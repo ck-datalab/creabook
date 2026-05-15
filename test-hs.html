@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Test HubSpot</title></head>
+<body>
+<h2>Test embed HubSpot</h2>
+<p id="status">Chargement...</p>
+<div id="form-here"></div>
+
+<script charset="utf-8" type="text/javascript" src="https://js-eu1.hsforms.net/forms/embed/v2.js"
+  onerror="document.getElementById('status').textContent='ERREUR: script HubSpot non chargé';">
+</script>
+<script>
+  document.getElementById('status').textContent = 'Script OK — hbspt=' + (typeof hbspt);
+  hbspt.forms.create({
+    region:   "eu1",
+    portalId: "26706563",
+    formId:   "a2537a21-fc0c-4d78-9271-5bdd1e89fa72",
+    target:   "#form-here",
+    onFormReady: function() {
+      document.getElementById('status').textContent = 'onFormReady fired — formulaire rendu!';
+    }
+  });
+  setTimeout(function() {
+    var s = document.getElementById('status');
+    if (s && s.textContent.indexOf('onFormReady') === -1) {
+      var iframe = document.querySelector('iframe');
+      s.textContent = 'Apres 5s: onFormReady pas fire. iframe=' + (iframe ? iframe.src : 'non') + ' | #form-here=' + document.getElementById('form-here').innerHTML.substring(0,80);
+    }
+  }, 5000);
+</script>
+</body>
+</html>
