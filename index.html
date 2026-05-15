@@ -861,15 +861,6 @@
       }
 
       function wireForm(doc) {
-        if (!doc.querySelector('[name="cb_assoc4_apport_ind"]')) {
-          var obs = new MutationObserver(function() {
-            if (!doc.querySelector('[name="cb_assoc4_apport_ind"]')) return;
-            obs.disconnect();
-            setTimeout(function(){ wireForm(doc); }, 100);
-          });
-          obs.observe(doc.body, { childList:true, subtree:true });
-          return;
-        }
         _fDoc = doc;
         injectFormCSS(doc);
         wireChosenDropdowns(doc);
