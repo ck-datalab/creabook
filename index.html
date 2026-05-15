@@ -562,7 +562,12 @@
 
 
 
-    <!-- Step navigation buttons -->
+
+    <!-- HubSpot Form Embed -->
+    <div id="hs-diag" style="padding:1rem;color:#666;font-family:Manrope,sans-serif;font-size:0.85rem;">Chargement du formulaire…</div>
+    <div id="hs-form-wrapper"></div>
+
+        <!-- Step navigation buttons -->
     <div class="form-nav" id="form-nav">
       <button class="form-nav-btn" id="btn-prev" onclick="formPrevStep()" style="visibility:hidden">← Précédent</button>
       <span class="form-step-counter" id="form-step-counter">Étape 1 / 5</span>
@@ -660,11 +665,7 @@
 </footer>
 
 
-
-    <!-- HubSpot Form Embed -->
-    <div id="hs-diag" style="padding:1rem;color:#666;font-family:Manrope,sans-serif;font-size:0.85rem;">Chargement du formulaire…</div>
-    <div id="hs-form-wrapper"></div>
-    <script charset="utf-8" type="text/javascript" src="https://js-eu1.hsforms.net/forms/embed/v2.js"
+<script charset="utf-8" type="text/javascript" src="https://js-eu1.hsforms.net/forms/embed/v2.js"
       onerror="document.getElementById('hs-diag').textContent='Script HubSpot non charge';"
     ></script>
     <script>
