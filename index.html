@@ -817,6 +817,17 @@
               showNextSteps(entite, montant);
             }
           });
+          setTimeout(function() {
+            if (!_diag || !_diag.parentNode) return; // onFormReady fired already
+            var iframe = document.querySelector('iframe[src*="hsforms"]');
+            var formEl = document.querySelector('.hs-form, .hbspt-form, form[data-form-id]');
+            var info = [];
+            info.push('Apres 5s:');
+            info.push('iframe hsforms = ' + (iframe ? iframe.src.substring(0,60) : 'non'));
+            info.push('form element = ' + (formEl ? formEl.tagName + '.' + formEl.className.substring(0,30) : 'non'));
+            info.push('wrapper HTML = ' + (document.getElementById('hs-form-wrapper') || document.body).innerHTML.substring(0,100));
+            _diag.textContent = info.join(' | ');
+          }, 5000);
         } catch(e) {
           if (_diag) _diag.textContent = 'Erreur hbspt.forms.create : ' + e.message;
         }
