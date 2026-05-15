@@ -879,6 +879,9 @@
           nbField.addEventListener('keyup',  syncAssoc);
           syncAssoc();
         }
+        var fss_diag = doc.querySelectorAll('form fieldset');
+        var desc = document.getElementById('step-desc');
+        if (desc) desc.innerHTML += ' <small style="color:#999">[fs:' + fss_diag.length + ' f0:' + (fss_diag[0] ? fss_diag[0].className.substring(0,30) : 'undef') + ']</small>';
         applyStepVisibility();
         updateStepUI();
       }
