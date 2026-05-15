@@ -715,15 +715,15 @@
         var fss = _fDoc.querySelectorAll('form fieldset');
         for (var i = 0; i < fss.length; i++) fss[i].style.display = 'none';
         var groups = STEP_FS[_step];
-        for (var g = 0; g < groups.length; g++) { if (fss[groups[g]]) fss[groups[g]].style.display = ''; }
+        for (var g = 0; g < groups.length; g++) { if (fss[groups[g]]) fss[groups[g]].style.setProperty('display','block','important'); }
         // Assoc fieldsets 6-9: only on step 3, gated by _assocOn
         for (var n = 1; n <= 4; n++) {
           var show = (_step === 3) && !!_assocOn[n];
-          if (fss[5 + n]) fss[5 + n].style.display = show ? '' : 'none';
+          if (fss[5 + n]) fss[5 + n].style.setProperty('display', show ? 'block' : 'none', 'important');
           var rts = _fDoc.querySelectorAll('.hs-richtext');
           for (var r = 0; r < rts.length; r++) {
             var h3 = rts[r].querySelector('h3');
-            if (h3 && h3.textContent.trim() === 'Associé ' + n) rts[r].style.display = show ? '' : 'none';
+            if (h3 && h3.textContent.trim() === 'Associé ' + n) rts[r].style.setProperty('display', show ? 'block' : 'none', 'important');
           }
         }
       }
@@ -879,59 +879,31 @@
           nbField.addEventListener('keyup',  syncAssoc);
           syncAssoc();
         }
-        var fss_diag = doc.querySelectorAll('form fieldset');
-        var desc = document.getElementById('step-desc');
-        if (desc) desc.innerHTML += ' <small style="color:#999">[fs:' + fss_diag.length + ' f0:' + (fss_diag[0] ? fss_diag[0].className.substring(0,30) : 'undef') + ']</small>';
         applyStepVisibility();
         updateStepUI();
       }
 
-      var _diag = document.getElementById('hs-diag');
-      if (typeof hbspt === 'undefined') {
-        if (_diag) _diag.textContent = 'hbspt non defini - script bloque';
-      } else {
-        if (_diag) _diag.textContent = 'hbspt OK - creation formulaire...';
-        try {
-          hbspt.forms.create({
-            portalId: "26706563",
-            formId:   "a2537a21-fc0c-4d78-9271-5bdd1e89fa72",
-            region:   "eu1",
-            locale:   "fr",
-            target:   "#hs-form-wrapper",
-            onFormReady: function($form) { if (_diag) _diag.remove(); wireForm($form[0].ownerDocument); },
-            onFormSubmitted: function(form, data) {
-              var entite = 'cecca';
-              var montant = '900';
-              if (data && data.submissionValues) {
-                var sv = data.submissionValues;
-                if (sv.cb_entite) entite = sv.cb_entite;
-                if (entite === 'cecca_etoile') montant = '2 160';
-              }
-              document.getElementById('form-stepper').style.display = 'none';
-              document.getElementById('form-nav').style.display = 'none';
-              document.getElementById('step-desc').style.display = 'none';
-              showNextSteps(entite, montant);
-            }
-          });
-          setTimeout(function() {
-            if (!_diag || !_diag.parentNode) return;
-            var iframe = document.querySelector('iframe[src*="hsforms"]');
-            var formEl = document.querySelector('.hs-form, .hbspt-form, form[data-form-id]');
-            var logs = (window._netlog || []).join(' ## ');
-            var info = [
-              'Apres 5s:',
-              'iframe=' + (iframe ? iframe.src.substring(0,80) : 'non'),
-              'form=' + (formEl ? formEl.tagName : 'non'),
-              'wrapper=' + (document.getElementById('hs-form-wrapper') || {innerHTML:''}).innerHTML.substring(0,80),
-              'net=' + (logs || 'vide')
-            ];
-            _diag.style.cssText = 'padding:1rem;font-size:0.75rem;color:#333;word-break:break-all;white-space:pre-wrap;background:#f5f5f5;';
-            _diag.textContent = info.join('\n');
-          }, 5000);
-        } catch(e) {
-          if (_diag) _diag.textContent = 'Erreur hbspt.forms.create : ' + e.message;
+      hbspt.forms.create({
+        portalId: "26706563",
+        formId:   "a2537a21-fc0c-4d78-9271-5bdd1e89fa72",
+        region:   "eu1",
+        locale:   "fr",
+        target:   "#hs-form-wrapper",
+        onFormReady: function($form) { wireForm($form[0].ownerDocument); },
+        onFormSubmitted: function(form, data) {
+          var entite = 'cecca';
+          var montant = '900';
+          if (data && data.submissionValues) {
+            var sv = data.submissionValues;
+            if (sv.cb_entite) entite = sv.cb_entite;
+            if (entite === 'cecca_etoile') montant = '2 160';
+          }
+          document.getElementById('form-stepper').style.display = 'none';
+          document.getElementById('form-nav').style.display = 'none';
+          document.getElementById('step-desc').style.display = 'none';
+          showNextSteps(entite, montant);
         }
-      }
+      });
     </script>
 </body>
 </html>
