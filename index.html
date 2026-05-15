@@ -645,12 +645,88 @@
 
       function formPrevStep() { if (_step > 0) { _step--; applyStepVisibility(); updateStepUI(); } }
 
+      // ── Step validation ────────────────────────────────────────────
+      function validateCurrentStep() {
+        if (!_fDoc) return true;
+        var fss = _fDoc.querySelectorAll('form fieldset');
+        var toCheck = STEP_FS[_step].slice();
+        if (_step === 3) {
+          for (var n = 1; n <= 4; n++) { if (_assocOn[n]) toCheck.push(5 + n); }
+        }
+        var isValid = true;
+        for (var g = 0; g < toCheck.length; g++) {
+          var fs = fss[toCheck[g]];
+          if (!fs) continue;
+          var inputs = fs.querySelectorAll('[aria-required="true"],[required]');
+          for (var i = 0; i < inputs.length; i++) {
+            var inp = inputs[i];
+            if (inp.type === 'hidden') continue;
+            var wrapper = inp.closest('.hs-form-field');
+            if (wrapper && wrapper.style.display === 'none') continue;
+            if (!inp.value || !inp.value.trim()) {
+              isValid = false;
+              if (wrapper) { wrapper.style.outline = '2px solid #B04545'; wrapper.style.borderRadius = '2px'; }
+            } else {
+              if (wrapper) wrapper.style.outline = '';
+            }
+          }
+        }
+        // Show/hide inline error banner
+        var errId = 'cb-step-err';
+        var existing = document.getElementById(errId);
+        if (!isValid) {
+          if (!existing) {
+            var err = document.createElement('div');
+            err.id = errId;
+            err.style.cssText = 'background:#FEE2E2;border:1px solid #B04545;border-radius:2px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:#B04545;font-family:Manrope,sans-serif;';
+            err.textContent = 'Veuillez remplir tous les champs obligatoires avant de continuer.';
+            var nav = document.getElementById('form-nav');
+            nav.parentNode.insertBefore(err, nav);
+          } else { existing.style.display = ''; }
+        } else if (existing) { existing.style.display = 'none'; }
+        return isValid;
+      }
+
       function formNextStep() {
+        if (!validateCurrentStep()) return;
         if (_step < TOTAL_STEPS - 1) { _step++; applyStepVisibility(); updateStepUI(); }
         else if (_fDoc) {
           var btn = _fDoc.querySelector('input[type="submit"]') || _fDoc.querySelector('.hs-button');
           if (btn) btn.click();
         }
+      }
+
+      // ── SSN formatter ──────────────────────────────────────────────
+      function wireSSNFormatters(doc) {
+        var ssnFields = ['cb_num_secu','cb_assoc1_num_secu','cb_assoc2_num_secu','cb_assoc3_num_secu','cb_assoc4_num_secu'];
+        ssnFields.forEach(function(name) {
+          var el = doc.querySelector('[name="' + name + '"]');
+          if (!el) return;
+          el.setAttribute('maxlength', '21');
+          el.setAttribute('placeholder', '1 23 45 67 890 123 45');
+          el.addEventListener('input', function() {
+            var digits = el.value.replace(/\D/g, '').substring(0, 15);
+            var groups = [1,2,2,2,3,3,2], out = '', pos = 0;
+            for (var g = 0; g < groups.length && pos < digits.length; g++) {
+              if (g > 0) out += ' ';
+              out += digits.substring(pos, pos + groups[g]);
+              pos += groups[g];
+            }
+            el.value = out;
+          });
+        });
+      }
+
+      // ── Inject CSS into form doc (works whether form is inline or in iframe) ──
+      function injectFormCSS(doc) {
+        var style = doc.createElement('style');
+        style.textContent = [
+          '.hs-form select, .hs-form .hs-input { color: #0A0A0A !important; background: #FAFAF7 !important; }',
+          '.hs-form option { color: #0A0A0A !important; }',
+          '.hs-form .chosen-single span, .hs-form .chosen-drop li { color: #0A0A0A !important; }',
+          '.hs-form .chosen-container-single .chosen-single { color: #0A0A0A !important; background: #FAFAF7 !important; }'
+        ].join('\n');
+        (doc.head || doc.documentElement).appendChild(style);
       }
 
       function wireForm(doc) {
@@ -664,6 +740,8 @@
           return;
         }
         _fDoc = doc;
+        injectFormCSS(doc);
+        wireSSNFormatters(doc);
         var submitArea = doc.querySelector('.hs_submit');
         if (submitArea) submitArea.style.display = 'none';
         var nbField = doc.querySelector('[name="cb_nb_associes"]');
@@ -686,6 +764,7 @@
         portalId: "26706563",
         formId:   "a2537a21-fc0c-4d78-9271-5bdd1e89fa72",
         region:   "eu1",
+        locale:   "fr",
         onFormReady: function($form) { wireForm($form[0].ownerDocument); },
         onFormSubmitted: function(form, data) {
           var entite = 'cecca';
