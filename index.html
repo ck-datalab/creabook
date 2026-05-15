@@ -721,10 +721,22 @@
       function injectFormCSS(doc) {
         var style = doc.createElement('style');
         style.textContent = [
+          /* native select + inputs */
           '.hs-form select, .hs-form .hs-input { color: #0A0A0A !important; background: #FAFAF7 !important; }',
-          '.hs-form option { color: #0A0A0A !important; }',
-          '.hs-form .chosen-single span, .hs-form .chosen-drop li { color: #0A0A0A !important; }',
-          '.hs-form .chosen-container-single .chosen-single { color: #0A0A0A !important; background: #FAFAF7 !important; }'
+          '.hs-form option { color: #0A0A0A !important; background: #FAFAF7 !important; }',
+          /* chosen container sizing */
+          '.hs-form .chosen-container { width: 100% !important; }',
+          /* chosen trigger button */
+          '.hs-form .chosen-container-single .chosen-single { color: #0A0A0A !important; background: #FAFAF7 !important; height: auto !important; min-height: 2.4rem !important; padding: 0.5rem 0.9rem !important; display: flex !important; align-items: center !important; border: 1px solid #d1d5db !important; border-radius: 2px !important; }',
+          /* the span that shows the selected value — must be visible */
+          '.hs-form .chosen-container-single .chosen-single span { color: #0A0A0A !important; display: block !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; flex: 1 !important; }',
+          /* arrow icon */
+          '.hs-form .chosen-container-single .chosen-single div { position: static !important; margin-left: auto !important; }',
+          /* dropdown list */
+          '.hs-form .chosen-drop { background: #FAFAF7 !important; border: 1px solid #d1d5db !important; border-radius: 2px !important; z-index: 9999 !important; }',
+          '.hs-form .chosen-results li { color: #0A0A0A !important; padding: 0.5rem 0.9rem !important; }',
+          '.hs-form .chosen-results li.highlighted { background: #1E4E7A !important; color: #FAFAF7 !important; }',
+          '.hs-form .chosen-results li.result-selected { font-weight: 600 !important; }'
         ].join('\n');
         (doc.head || doc.documentElement).appendChild(style);
       }
