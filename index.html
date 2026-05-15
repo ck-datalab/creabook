@@ -561,8 +561,12 @@
     <div class="step-desc" id="step-desc"></div>
 
     <!-- HubSpot Form Embed -->
-    <div id="hs-form-wrapper"></div>
-    <script charset="utf-8" type="text/javascript" src="https://js-eu1.hsforms.net/forms/embed/v2.js"></script>
+    <div id="hs-form-wrapper">
+      <div id="hs-diag" style="padding:1rem;color:#666;font-family:Manrope,sans-serif;font-size:0.85rem;">Chargement du formulaire…</div>
+    </div>
+    <script charset="utf-8" type="text/javascript" src="https://js-eu1.hsforms.net/forms/embed/v2.js"
+      onerror="document.getElementById('hs-diag').textContent='❌ Script HubSpot non chargé (bloqué réseau ou CSP)';"
+    ></script>
     <script>
       // ── RIBs ──────────────────────────────────────────────────────
       var RIBS = {
@@ -787,28 +791,37 @@
         updateStepUI();
       }
 
-      hbspt.forms.create({
-        portalId: "26706563",
-        formId:   "a2537a21-fc0c-4d78-9271-5bdd1e89fa72",
-        region:   "eu1",
-        locale:   "fr",
-        target:   "#hs-form-wrapper",
-        onFormReady: function($form) { wireForm($form[0].ownerDocument); },
-        onFormSubmitted: function(form, data) {
-          var entite = 'cecca';
-          var montant = '900';
-
-          if (data && data.submissionValues) {
-            var sv = data.submissionValues;
-            if (sv.cb_entite) entite = sv.cb_entite;
-            if (entite === 'cecca_etoile') montant = '2 160';
-          }
-          document.getElementById('form-stepper').style.display = 'none';
-          document.getElementById('form-nav').style.display = 'none';
-          document.getElementById('step-desc').style.display = 'none';
-          showNextSteps(entite, montant);
+      var _diag = document.getElementById('hs-diag');
+      if (typeof hbspt === 'undefined') {
+        if (_diag) _diag.textContent = 'hbspt non defini - script bloque';
+      } else {
+        if (_diag) _diag.textContent = 'hbspt OK - creation formulaire...';
+        try {
+          hbspt.forms.create({
+            portalId: "26706563",
+            formId:   "a2537a21-fc0c-4d78-9271-5bdd1e89fa72",
+            region:   "eu1",
+            locale:   "fr",
+            target:   "#hs-form-wrapper",
+            onFormReady: function($form) { if (_diag) _diag.remove(); wireForm($form[0].ownerDocument); },
+            onFormSubmitted: function(form, data) {
+              var entite = 'cecca';
+              var montant = '900';
+              if (data && data.submissionValues) {
+                var sv = data.submissionValues;
+                if (sv.cb_entite) entite = sv.cb_entite;
+                if (entite === 'cecca_etoile') montant = '2 160';
+              }
+              document.getElementById('form-stepper').style.display = 'none';
+              document.getElementById('form-nav').style.display = 'none';
+              document.getElementById('step-desc').style.display = 'none';
+              showNextSteps(entite, montant);
+            }
+          });
+        } catch(e) {
+          if (_diag) _diag.textContent = 'Erreur hbspt.forms.create : ' + e.message;
         }
-      });
+      }
     </script>
 
     <!-- Step navigation buttons -->
