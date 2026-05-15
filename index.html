@@ -561,11 +561,10 @@
     <div class="step-desc" id="step-desc"></div>
 
     <!-- HubSpot Form Embed -->
-    <div id="hs-form-wrapper">
-      <div id="hs-diag" style="padding:1rem;color:#666;font-family:Manrope,sans-serif;font-size:0.85rem;">Chargement du formulaire…</div>
-    </div>
+    <div id="hs-diag" style="padding:1rem;color:#666;font-family:Manrope,sans-serif;font-size:0.85rem;">Chargement du formulaire…</div>
+    <div id="hs-form-wrapper"></div>
     <script charset="utf-8" type="text/javascript" src="https://js-eu1.hsforms.net/forms/embed/v2.js"
-      onerror="document.getElementById('hs-diag').textContent='❌ Script HubSpot non chargé (bloqué réseau ou CSP)';"
+      onerror="document.getElementById('hs-diag').textContent='Script HubSpot non charge';"
     ></script>
     <script>
       // ── RIBs ──────────────────────────────────────────────────────
@@ -802,6 +801,7 @@
             formId:   "a2537a21-fc0c-4d78-9271-5bdd1e89fa72",
             region:   "eu1",
             locale:   "fr",
+            target:   "#hs-form-wrapper",
             onFormReady: function($form) { if (_diag) _diag.remove(); wireForm($form[0].ownerDocument); },
             onFormSubmitted: function(form, data) {
               var entite = 'cecca';
