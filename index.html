@@ -7,29 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script>
-/* intercepteur reseau — a retirer apres debug */
-(function() {
-  var log = [];
-  var orig = window.fetch;
-  window.fetch = function(url) {
-    log.push('fetch:' + url);
-    return orig.apply(this, arguments).catch(function(e) {
-      log.push('FETCH_ERR:' + url + ':' + e.message);
-      throw e;
-    });
-  };
-  var XHR = window.XMLHttpRequest.prototype.open;
-  window.XMLHttpRequest.prototype.open = function(m, url) {
-    log.push('xhr:' + url);
-    return XHR.apply(this, arguments);
-  };
-  window.addEventListener('error', function(e) {
-    log.push('jserr:' + e.message + '@' + e.filename + ':' + e.lineno);
-  });
-  window._netlog = log;
-})();
-</script>
 <style>
   :root {
     --ink:       #0A0A0A;
@@ -583,6 +560,107 @@
     <!-- Step description (updated dynamically) -->
     <div class="step-desc" id="step-desc"></div>
 
+
+
+    <!-- Step navigation buttons -->
+    <div class="form-nav" id="form-nav">
+      <button class="form-nav-btn" id="btn-prev" onclick="formPrevStep()" style="visibility:hidden">← Précédent</button>
+      <span class="form-step-counter" id="form-step-counter">Étape 1 / 5</span>
+      <button class="form-nav-btn primary" id="btn-next" onclick="formNextStep()">Suivant →</button>
+    </div>
+
+    <!-- Post-submission: virement section -->
+    <div id="next-steps" class="next-steps">
+
+      <div class="success-banner">
+        <div class="check">
+          <svg viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="2.5,8.5 6.5,12.5 13.5,4.5"/>
+          </svg>
+        </div>
+        <div>
+          <h3>Dossier reçu !</h3>
+          <p>Votre conseiller Cecca a été notifié et reviendra vers vous sous 48h. En attendant, effectuez le virement d'acompte ci-dessous pour démarrer la création.</p>
+        </div>
+      </div>
+
+      <div class="virement-card">
+        <div class="virement-card-header">
+          <div class="step-badge">2</div>
+          <span>Effectuez le virement d'acompte — <strong id="rib-montant" style="color:var(--gold)"></strong></span>
+        </div>
+        <div class="rib-section">
+          <p class="rib-intro">
+            Effectuez un virement de <strong id="rib-montant-2"></strong> sur le compte <strong id="rib-beneficiaire"></strong> en indiquant
+            le nom de votre société dans le libellé.
+          </p>
+
+          <div class="rib-rows">
+
+            <div class="rib-row">
+              <div class="rib-row-left">
+                <span class="rib-label">Bénéficiaire</span>
+                <span class="rib-value" id="rib-beneficiaire-2"></span>
+              </div>
+            </div>
+
+            <div class="rib-row">
+              <div class="rib-row-left">
+                <span class="rib-label">Banque</span>
+                <span class="rib-value" id="rib-banque"></span>
+              </div>
+            </div>
+
+            <div class="rib-row">
+              <div class="rib-row-left">
+                <span class="rib-label">IBAN</span>
+                <span class="rib-value" id="rib-iban"></span>
+              </div>
+              <button class="copy-btn" onclick="copyRib('iban', this)">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="5" y="5" width="8" height="9" rx="1"/>
+                  <path d="M3 11V3a1 1 0 0 1 1-1h7"/>
+                </svg>
+                <span class="btn-label">Copier</span>
+              </button>
+            </div>
+
+            <div class="rib-row">
+              <div class="rib-row-left">
+                <span class="rib-label">BIC / Swift</span>
+                <span class="rib-value" id="rib-bic"></span>
+              </div>
+              <button class="copy-btn" onclick="copyRib('bic', this)">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="5" y="5" width="8" height="9" rx="1"/>
+                  <path d="M3 11V3a1 1 0 0 1 1-1h7"/>
+                </svg>
+                <span class="btn-label">Copier</span>
+              </button>
+            </div>
+
+          </div>
+
+          <p class="rib-note">
+            Libellé du virement : <strong>nom de votre société</strong> — ex. "SAS MON ENTREPRISE"
+          </p>
+        </div>
+      </div>
+
+    </div>
+    <!-- /next-steps -->
+
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>© 2025 Cecca — Cabinet d'expertise comptable &nbsp;·&nbsp; <a href="https://cecca.fr">cecca.fr</a></p>
+  <p style="margin-top:0.4rem">Vos données sont traitées conformément au RGPD.</p>
+</footer>
+
+
+
     <!-- HubSpot Form Embed -->
     <div id="hs-diag" style="padding:1rem;color:#666;font-family:Manrope,sans-serif;font-size:0.85rem;">Chargement du formulaire…</div>
     <div id="hs-form-wrapper"></div>
@@ -860,104 +938,5 @@
         }
       }
     </script>
-
-    <!-- Step navigation buttons -->
-    <div class="form-nav" id="form-nav">
-      <button class="form-nav-btn" id="btn-prev" onclick="formPrevStep()" style="visibility:hidden">← Précédent</button>
-      <span class="form-step-counter" id="form-step-counter">Étape 1 / 5</span>
-      <button class="form-nav-btn primary" id="btn-next" onclick="formNextStep()">Suivant →</button>
-    </div>
-
-    <!-- Post-submission: virement section -->
-    <div id="next-steps" class="next-steps">
-
-      <div class="success-banner">
-        <div class="check">
-          <svg viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="2.5,8.5 6.5,12.5 13.5,4.5"/>
-          </svg>
-        </div>
-        <div>
-          <h3>Dossier reçu !</h3>
-          <p>Votre conseiller Cecca a été notifié et reviendra vers vous sous 48h. En attendant, effectuez le virement d'acompte ci-dessous pour démarrer la création.</p>
-        </div>
-      </div>
-
-      <div class="virement-card">
-        <div class="virement-card-header">
-          <div class="step-badge">2</div>
-          <span>Effectuez le virement d'acompte — <strong id="rib-montant" style="color:var(--gold)"></strong></span>
-        </div>
-        <div class="rib-section">
-          <p class="rib-intro">
-            Effectuez un virement de <strong id="rib-montant-2"></strong> sur le compte <strong id="rib-beneficiaire"></strong> en indiquant
-            le nom de votre société dans le libellé.
-          </p>
-
-          <div class="rib-rows">
-
-            <div class="rib-row">
-              <div class="rib-row-left">
-                <span class="rib-label">Bénéficiaire</span>
-                <span class="rib-value" id="rib-beneficiaire-2"></span>
-              </div>
-            </div>
-
-            <div class="rib-row">
-              <div class="rib-row-left">
-                <span class="rib-label">Banque</span>
-                <span class="rib-value" id="rib-banque"></span>
-              </div>
-            </div>
-
-            <div class="rib-row">
-              <div class="rib-row-left">
-                <span class="rib-label">IBAN</span>
-                <span class="rib-value" id="rib-iban"></span>
-              </div>
-              <button class="copy-btn" onclick="copyRib('iban', this)">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="5" y="5" width="8" height="9" rx="1"/>
-                  <path d="M3 11V3a1 1 0 0 1 1-1h7"/>
-                </svg>
-                <span class="btn-label">Copier</span>
-              </button>
-            </div>
-
-            <div class="rib-row">
-              <div class="rib-row-left">
-                <span class="rib-label">BIC / Swift</span>
-                <span class="rib-value" id="rib-bic"></span>
-              </div>
-              <button class="copy-btn" onclick="copyRib('bic', this)">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="5" y="5" width="8" height="9" rx="1"/>
-                  <path d="M3 11V3a1 1 0 0 1 1-1h7"/>
-                </svg>
-                <span class="btn-label">Copier</span>
-              </button>
-            </div>
-
-          </div>
-
-          <p class="rib-note">
-            Libellé du virement : <strong>nom de votre société</strong> — ex. "SAS MON ENTREPRISE"
-          </p>
-        </div>
-      </div>
-
-    </div>
-    <!-- /next-steps -->
-
-  </div>
-</div>
-
-<!-- Footer -->
-<footer class="footer">
-  <p>© 2025 Cecca — Cabinet d'expertise comptable &nbsp;·&nbsp; <a href="https://cecca.fr">cecca.fr</a></p>
-  <p style="margin-top:0.4rem">Vos données sont traitées conformément au RGPD.</p>
-</footer>
-
-
 </body>
 </html>
