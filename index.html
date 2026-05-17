@@ -185,6 +185,18 @@
     outline: none !important;
     box-shadow: var(--shadow-sm) !important;
   }
+  .hs-form select {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230A0A0A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 1rem center !important;
+    background-size: 1em !important;
+    padding: 0 2.5rem 0 0.9rem !important;
+    height: 46px !important;
+    line-height: 44px !important;
+  }
   .hs-form input:focus,
   .hs-form select:focus,
   .hs-form textarea:focus {
@@ -829,6 +841,7 @@
         style.textContent = [
           '.hs-form select, .hs-form .hs-input { color: #0A0A0A !important; background: #FAFAF7 !important; }',
           '.hs-form option { color: #0A0A0A !important; background: #FAFAF7 !important; }',
+          '.hs-form select { -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%230A0A0A\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e") !important; background-repeat: no-repeat !important; background-position: right 1rem center !important; background-size: 1em !important; padding: 0 2.5rem 0 0.9rem !important; height: 46px !important; line-height: 44px !important; }',
           '.hs-form .chosen-container { width: 100% !important; }',
           '.hs-form .chosen-container-single .chosen-single { color: #0A0A0A !important; background: #FAFAF7 !important; border: 1px solid #d1d5db !important; border-radius: 2px !important; }',
           '.hs-form .chosen-container-single .chosen-single span { color: #0A0A0A !important; display: block !important; }',
@@ -846,9 +859,10 @@
             sel.addEventListener('change', function() {
               var opt = sel.options[sel.selectedIndex];
               if (!opt) return;
-              // chosen.js names the container "{select-id}_chosen"
-              var container = sel.id ? doc.getElementById(sel.id + '_chosen') : null;
-              if (container) {
+              // The Chosen.js container is the next sibling of the hidden <select> element.
+              // We make the lookup more robust by not relying on the element's ID.
+              var container = sel.nextElementSibling;
+              if (container && container.classList.contains('chosen-container')) {
                 var span = container.querySelector('.chosen-single span');
                 if (span) {
                   span.textContent = opt.text;
