@@ -719,7 +719,7 @@
         }
       }
 
-      function updateStepUI() {
+      function updateStepUI(skipScroll) {
         var dots = document.querySelectorAll('#form-stepper .form-stepper-step');
         for (var i = 0; i < dots.length; i++) {
           dots[i].classList.remove('active','done');
@@ -737,7 +737,7 @@
           if (_step === TOTAL_STEPS - 1) { next.textContent = 'Envoyer le dossier'; next.className = 'form-nav-btn submit-btn'; }
           else { next.textContent = 'Suivant →'; next.className = 'form-nav-btn primary'; }
         }
-        document.querySelector('.form-card').scrollIntoView({ behavior:'smooth', block:'start' });
+        if (!skipScroll) document.querySelector('.form-card').scrollIntoView({ behavior:'smooth', block:'start' });
       }
 
       function formPrevStep() { if (_step > 0) { _step--; applyStepVisibility(); updateStepUI(); } }
@@ -904,7 +904,7 @@
           syncAssoc();
         }
         applyStepVisibility();
-        updateStepUI();
+        updateStepUI(true);
       }
 
       hbspt.forms.create({
