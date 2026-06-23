@@ -43,29 +43,6 @@
 
   h1, h2, h3 { font-family: 'Epilogue', Georgia, serif; font-weight: 400; letter-spacing: -0.015em; }
 
-  /* Header */
-  .header {
-    background: var(--blue);
-    color: var(--paper);
-    padding: 1.5rem 3rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .header .brand {
-    font-family: 'Epilogue', serif;
-    font-size: 1.6rem;
-    font-weight: 300;
-    letter-spacing: -0.02em;
-  }
-  .header .brand strong { font-weight: 500; font-style: italic; }
-  .header .tagline {
-    font-size: 0.72rem;
-    color: var(--grey-400);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
   /* Hero */
   .hero {
     background: var(--blue) url('assets/cecca-hero-bg.png') center/cover no-repeat;
@@ -170,10 +147,10 @@
   .hs-form .hs-form-field { margin-bottom: 1.25rem !important; }
   .hs-form label {
     font-family: 'Epilogue', sans-serif !important;
-    font-size: 0.82rem !important;
+    font-size: 0.98rem !important;
     font-weight: 500 !important;
     color: var(--ink) !important;
-    margin-bottom: 0.4rem !important;
+    margin-bottom: 0.5rem !important;
     display: block !important;
   }
   .hs-form input[type="text"],
@@ -514,7 +491,6 @@
   .form-nav-btn.submit-btn:hover { background: var(--blue-dark); border-color: var(--blue-dark); }
 
   @media (max-width: 640px) {
-    .header { padding: 1.25rem 1.5rem; }
     .hero { padding: 2.5rem 1.5rem; }
     .form-container { padding: 1.5rem 1rem 3rem; }
     .form-card { padding: 1.5rem; }
@@ -527,18 +503,10 @@
 </head>
 <body>
 
-<!-- Header -->
-<header class="header">
-  <div>
-    <div class="brand">Le <strong>Créa'Book</strong></div>
-    <div class="tagline">Cecca — Cabinet d'expertise comptable</div>
-  </div>
-</header>
-
 <!-- Hero -->
 <section class="hero">
-  <span class="eyebrow">Création de société</span>
-  <h1>Votre dossier de création,<br><em>simplement</em></h1>
+  <span class="eyebrow">Création d'entreprise</span>
+  <h1>Votre dossier complété<br><em>simplement</em></h1>
   <p>Remplissez ce formulaire pour transmettre toutes les informations nécessaires à la création de votre société. L'équipe Cecca prend en charge le reste.</p>
   <div class="hero-steps">
     <div class="hero-step"><span class="num">1</span>Remplissez le formulaire</div>
@@ -850,6 +818,7 @@
       function injectFormCSS(doc) {
         var style = doc.createElement('style');
         style.textContent = [
+          '.hs-form label { font-family: Epilogue, sans-serif !important; font-size: 1.05rem !important; font-weight: 500 !important; color: #0A0A0A !important; margin-bottom: 0.5rem !important; display: block !important; }',
           '.hs-form select, .hs-form .hs-input { color: #0A0A0A !important; background: #FAFAF7 !important; }',
           '.hs-form option { color: #0A0A0A !important; background: #FAFAF7 !important; }',
           '.hs-form select { -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%230A0A0A\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e") !important; background-repeat: no-repeat !important; background-position: right 1rem center !important; background-size: 1em !important; padding: 0 2.5rem 0 0.9rem !important; height: 46px !important; line-height: 44px !important; }',
@@ -885,11 +854,41 @@
         }
       }
 
+      // Champs marqués obligatoires côté client (complète ce que définit HubSpot)
+      var REQUIRED_FIELDS = [
+        'email', 'firstname', 'lastname',
+        'cb_entite', 'cb_type_parcours',
+        'cb_denomination_sociale', 'cb_forme_juridique',
+        'cb_objet_social', 'cb_capital_social',
+        'cb_siege_ville',
+        'cb_nb_associes'
+      ];
+      function markRequiredFields(doc) {
+        REQUIRED_FIELDS.forEach(function(name) {
+          var el = doc.querySelector('[name="' + name + '"]');
+          if (!el) return;
+          el.setAttribute('required', 'required');
+          el.setAttribute('aria-required', 'true');
+          var wrapper = el.closest('.hs-form-field');
+          if (wrapper) {
+            var lbl = wrapper.querySelector('label:not(.hs-error-msg)');
+            if (lbl && !lbl.querySelector('.hs-form-required')) {
+              var star = doc.createElement('span');
+              star.className = 'hs-form-required';
+              star.textContent = ' *';
+              star.style.color = '#C0184A';
+              lbl.appendChild(star);
+            }
+          }
+        });
+      }
+
       function wireForm(doc) {
         _fDoc = doc;
         injectFormCSS(doc);
         wireChosenDropdowns(doc);
         wireSSNFormatters(doc);
+        markRequiredFields(doc);
         var submitArea = doc.querySelector('.hs_submit');
         if (submitArea) submitArea.style.display = 'none';
         var nbField = doc.querySelector('[name="cb_nb_associes"]');
@@ -914,7 +913,11 @@
         region:   "eu1",
         locale:   "fr",
         target:   "#hs-form-wrapper",
-        onFormReady: function($form) { wireForm($form[0].ownerDocument); },
+        onFormReady: function($form) {
+          var diag = document.getElementById('hs-diag');
+          if (diag) diag.remove();
+          wireForm($form[0].ownerDocument);
+        },
         onFormSubmitted: function(form, data) {
           var entite = 'cecca';
           var montant = '900';
