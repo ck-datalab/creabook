@@ -6,17 +6,17 @@
 <title>Créa'Book — Dépôt de dossier | Cecca</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 <style>
   :root {
     --ink:       #0A0A0A;
     --paper:     #FAFAF7;
     --paper-2:   #F2F1EB;
-    --blue:      #1E4E7A;
-    --blue-dark: #133856;
-    --blue-mist: #E8EEF4;
-    --gold:      #B8935A;
-    --gold-soft: #E8D9BF;
+    --blue:      #0A1338;
+    --blue-dark: #050A1F;
+    --blue-mist: #E8EAF0;
+    --gold:      #C0184A;
+    --gold-soft: #F5D5DE;
     --grey-500:  #6B6B65;
     --grey-400:  #9B9B95;
     --grey-300:  #C0BFB8;
@@ -33,7 +33,7 @@
   html { scroll-behavior: smooth; }
 
   body {
-    font-family: 'Manrope', -apple-system, sans-serif;
+    font-family: 'Epilogue', -apple-system, sans-serif;
     font-size: 15px;
     line-height: 1.55;
     color: var(--ink);
@@ -41,11 +41,11 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 400; letter-spacing: -0.015em; }
+  h1, h2, h3 { font-family: 'Epilogue', Georgia, serif; font-weight: 400; letter-spacing: -0.015em; }
 
   /* Header */
   .header {
-    background: var(--ink);
+    background: var(--blue);
     color: var(--paper);
     padding: 1.5rem 3rem;
     display: flex;
@@ -53,7 +53,7 @@
     justify-content: space-between;
   }
   .header .brand {
-    font-family: 'Fraunces', serif;
+    font-family: 'Epilogue', serif;
     font-size: 1.6rem;
     font-weight: 300;
     letter-spacing: -0.02em;
@@ -68,11 +68,20 @@
 
   /* Hero */
   .hero {
-    background: var(--blue);
+    background: var(--blue) url('assets/cecca-hero-bg.png') center/cover no-repeat;
     color: white;
     padding: 4rem 3rem;
     text-align: center;
+    position: relative;
   }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(5,10,31,0.15) 0%, rgba(5,10,31,0.45) 100%);
+    pointer-events: none;
+  }
+  .hero > * { position: relative; z-index: 1; }
   .hero .eyebrow {
     font-size: 0.72rem;
     letter-spacing: 0.2em;
@@ -160,7 +169,7 @@
   .hs-form fieldset { max-width: 100% !important; }
   .hs-form .hs-form-field { margin-bottom: 1.25rem !important; }
   .hs-form label {
-    font-family: 'Manrope', sans-serif !important;
+    font-family: 'Epilogue', sans-serif !important;
     font-size: 0.82rem !important;
     font-weight: 500 !important;
     color: var(--ink) !important;
@@ -177,7 +186,7 @@
     padding: 0.7rem 0.9rem !important;
     border: 1px solid var(--grey-200) !important;
     border-radius: 2px !important;
-    font-family: 'Manrope', sans-serif !important;
+    font-family: 'Epilogue', sans-serif !important;
     font-size: 0.92rem !important;
     color: var(--ink) !important;
     background: var(--paper) !important;
@@ -206,7 +215,7 @@
   .hs-form .hs-button {
     background: var(--ink) !important;
     color: var(--paper) !important;
-    font-family: 'Manrope', sans-serif !important;
+    font-family: 'Epilogue', sans-serif !important;
     font-size: 0.92rem !important;
     font-weight: 500 !important;
     padding: 0.9rem 2rem !important;
@@ -232,13 +241,13 @@
     font-weight: 400 !important;
   }
   .hs-form .submitted-message {
-    font-family: 'Manrope', sans-serif;
+    font-family: 'Epilogue', sans-serif;
     text-align: center;
     padding: 2rem;
     color: var(--grey-500);
   }
   .hs-form .submitted-message h2 {
-    font-family: 'Fraunces', serif;
+    font-family: 'Epilogue', serif;
     color: var(--ink);
     margin-bottom: 0.5rem;
   }
@@ -292,7 +301,7 @@
   }
   .success-banner .check svg { width: 16px; height: 16px; }
   .success-banner h3 {
-    font-family: 'Fraunces', serif;
+    font-family: 'Epilogue', serif;
     font-size: 1.1rem;
     color: var(--green);
     margin-bottom: 0.25rem;
@@ -382,7 +391,7 @@
     border: 1px solid var(--grey-200);
     border-radius: 2px;
     padding: 0.4rem 0.75rem;
-    font-family: 'Manrope', sans-serif;
+    font-family: 'Epilogue', sans-serif;
     font-size: 0.78rem;
     font-weight: 500;
     color: var(--grey-500);
@@ -405,14 +414,16 @@
 
   /* Footer */
   .footer {
-    background: var(--ink);
-    color: var(--grey-400);
+    background: var(--blue);
+    color: var(--grey-300);
     text-align: center;
     padding: 2rem;
     font-size: 0.78rem;
     letter-spacing: 0.03em;
+    border-top: 2px solid var(--gold);
   }
-  .footer a { color: var(--grey-300); text-decoration: none; }
+  .footer a { color: var(--gold-soft); text-decoration: none; }
+  .footer a:hover { color: var(--gold); }
 
   /* ── Form stepper ─────────────────────────────────────────────── */
   .form-stepper {
@@ -488,7 +499,7 @@
   .form-nav-btn {
     display: inline-flex; align-items: center; gap: 0.4rem;
     padding: 0.7rem 1.5rem; border-radius: 2px;
-    font-family: 'Manrope', sans-serif; font-size: 0.88rem; font-weight: 500;
+    font-family: 'Epilogue', sans-serif; font-size: 0.88rem; font-weight: 500;
     cursor: pointer; transition: all .2s;
     border: 1px solid var(--grey-200); background: white; color: var(--grey-500);
     white-space: nowrap;
@@ -576,7 +587,7 @@
 
 
     <!-- HubSpot Form Embed -->
-    <div id="hs-diag" style="padding:1rem;color:#666;font-family:Manrope,sans-serif;font-size:0.85rem;">Chargement du formulaire…</div>
+    <div id="hs-diag" style="padding:1rem;color:#666;font-family:Epilogue,sans-serif;font-size:0.85rem;">Chargement du formulaire…</div>
     <div id="hs-form-wrapper"></div>
 
         <!-- Step navigation buttons -->
@@ -796,7 +807,7 @@
           if (!existing) {
             var err = document.createElement('div');
             err.id = errId;
-            err.style.cssText = 'background:#FEE2E2;border:1px solid #B04545;border-radius:2px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:#B04545;font-family:Manrope,sans-serif;';
+            err.style.cssText = 'background:#FEE2E2;border:1px solid #B04545;border-radius:2px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:#B04545;font-family:Epilogue,sans-serif;';
             err.textContent = 'Veuillez remplir tous les champs obligatoires avant de continuer.';
             var nav = document.getElementById('form-nav');
             nav.parentNode.insertBefore(err, nav);
@@ -847,7 +858,7 @@
           '.hs-form .chosen-container-single .chosen-single span { color: #0A0A0A !important; display: block !important; }',
           '.hs-form .chosen-drop { background: #FAFAF7 !important; border: 1px solid #d1d5db !important; z-index: 9999 !important; }',
           '.hs-form .chosen-results li { color: #0A0A0A !important; }',
-          '.hs-form .chosen-results li.highlighted { background: #1E4E7A !important; color: #FAFAF7 !important; }'
+          '.hs-form .chosen-results li.highlighted { background: #0A1338 !important; color: #FAFAF7 !important; }'
         ].join('\n');
         (doc.head || doc.documentElement).appendChild(style);
       }
