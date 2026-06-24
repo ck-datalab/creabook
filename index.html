@@ -536,7 +536,7 @@
       </div>
       <div class="form-stepper-step" data-step="2">
         <div class="step-bubble">3</div>
-        <span class="step-label">Dirigeant</span>
+        <span class="step-label">Mandataire</span>
       </div>
       <div class="form-stepper-step" data-step="3">
         <div class="step-bubble">4</div>
@@ -651,7 +651,7 @@
 
 <!-- Footer -->
 <footer class="footer">
-  <p>© 2025 Cecca — Cabinet d'expertise comptable &nbsp;·&nbsp; <a href="https://cecca.fr">cecca.fr</a></p>
+  <p>© 2026 Cecca — Cabinet d'expertise comptable &nbsp;·&nbsp; <a href="https://cecca.fr">cecca.fr</a></p>
   <p style="margin-top:0.4rem">Vos données sont traitées conformément au RGPD.</p>
 </footer>
 
@@ -696,9 +696,9 @@
       var STEP_DESCS = [
         '<strong>Vos coordonnées</strong> — Identité, choix de l\'entité Cecca et type de parcours',
         '<strong>Votre société</strong> — Dénomination, forme juridique, capital social et siège',
-        '<strong>Le dirigeant</strong> — Informations personnelles, apports et situation matrimoniale',
+        '<strong>Le Mandataire</strong> — Informations personnelles, apports et situation matrimoniale',
         '<strong>Associés & banque</strong> — Informations sur les associés et la banque choisie',
-        '<strong>Documents justificatifs</strong> — Pièces pour la société et le dirigeant'
+        '<strong>Documents justificatifs</strong> — Pièces pour la société et le mandataire. <em>La carte vitale et le justificatif de domicile ne sont obligatoires que pour le mandataire.</em>'
       ];
 
       function applyStepVisibility() {
@@ -883,19 +883,98 @@
         });
       }
 
+      function wireHebergement(doc) {
+        var DEP_FIELDS = ['cb_hebergeur_nom', 'cb_hebergeur_adresse', 'cb_doc_attestation_hebergement'];
+
+        function toggleDep(show) {
+          DEP_FIELDS.forEach(function(name) {
+            var wrapper = doc.querySelector('.hs_' + name);
+            if (!wrapper) return;
+            wrapper.style.display = show ? '' : 'none';
+            var inputs = wrapper.querySelectorAll('input, textarea, select');
+            inputs.forEach(function(inp) {
+              if (show) inp.setAttribute('required', '');
+              else inp.removeAttribute('required');
+            });
+          });
+        }
+
+        // Cacher par défaut
+        toggleDep(false);
+
+        // Écouter les changements sur le radio cb_est_heberge
+        doc.addEventListener('change', function(e) {
+          if (e.target && e.target.name === 'cb_est_heberge') {
+            toggleDep(e.target.value === 'oui');
+          }
+        });
+      }
+
+      // Correspondance champs mandataire → associé 1
+      var MANDATAIRE_ASSOC_MAP = {
+        'cb_assoc1_nom':         'lastname',
+        'cb_assoc1_prenom':      'firstname',
+        'cb_assoc1_num_secu':    'cb_num_secu',
+        'cb_assoc1_nb_parts':    'cb_nb_parts',
+        'cb_assoc1_apport_num':  'cb_apport_numeraire',
+        'cb_assoc1_apport_nat':  'cb_apport_nature',
+        'cb_assoc1_apport_ind':  'cb_apport_industrie',
+        'cb_assoc1_regime':      'cb_regime_matrimonial'
+      };
+
+      function wireMandataireAssoc(doc) {
+        doc.addEventListener('change', function(e) {
+          if (!e.target || e.target.name !== 'cb_mandataire_est_associe') return;
+          var isMandataire = (e.target.value === 'oui');
+
+          if (isMandataire) {
+            // Pré-remplir les champs associé 1 depuis les données mandataire
+            Object.keys(MANDATAIRE_ASSOC_MAP).forEach(function(assocField) {
+              var srcName = MANDATAIRE_ASSOC_MAP[assocField];
+              var src = doc.querySelector('[name="' + srcName + '"]');
+              var dst = doc.querySelector('[name="' + assocField + '"]');
+              if (src && dst) {
+                dst.value = src.value;
+                dst.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+            });
+            // Forcer l'affichage de la section associé 1
+            _assocOn[1] = true;
+          } else {
+            // Vider associé 1 et restaurer la logique normale
+            Object.keys(MANDATAIRE_ASSOC_MAP).forEach(function(assocField) {
+              var dst = doc.querySelector('[name="' + assocField + '"]');
+              if (dst) { dst.value = ''; dst.dispatchEvent(new Event('input', { bubbles: true })); }
+            });
+            var nbField = doc.querySelector('[name="cb_nb_associes"]');
+            var val = nbField ? (parseInt(nbField.value) || 0) : 0;
+            _assocOn[1] = (val >= 1);
+          }
+
+          if (_step === 3) applyStepVisibility();
+        });
+      }
+
       function wireForm(doc) {
         _fDoc = doc;
         injectFormCSS(doc);
         wireChosenDropdowns(doc);
         wireSSNFormatters(doc);
         markRequiredFields(doc);
+        wireHebergement(doc);
+        wireMandataireAssoc(doc);
         var submitArea = doc.querySelector('.hs_submit');
         if (submitArea) submitArea.style.display = 'none';
         var nbField = doc.querySelector('[name="cb_nb_associes"]');
         if (nbField) {
           function syncAssoc() {
             var val = parseInt(nbField.value) || 0;
-            for (var i = 1; i <= 4; i++) _assocOn[i] = (i <= val);
+            var mandRadio = doc.querySelector('[name="cb_mandataire_est_associe"]:checked');
+            var mandIsAssoc = mandRadio && mandRadio.value === 'oui';
+            for (var i = 1; i <= 4; i++) {
+              // Si mandataire est associé, toujours afficher associé 1
+              _assocOn[i] = mandIsAssoc ? (i === 1 || i <= val) : (i <= val);
+            }
             if (_step === 3) applyStepVisibility();
           }
           nbField.addEventListener('change', syncAssoc);
