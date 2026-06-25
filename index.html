@@ -933,51 +933,6 @@
         });
       }
 
-      // Correspondance champs mandataire → associé 1
-      var MANDATAIRE_ASSOC_MAP = {
-        'cb_assoc1_nom':         'lastname',
-        'cb_assoc1_prenom':      'firstname',
-        'cb_assoc1_num_secu':    'cb_num_secu',
-        'cb_assoc1_nb_parts':    'cb_nb_parts',
-        'cb_assoc1_apport_num':  'cb_apport_numeraire',
-        'cb_assoc1_apport_nat':  'cb_apport_nature',
-        'cb_assoc1_apport_ind':  'cb_apport_industrie',
-        'cb_assoc1_regime':      'cb_regime_matrimonial'
-      };
-
-      function wireMandataireAssoc(doc) {
-        doc.addEventListener('change', function(e) {
-          if (!e.target || e.target.name !== 'cb_mandataire_est_associe') return;
-          var isMandataire = (e.target.value === 'oui');
-
-          if (isMandataire) {
-            // Pré-remplir les champs associé 1 depuis les données mandataire
-            Object.keys(MANDATAIRE_ASSOC_MAP).forEach(function(assocField) {
-              var srcName = MANDATAIRE_ASSOC_MAP[assocField];
-              var src = doc.querySelector('[name="' + srcName + '"]');
-              var dst = doc.querySelector('[name="' + assocField + '"]');
-              if (src && dst) {
-                dst.value = src.value;
-                dst.dispatchEvent(new Event('input', { bubbles: true }));
-              }
-            });
-            // Forcer l'affichage de la section associé 1
-            _assocOn[1] = true;
-          } else {
-            // Vider associé 1 et restaurer la logique normale
-            Object.keys(MANDATAIRE_ASSOC_MAP).forEach(function(assocField) {
-              var dst = doc.querySelector('[name="' + assocField + '"]');
-              if (dst) { dst.value = ''; dst.dispatchEvent(new Event('input', { bubbles: true })); }
-            });
-            var nbField = doc.querySelector('[name="cb_nb_associes"]');
-            var val = nbField ? (parseInt(nbField.value) || 0) : 0;
-            _assocOn[1] = (val >= 1);
-          }
-
-          if (_step === 3) applyStepVisibility();
-        });
-      }
-
       function wireForm(doc) {
         _fDoc = doc;
         injectFormCSS(doc);
@@ -985,7 +940,6 @@
         wireSSNFormatters(doc);
         markRequiredFields(doc);
         wireHebergement(doc);
-        wireMandataireAssoc(doc);
         var emailField = doc.querySelector('[name="email"]');
         if (emailField) emailField.setAttribute('autocomplete', 'off');
         var submitArea = doc.querySelector('.hs_submit');
@@ -994,12 +948,7 @@
         if (nbField) {
           function syncAssoc() {
             var val = parseInt(nbField.value) || 0;
-            var mandRadio = doc.querySelector('[name="cb_mandataire_est_associe"]:checked');
-            var mandIsAssoc = mandRadio && mandRadio.value === 'oui';
-            for (var i = 1; i <= 4; i++) {
-              // Si mandataire est associé, toujours afficher associé 1
-              _assocOn[i] = mandIsAssoc ? (i === 1 || i <= val) : (i <= val);
-            }
+            for (var i = 1; i <= 4; i++) _assocOn[i] = (i <= val);
             if (_step === 3) applyStepVisibility();
           }
           nbField.addEventListener('change', syncAssoc);
