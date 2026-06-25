@@ -638,7 +638,7 @@
           </div>
 
           <p class="rib-note">
-            Libellé du virement : <strong>nom de votre société</strong> — ex. "SAS MON ENTREPRISE"
+            Libellé du virement : <strong id="rib-libelle">nom de votre société</strong>
           </p>
         </div>
       </div>
@@ -666,7 +666,7 @@
         cecca_etoile: { beneficiaire:'CECCA ETOILE', banque:'LCL', iban:'FR03 3000 2062 3500 0007 4330 P33', bic:'CRLYFRPPXXX' }
       };
 
-      function showNextSteps(entite, montant) {
+      function showNextSteps(entite, montant, societe) {
         var rib = RIBS[entite] || RIBS.cecca;
         var label = montant + ' €';
         ['rib-montant','rib-montant-2'].forEach(function(id){ document.getElementById(id).textContent = label; });
@@ -674,6 +674,7 @@
         document.getElementById('rib-banque').textContent = rib.banque;
         document.getElementById('rib-iban').textContent   = rib.iban;
         document.getElementById('rib-bic').textContent    = rib.bic;
+        if (societe) document.getElementById('rib-libelle').textContent = societe;
         var panel = document.getElementById('next-steps');
         panel.classList.add('visible');
         setTimeout(function(){ panel.scrollIntoView({ behavior:'smooth', block:'start' }); }, 300);
@@ -991,10 +992,15 @@
             entite = etoileManagers.indexOf(sv.cb_manager) !== -1 ? 'cecca_etoile' : 'cecca';
             if (entite === 'cecca_etoile') montant = '2 160';
           }
+          var societe = '';
+          if (data && data.submissionValues) {
+            var sv2 = data.submissionValues;
+            societe = [(sv2.cb_forme_juridique || ''), (sv2.cb_denomination_sociale || '')].filter(Boolean).join(' ');
+          }
           document.getElementById('form-stepper').style.display = 'none';
           document.getElementById('form-nav').style.display = 'none';
           document.getElementById('step-desc').style.display = 'none';
-          showNextSteps(entite, montant);
+          showNextSteps(entite, montant, societe);
         }
       });
     </script>
