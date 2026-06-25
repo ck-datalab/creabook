@@ -698,7 +698,7 @@
         '<strong>Votre société</strong> — Dénomination, forme juridique, capital social et siège',
         '<strong>Le Mandataire</strong> — Informations personnelles, apports et situation matrimoniale',
         '<strong>Associés & banque</strong> — Informations sur les associés et la banque choisie',
-        '<strong>Documents justificatifs</strong> — Pièces pour la société et le mandataire. <em>La carte vitale et le justificatif de domicile ne sont obligatoires que pour le mandataire.</em>'
+        '<strong>Documents justificatifs</strong> — Pièces pour la société et le mandataire.'
       ];
 
       function applyStepVisibility() {
@@ -942,6 +942,9 @@
         wireHebergement(doc);
         var emailField = doc.querySelector('[name="email"]');
         if (emailField) emailField.setAttribute('autocomplete', 'off');
+        doc.querySelectorAll('input[type="number"]').forEach(function(inp) {
+          inp.setAttribute('min', '0');
+        });
         var submitArea = doc.querySelector('.hs_submit');
         if (submitArea) submitArea.style.display = 'none';
         var nbField = doc.querySelector('[name="cb_nb_associes"]');
