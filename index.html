@@ -849,7 +849,8 @@
           '.hs-form .chosen-container-single .chosen-single span { color: #0A0A0A !important; display: block !important; }',
           '.hs-form .chosen-drop { background: #FAFAF7 !important; border: 1px solid #d1d5db !important; z-index: 9999 !important; }',
           '.hs-form .chosen-results li { color: #0A0A0A !important; }',
-          '.hs-form .chosen-results li.highlighted { background: #0A1338 !important; color: #FAFAF7 !important; }'
+          '.hs-form .chosen-results li.highlighted { background: #0A1338 !important; color: #FAFAF7 !important; }',
+          '.hs-form .hs-suggestion, .hs-form .email-suggestion, .hs-form [class*="suggestion"] { display: none !important; }'
         ].join('\n');
         (doc.head || doc.documentElement).appendChild(style);
       }
@@ -985,6 +986,8 @@
         markRequiredFields(doc);
         wireHebergement(doc);
         wireMandataireAssoc(doc);
+        var emailField = doc.querySelector('[name="email"]');
+        if (emailField) emailField.setAttribute('autocomplete', 'off');
         var submitArea = doc.querySelector('.hs_submit');
         if (submitArea) submitArea.style.display = 'none';
         var nbField = doc.querySelector('[name="cb_nb_associes"]');
