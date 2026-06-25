@@ -793,8 +793,7 @@
             // Désactiver temporairement required sur les inputs cachés pour que
             // HubSpot ne bloque pas sur les champs conditionnels non visibles
             var hidden = [];
-            _fDoc.querySelectorAll('[required]').forEach(function(inp) {
-              var wrapper = inp.closest('fieldset') || inp.closest('.hs-form-field');
+            _fDoc.querySelectorAll('[required],[aria-required="true"]').forEach(function(inp) {
               var isHidden = false;
               var el = inp;
               while (el && el !== _fDoc.body) {
@@ -803,13 +802,17 @@
               }
               if (isHidden) {
                 inp.removeAttribute('required');
+                inp.removeAttribute('aria-required');
                 hidden.push(inp);
               }
             });
             btn.click();
             // Restaurer après (au cas où la soumission échoue côté HubSpot)
             setTimeout(function() {
-              hidden.forEach(function(inp) { inp.setAttribute('required', ''); });
+              hidden.forEach(function(inp) {
+                inp.setAttribute('required', '');
+                inp.setAttribute('aria-required', 'true');
+              });
             }, 500);
           }
         }
