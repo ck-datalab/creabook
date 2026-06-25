@@ -972,6 +972,21 @@
         updateStepUI(true);
       }
 
+      (function() {
+        var stored = sessionStorage.getItem('creabook_submitted');
+        if (stored) {
+          try {
+            var s = JSON.parse(stored);
+            ['form-stepper','form-nav','step-desc','hs-diag','hs-form-wrapper'].forEach(function(id) {
+              var el = document.getElementById(id);
+              if (el) el.style.display = 'none';
+            });
+            showNextSteps(s.entite, s.montant, s.societe);
+            return;
+          } catch(e) {}
+        }
+      })();
+
       hbspt.forms.create({
         portalId: "26706563",
         formId:   "a2537a21-fc0c-4d78-9271-5bdd1e89fa72",
@@ -997,6 +1012,7 @@
             var sv2 = data.submissionValues;
             societe = [(sv2.cb_forme_juridique || ''), (sv2.cb_denomination_sociale || '')].filter(Boolean).join(' ');
           }
+          sessionStorage.setItem('creabook_submitted', JSON.stringify({ entite: entite, montant: montant, societe: societe }));
           document.getElementById('form-stepper').style.display = 'none';
           document.getElementById('form-nav').style.display = 'none';
           document.getElementById('step-desc').style.display = 'none';
