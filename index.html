@@ -760,6 +760,11 @@
             if (inp.type === 'hidden') continue;
             var wrapper = inp.closest('.hs-form-field');
             if (wrapper && wrapper.style.display === 'none') continue;
+            if (inp.readOnly) {
+              var fieldName = inp.id ? inp.id.replace(/-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, '') : '';
+              var hp = fieldName ? _fDoc.querySelector('input[type="hidden"][name="' + fieldName + '"]') : null;
+              if (hp && hp.value && hp.value.trim()) { if (wrapper) wrapper.style.outline = ''; continue; }
+            }
             if (!inp.value || !inp.value.trim()) {
               isValid = false;
               if (wrapper) { wrapper.style.outline = '2px solid #B04545'; wrapper.style.borderRadius = '2px'; }
@@ -982,7 +987,8 @@
           var montant = '900';
           if (data && data.submissionValues) {
             var sv = data.submissionValues;
-            if (sv.cb_entite) entite = sv.cb_entite;
+            var etoileManagers = ['Simbou DANFAKHA', 'Yann POINLOUP', 'Mateus SOUTELO'];
+            entite = etoileManagers.indexOf(sv.cb_manager) !== -1 ? 'cecca_etoile' : 'cecca';
             if (entite === 'cecca_etoile') montant = '2 160';
           }
           document.getElementById('form-stepper').style.display = 'none';
