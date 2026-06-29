@@ -526,6 +526,9 @@
   .mdt-row-3 { grid-template-columns: 1fr 1fr 1fr; }
   .mdt-row-1 { grid-template-columns: 1fr; }
   .mdt-fg { display: flex; flex-direction: column; }
+  .mdt-acre { display:flex; align-items:center; gap:0.65rem; margin:1rem 0 0.25rem; padding:0.75rem 1rem; background:var(--blue-mist,#E8EAF0); border:1px solid #c5c9d8; border-radius:2px; }
+  .mdt-acre input[type="checkbox"] { width:16px; height:16px; flex-shrink:0; cursor:pointer; accent-color:var(--blue); }
+  .mdt-acre label { font-family:'Epilogue',sans-serif; font-size:0.9rem; font-weight:500; color:var(--ink); cursor:pointer; margin:0; }
   .mdt-docs { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--grey-200); }
   .mdt-docs-ttl { font-family: 'Epilogue', sans-serif; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey-500); margin-bottom: 0.75rem; }
   .mdt-doc-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--grey-100); }
@@ -905,6 +908,7 @@
         }
         setHidden('cb_mdt_assoc_count',    _mdt.assocCount    || 0);
         setHidden('cb_mdt_nonassoc_count', _mdt.nonAssocCount || 0);
+        setHidden('cb_mdt_acre',           _mdt.acre ? 'oui' : 'non');
         var AKEYS = ['nom','prenom','regime','role','nationalite','num_secu','profession','nb_parts','apport_num','apport_nat','apport_ind'];
         var NKEYS = ['nom','prenom','regime','role','nationalite','num_secu','profession'];
         for (var i = 0; i < 4; i++) {
@@ -1198,7 +1202,7 @@
       }
 
       /* ── Mandataire custom section ──────────────────────────────── */
-      var _mdt = { assocCount: 0, nonAssocCount: 0, assoc: [], nonAssoc: [] };
+      var _mdt = { assocCount: 0, nonAssocCount: 0, assoc: [], nonAssoc: [], acre: false };
       var MDT_ROLES   = ['Gérant', 'Président', 'Directeur général'];
       var MDT_REGIMES = ['Célibataire','Marié(e) — communauté légale','Marié(e) — séparation de biens',
         'Marié(e) — participation aux acquêts','Marié(e) — communauté universelle',
@@ -1229,7 +1233,7 @@
           '<span class="mdt-doc-fname" id="mdt-fn-' + key + '-' + doc + '">Aucun fichier</span>' +
           '</div>';
       }
-      function buildMdtCard(idx, isAssoc) {
+      function buildMdtCard(idx, isAssoc, isFirst) {
         var data = (isAssoc ? _mdt.assoc[idx] : _mdt.nonAssoc[idx]) || {};
         var key = (isAssoc ? 'a' : 'n') + idx;
         var card = document.createElement('div');
@@ -1247,6 +1251,11 @@
             mdtFg('Apport en nature (€)','apport_nat',data.apport_nat,'number',false) +
             mdtFg('Apport en industrie (€)','apport_ind',data.apport_ind,'number',false) + '</div>';
         }
+        // ACRE (premier mandataire uniquement)
+        if (isFirst) {
+          html += '<div class="mdt-acre"><input type="checkbox" id="mdt-acre-cb"' + (_mdt.acre ? ' checked' : '') + '>' +
+            '<label for="mdt-acre-cb">Bénéficie de l\'ACRE (Aide à la Création ou Reprise d\'Entreprise)</label></div>';
+        }
         // Documents
         html += '<div class="mdt-docs"><p class="mdt-docs-ttl">Documents</p>';
         html += mdtDocRow(key, 'cni', 'CNI / Passeport', true);
@@ -1257,6 +1266,11 @@
         }
         html += '</div>';
         card.innerHTML = html;
+        // Wire ACRE checkbox
+        if (isFirst) {
+          var acreCb = card.querySelector('#mdt-acre-cb');
+          if (acreCb) acreCb.addEventListener('change', function() { _mdt.acre = this.checked; });
+        }
         // Wire text/select fields
         card.querySelectorAll('[data-f]').forEach(function(inp) {
           function saveField() {
@@ -1293,11 +1307,11 @@
         container.innerHTML  = '';
         if (_mdt.assocCount > 0) {
           var h = document.createElement('h3'); h.className = 'mdt-section-ttl'; h.textContent = 'Mandataires associés'; container.appendChild(h);
-          for (var i = 0; i < _mdt.assocCount; i++) { if (!_mdt.assoc[i]) _mdt.assoc[i] = {}; container.appendChild(buildMdtCard(i, true)); }
+          for (var i = 0; i < _mdt.assocCount; i++) { if (!_mdt.assoc[i]) _mdt.assoc[i] = {}; container.appendChild(buildMdtCard(i, true, i === 0)); }
         }
         if (_mdt.nonAssocCount > 0) {
           var h2 = document.createElement('h3'); h2.className = 'mdt-section-ttl'; h2.textContent = 'Mandataires non associés'; container.appendChild(h2);
-          for (var j = 0; j < _mdt.nonAssocCount; j++) { if (!_mdt.nonAssoc[j]) _mdt.nonAssoc[j] = {}; container.appendChild(buildMdtCard(j, false)); }
+          for (var j = 0; j < _mdt.nonAssocCount; j++) { if (!_mdt.nonAssoc[j]) _mdt.nonAssoc[j] = {}; container.appendChild(buildMdtCard(j, false, j === 0 && _mdt.assocCount === 0)); }
         }
       }
       function validateMandataireStep() {
