@@ -1027,10 +1027,11 @@
       // Champs marqués obligatoires côté client (complète ce que définit HubSpot)
       var REQUIRED_FIELDS = [
         'email', 'firstname', 'lastname',
-        'cb_entite', 'cb_type_parcours',
+        'cb_type_parcours',
         'cb_denomination_sociale', 'cb_forme_juridique',
         'cb_objet_social', 'cb_capital_social', 'cb_montant_nominal_part',
         'cb_siege_ville',
+        'cb_banque_nom', 'cb_banque_adresse', 'cb_banque_contact',
       ];
       function markRequiredFields(doc) {
         REQUIRED_FIELDS.forEach(function(name) {
@@ -1054,16 +1055,9 @@
 
       function wireHebergement(doc) {
         // Toujours masquer les champs HubSpot hébergeur (remplacés par UI custom)
-        var HS_HBG = ['cb_hebergeur_nom', 'cb_hebergeur_adresse', 'cb_hebergeur_type', 'cb_hebergeur_prenom', 'cb_hebergeur_cp', 'cb_hebergeur_ville', 'cb_hebergeur_societe'];
-        HS_HBG.forEach(function(name) {
-          var wrapper = doc.querySelector('.hs_' + name);
-          if (!wrapper) return;
-          wrapper.style.display = 'none';
-          wrapper.querySelectorAll('input, textarea, select').forEach(function(inp) {
-            inp.removeAttribute('required');
-            inp.removeAttribute('aria-required');
-          });
-        });
+        // Les champs hébergeur détail sont hidden=True dans HubSpot → rendus
+        // en <input type="hidden">, pas de wrapper à masquer. cb_est_heberge
+        // reste visible (radio oui/non natif HubSpot).
 
         // Injecter le CSS dans l'iframe
         var style = doc.createElement('style');
