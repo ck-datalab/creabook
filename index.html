@@ -912,12 +912,14 @@
         }
         setHidden('cb_mdt_assoc_count',    _mdt.assocCount    || 0);
         setHidden('cb_mdt_nonassoc_count', _mdt.nonAssocCount || 0);
-        setHidden('cb_mdt_acre',           _mdt.acre ? 'oui' : 'non');
-        var AKEYS = ['nom','prenom','regime','role','nationalite','num_secu','profession','nb_parts','apport_num','apport_nat','apport_ind'];
+        var AKEYS = ['nom','prenom','regime','role','nationalite','num_secu','profession','nb_parts','apport_num','apport_nat','apport_ind','acre'];
         var NKEYS = ['nom','prenom','regime','role','nationalite','num_secu','profession'];
         for (var i = 0; i < 4; i++) {
           var a = _mdt.assoc[i] || {};
-          AKEYS.forEach(function(k) { setHidden('cb_mdt_a' + (i+1) + '_' + k, a[k] || ''); });
+          AKEYS.forEach(function(k) {
+            var val = k === 'acre' ? (a[k] ? 'oui' : 'non') : (a[k] || '');
+            setHidden('cb_mdt_a' + (i+1) + '_' + k, val);
+          });
           var n = _mdt.nonAssoc[i] || {};
           NKEYS.forEach(function(k) { setHidden('cb_mdt_n' + (i+1) + '_' + k, n[k] || ''); });
         }
@@ -1265,10 +1267,11 @@
             mdtFg('Apport en nature (€)','apport_nat',data.apport_nat,'number',false) +
             mdtFg('Apport en industrie (€)','apport_ind',data.apport_ind,'number',false) + '</div>';
         }
-        // ACRE (premier mandataire uniquement)
-        if (isFirst) {
-          html += '<div class="mdt-acre"><input type="checkbox" id="mdt-acre-cb"' + (_mdt.acre ? ' checked' : '') + '>' +
-            '<label for="mdt-acre-cb">Bénéficie de l\'ACRE (Aide à la Création ou Reprise d\'Entreprise)</label></div>';
+        // ACRE (mandataires associés uniquement)
+        if (isAssoc) {
+          var acreId = 'mdt-acre-cb-' + key;
+          html += '<div class="mdt-acre"><input type="checkbox" id="' + acreId + '"' + (data.acre ? ' checked' : '') + '>' +
+            '<label for="' + acreId + '">Bénéficie de l\'ACRE (Aide à la Création ou Reprise d\'Entreprise)</label></div>';
         }
         // Documents
         html += '<div class="mdt-docs"><p class="mdt-docs-ttl">Documents</p>';
@@ -1283,10 +1286,13 @@
         // Wire contact principal radio
         var cpRadio = card.querySelector('input[name="mdt-cp"]');
         if (cpRadio) cpRadio.addEventListener('change', function() { if (this.checked) _mdt.contactPrincipal = this.value; });
-        // Wire ACRE checkbox
-        if (isFirst) {
-          var acreCb = card.querySelector('#mdt-acre-cb');
-          if (acreCb) acreCb.addEventListener('change', function() { _mdt.acre = this.checked; });
+        // Wire ACRE checkbox (associés uniquement)
+        if (isAssoc) {
+          var acreCb = card.querySelector('input[type="checkbox"]');
+          if (acreCb) acreCb.addEventListener('change', function() {
+            if (!_mdt.assoc[idx]) _mdt.assoc[idx] = {};
+            _mdt.assoc[idx].acre = this.checked;
+          });
         }
         // Wire text/select fields
         card.querySelectorAll('[data-f]').forEach(function(inp) {
