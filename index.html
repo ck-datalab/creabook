@@ -840,14 +840,8 @@
         if (_hbg.type === 'physique') {
           if (!(_hbg.nom||'').trim())      return hbgErr('Le nom de l\'hébergeur est obligatoire.');
           if (!(_hbg.prenom||'').trim())   return hbgErr('Le prénom de l\'hébergeur est obligatoire.');
-          if (!(_hbg.adresse_p||'').trim()) return hbgErr('L\'adresse de l\'hébergeur est obligatoire.');
-          if (!(_hbg.cp_p||'').trim())     return hbgErr('Le code postal de l\'hébergeur est obligatoire.');
-          if (!(_hbg.ville_p||'').trim())  return hbgErr('La ville de l\'hébergeur est obligatoire.');
         } else {
           if (!(_hbg.societe||'').trim())   return hbgErr('Le nom de la société hébergeuse est obligatoire.');
-          if (!(_hbg.adresse_m||'').trim()) return hbgErr('L\'adresse de la société est obligatoire.');
-          if (!(_hbg.cp_m||'').trim())      return hbgErr('Le code postal est obligatoire.');
-          if (!(_hbg.ville_m||'').trim())   return hbgErr('La ville est obligatoire.');
         }
         hbgOk(); return true;
       }
@@ -1109,19 +1103,9 @@
           '      <div><label class="hbg-lbl">Nom <span style="color:#C0184A">*</span></label><input class="hbg-inp" data-hbg="nom" type="text" placeholder="Nom de famille"></div>',
           '      <div><label class="hbg-lbl">Prénom <span style="color:#C0184A">*</span></label><input class="hbg-inp" data-hbg="prenom" type="text" placeholder="Prénom"></div>',
           '    </div>',
-          '    <div class="hbg-block"><label class="hbg-lbl">Adresse <span style="color:#C0184A">*</span></label><input class="hbg-inp" data-hbg="adresse_p" type="text" placeholder="Numéro et nom de rue"></div>',
-          '    <div class="hbg-grid-addr">',
-          '      <div><label class="hbg-lbl">Code postal <span style="color:#C0184A">*</span></label><input class="hbg-inp" data-hbg="cp_p" type="text" placeholder="75001" maxlength="5"></div>',
-          '      <div><label class="hbg-lbl">Ville <span style="color:#C0184A">*</span></label><input class="hbg-inp" data-hbg="ville_p" type="text" placeholder="Paris"></div>',
-          '    </div>',
           '  </div>',
           '  <div id="hbg-morale" style="display:none;">',
           '    <div class="hbg-block"><label class="hbg-lbl">Nom de la société <span style="color:#C0184A">*</span></label><input class="hbg-inp" data-hbg="societe" type="text" placeholder="Raison sociale"></div>',
-          '    <div class="hbg-block"><label class="hbg-lbl">Adresse <span style="color:#C0184A">*</span></label><input class="hbg-inp" data-hbg="adresse_m" type="text" placeholder="Numéro et nom de rue"></div>',
-          '    <div class="hbg-grid-addr">',
-          '      <div><label class="hbg-lbl">Code postal <span style="color:#C0184A">*</span></label><input class="hbg-inp" data-hbg="cp_m" type="text" placeholder="75001" maxlength="5"></div>',
-          '      <div><label class="hbg-lbl">Ville <span style="color:#C0184A">*</span></label><input class="hbg-inp" data-hbg="ville_m" type="text" placeholder="Paris"></div>',
-          '    </div>',
           '  </div>',
           '  <div id="hbg-err" style="display:none;color:#C0184A;font-size:0.8rem;margin-top:0.5rem;font-family:Epilogue,sans-serif;"></div>',
           '</div>',
@@ -1131,11 +1115,7 @@
         function syncToHubspot() {
           var isP    = _hbg.type === 'physique';
           var isM    = _hbg.type === 'morale';
-          var adresse = isP ? (_hbg.adresse_p || '') : (_hbg.adresse_m || '');
-          var cp      = isP ? (_hbg.cp_p      || '') : (_hbg.cp_m      || '');
-          var ville   = isP ? (_hbg.ville_p   || '') : (_hbg.ville_m   || '');
-          var nomVal  = isP ? ((_hbg.nom || '') + ' ' + (_hbg.prenom || '')).trim() : (_hbg.societe || '');
-          var adrVal  = [adresse, (cp + ' ' + ville).trim()].filter(function(s){ return s.trim(); }).join(', ');
+          var nomVal = isP ? ((_hbg.nom || '') + ' ' + (_hbg.prenom || '')).trim() : (_hbg.societe || '');
 
           function setField(name, val) {
             var inp = doc.querySelector('input[name="' + name + '"]');
@@ -1150,12 +1130,12 @@
           }
 
           setField('cb_hebergeur_nom',     nomVal);
-          setField('cb_hebergeur_adresse', adrVal);
-          setField('cb_hebergeur_type',    _hbg.type    || '');
-          setField('cb_hebergeur_prenom',  isP ? (_hbg.prenom  || '') : '');
-          setField('cb_hebergeur_cp',      cp);
-          setField('cb_hebergeur_ville',   ville);
-          setField('cb_hebergeur_societe', isM ? (_hbg.societe  || '') : '');
+          setField('cb_hebergeur_adresse', '');
+          setField('cb_hebergeur_type',    _hbg.type   || '');
+          setField('cb_hebergeur_prenom',  isP ? (_hbg.prenom || '') : '');
+          setField('cb_hebergeur_cp',      '');
+          setField('cb_hebergeur_ville',   '');
+          setField('cb_hebergeur_societe', isM ? (_hbg.societe || '') : '');
         }
         _syncHebergeur = syncToHubspot;
 
@@ -1182,8 +1162,6 @@
             sec.style.display = show ? '' : 'none';
             if (!show) {
               _hbg.type = null; _hbg.nom = ''; _hbg.prenom = ''; _hbg.societe = '';
-              _hbg.adresse_p = ''; _hbg.cp_p = ''; _hbg.ville_p = '';
-              _hbg.adresse_m = ''; _hbg.cp_m = ''; _hbg.ville_m = '';
               sec.querySelectorAll('.hbg-inp').forEach(function(i) { i.value = ''; });
               sec.querySelectorAll('input[type="radio"]').forEach(function(i) { i.checked = false; });
               doc.getElementById('hbg-physique').style.display = 'none';
