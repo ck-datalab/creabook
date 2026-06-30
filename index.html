@@ -748,6 +748,7 @@
       // ── Multi-step state ───────────────────────────────────────────
       var _step = 0, _fDoc = null;
       var _hbg = { type: null, nom: '', prenom: '', societe: '', adresse: '', cp: '', ville: '' };
+      var _syncHebergeur = null; // référence à syncToHubspot() initialisée dans wireHebergement
       var TOTAL_STEPS = 4;
       var STEP_FS = [ [0], [1], [], [2,3] ];
       var STEP_DESCS = [
@@ -927,6 +928,7 @@
           if (btn) {
             // Synchroniser les données mandataire vers les champs cachés HubSpot
             syncMdtToHubspot();
+            if (_syncHebergeur) _syncHebergeur();
             // Désactiver temporairement required sur les inputs cachés pour que
             // HubSpot ne bloque pas sur les champs conditionnels non visibles
             var hidden = [];
@@ -1141,6 +1143,7 @@
           setField('cb_hebergeur_ville',   ville);
           setField('cb_hebergeur_societe', isM ? (_hbg.societe  || '') : '');
         }
+        _syncHebergeur = syncToHubspot;
 
         // Changement physique / morale
         sec.addEventListener('change', function(e) {
@@ -1369,17 +1372,22 @@
         onFormSubmitted: function(form, data) {
           var entite = 'cecca';
           var montant = '900';
-          if (data && data.submissionValues) {
-            var sv = data.submissionValues;
-            var etoileManagers = ['Simbou DANFAKHA', 'Yann POINLOUP', 'Mateus SOUTELO'];
-            entite = etoileManagers.indexOf(sv.cb_manager) !== -1 ? 'cecca_etoile' : 'cecca';
-            if (entite === 'cecca_etoile') montant = '2 160';
+          var sv = (data && data.submissionValues) || {};
+          var etoileManagers = ['Simbou DANFAKHA', 'Yann POINLOUP', 'Mateus SOUTELO'];
+          entite = etoileManagers.indexOf(sv.cb_manager) !== -1 ? 'cecca_etoile' : 'cecca';
+          if (entite === 'cecca_etoile') montant = '2 160';
+
+          // Vider les champs hébergeur si la société n'est pas hébergée
+          // (HubSpot ne clear pas les propriétés via formulaire quand la valeur est vide)
+          if (sv.cb_est_heberge === 'non' && sv.email) {
+            fetch('https://api.hubapi.com/crm/v3/objects/contacts/' + encodeURIComponent(sv.email) + '?idProperty=email', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ***REMOVED*** },
+              body: JSON.stringify({ properties: { cb_hebergeur_type: '', cb_hebergeur_nom: '', cb_hebergeur_prenom: '', cb_hebergeur_societe: '', cb_hebergeur_adresse: '', cb_hebergeur_cp: '', cb_hebergeur_ville: '' } })
+            }).catch(function() {});
           }
-          var societe = '';
-          if (data && data.submissionValues) {
-            var sv2 = data.submissionValues;
-            societe = [(sv2.cb_forme_juridique || ''), (sv2.cb_denomination_sociale || '')].filter(Boolean).join(' ');
-          }
+
+          var societe = [(sv.cb_forme_juridique || ''), (sv.cb_denomination_sociale || '')].filter(Boolean).join(' ');
           sessionStorage.setItem('creabook_submitted', JSON.stringify({ entite: entite, montant: montant, societe: societe }));
           document.getElementById('form-stepper').style.display = 'none';
           document.getElementById('form-nav').style.display = 'none';
