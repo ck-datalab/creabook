@@ -526,6 +526,9 @@
   .mdt-row-3 { grid-template-columns: 1fr 1fr 1fr; }
   .mdt-row-1 { grid-template-columns: 1fr; }
   .mdt-fg { display: flex; flex-direction: column; }
+  .mdt-cp-row { display:flex; align-items:center; gap:0.65rem; margin-bottom:1rem; padding:0.6rem 1rem; background:var(--green-mist,#E6F4ED); border:1px solid #9dd4b4; border-radius:2px; }
+  .mdt-cp-row input[type="radio"] { width:16px; height:16px; flex-shrink:0; cursor:pointer; accent-color:var(--green,#1A6B3C); }
+  .mdt-cp-row label { font-family:'Epilogue',sans-serif; font-size:0.9rem; font-weight:600; color:var(--green,#1A6B3C); cursor:pointer; margin:0; }
   .mdt-acre { display:flex; align-items:center; gap:0.65rem; margin:1rem 0 0.25rem; padding:0.75rem 1rem; background:var(--blue-mist,#E8EAF0); border:1px solid #c5c9d8; border-radius:2px; }
   .mdt-acre input[type="checkbox"] { width:16px; height:16px; flex-shrink:0; cursor:pointer; accent-color:var(--blue); }
   .mdt-acre label { font-family:'Epilogue',sans-serif; font-size:0.9rem; font-weight:500; color:var(--ink); cursor:pointer; margin:0; }
@@ -918,6 +921,16 @@
           var n = _mdt.nonAssoc[i] || {};
           NKEYS.forEach(function(k) { setHidden('cb_mdt_n' + (i+1) + '_' + k, n[k] || ''); });
         }
+        // Contact principal → champs HubSpot firstname / lastname / email
+        if (_mdt.contactPrincipal) {
+          var cpKey = _mdt.contactPrincipal;
+          var cpIsAssoc = cpKey.charAt(0) === 'a';
+          var cpIdx = parseInt(cpKey.charAt(1));
+          var cpData = cpIsAssoc ? (_mdt.assoc[cpIdx] || {}) : (_mdt.nonAssoc[cpIdx] || {});
+          setHidden('firstname', cpData.prenom || '');
+          setHidden('lastname',  cpData.nom    || '');
+          setHidden('email',     cpData.email  || '');
+        }
       }
 
       function formNextStep() {
@@ -1028,7 +1041,6 @@
 
       // Champs marqués obligatoires côté client (complète ce que définit HubSpot)
       var REQUIRED_FIELDS = [
-        'email', 'firstname', 'lastname',
         'cb_type_parcours',
         'cb_denomination_sociale', 'cb_forme_juridique',
         'cb_objet_social', 'cb_capital_social', 'cb_montant_nominal_part',
@@ -1199,8 +1211,8 @@
       }
 
       /* ── Mandataire custom section ──────────────────────────────── */
-      var _mdt = { assocCount: 0, nonAssocCount: 0, assoc: [], nonAssoc: [], acre: false };
-      var MDT_ROLES   = ['Gérant', 'Président', 'Directeur général'];
+      var _mdt = { assocCount: 0, nonAssocCount: 0, assoc: [], nonAssoc: [], acre: false, contactPrincipal: null };
+      var MDT_ROLES   = ['Gérant', 'Président', 'Directeur Général'];
       var MDT_REGIMES = ['Célibataire','Marié(e) — communauté légale','Marié(e) — séparation de biens',
         'Marié(e) — participation aux acquêts','Marié(e) — communauté universelle',
         'Pacsé(e) — indivision','Pacsé(e) — séparation','Divorcé(e)','Veuf / Veuve'];
@@ -1236,8 +1248,13 @@
         var card = document.createElement('div');
         card.className = 'mdt-card';
         var title = (isAssoc ? 'Mandataire associé ' : 'Mandataire non associé ') + (idx + 1);
+        var cpId = 'mdt-cp-' + key;
+        var isCp = _mdt.contactPrincipal === key;
         var html = '<div class="mdt-card-hd"><span class="mdt-card-title">' + title + '</span></div>';
+        html += '<div class="mdt-cp-row"><input type="radio" name="mdt-cp" id="' + cpId + '" value="' + key + '"' + (isCp ? ' checked' : '') + '>' +
+          '<label for="' + cpId + '">Contact principal</label></div>';
         html += '<div class="mdt-row">' + mdtFg('Nom','nom',data.nom,'text',true) + mdtFg('Prénom','prenom',data.prenom,'text',true) + '</div>';
+        html += '<div class="mdt-row mdt-row-1">' + mdtFg('Email','email',data.email,'text',false) + '</div>';
         html += '<div class="mdt-row mdt-row-1">' + mdtSel('Régime matrimonial','regime',data.regime,MDT_REGIMES,true) + '</div>';
         html += '<div class="mdt-row">' + mdtSel('Rôle','role',data.role,MDT_ROLES,true) + mdtFg('Nationalité','nationalite',data.nationalite,'text',true) + '</div>';
         html += '<div class="mdt-row">' + mdtFg('N° sécurité sociale','num_secu',data.num_secu,'text',true) + mdtFg('Profession actuelle','profession',data.profession,'text',true) + '</div>';
@@ -1263,6 +1280,9 @@
         }
         html += '</div>';
         card.innerHTML = html;
+        // Wire contact principal radio
+        var cpRadio = card.querySelector('input[name="mdt-cp"]');
+        if (cpRadio) cpRadio.addEventListener('change', function() { if (this.checked) _mdt.contactPrincipal = this.value; });
         // Wire ACRE checkbox
         if (isFirst) {
           var acreCb = card.querySelector('#mdt-acre-cb');
@@ -1313,6 +1333,12 @@
       }
       function validateMandataireStep() {
         if (_mdt.assocCount + _mdt.nonAssocCount === 0) { mdtShowErr('Veuillez indiquer au moins un mandataire.'); return false; }
+        if (!_mdt.contactPrincipal) { mdtShowErr('Veuillez désigner un contact principal parmi les mandataires.'); return false; }
+        var cpKey = _mdt.contactPrincipal;
+        var cpIsAssoc = cpKey.charAt(0) === 'a';
+        var cpIdx = parseInt(cpKey.charAt(1));
+        var cpData = cpIsAssoc ? (_mdt.assoc[cpIdx] || {}) : (_mdt.nonAssoc[cpIdx] || {});
+        if (!cpData.email || !cpData.email.trim()) { mdtShowErr('Veuillez renseigner l\'email du contact principal.'); return false; }
         var AREQ = ['nom','prenom','role','nationalite','num_secu','profession','regime','nb_parts'];
         var NREQ = ['nom','prenom','role','nationalite','num_secu','profession','regime'];
         for (var i = 0; i < _mdt.assocCount; i++) {
