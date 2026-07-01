@@ -529,9 +529,12 @@
   .mdt-cp-row { display:flex; align-items:center; gap:0.65rem; margin-bottom:1rem; padding:0.6rem 1rem; background:var(--green-mist,#E6F4ED); border:1px solid #9dd4b4; border-radius:2px; }
   .mdt-cp-row input[type="radio"] { width:16px; height:16px; flex-shrink:0; cursor:pointer; accent-color:var(--green,#1A6B3C); }
   .mdt-cp-row label { font-family:'Epilogue',sans-serif; font-size:0.9rem; font-weight:600; color:var(--green,#1A6B3C); cursor:pointer; margin:0; }
-  .mdt-acre { display:flex; align-items:center; gap:0.65rem; margin:1rem 0 0.25rem; padding:0.75rem 1rem; background:var(--blue-mist,#E8EAF0); border:1px solid #c5c9d8; border-radius:2px; }
-  .mdt-acre input[type="checkbox"] { width:16px; height:16px; flex-shrink:0; cursor:pointer; accent-color:var(--blue); }
-  .mdt-acre label { font-family:'Epilogue',sans-serif; font-size:0.9rem; font-weight:500; color:var(--ink); cursor:pointer; margin:0; }
+  .mdt-acre { display:flex; align-items:flex-start; gap:0.9rem; margin:1.25rem 0 0.5rem; padding:1rem 1.1rem; background:linear-gradient(135deg,#f0f7ff 0%,#e8f0fb 100%); border:1.5px solid #b3cde8; border-left:4px solid var(--blue,#0A1338); border-radius:4px; cursor:pointer; transition:box-shadow .15s; }
+  .mdt-acre:hover { box-shadow:0 2px 10px rgba(10,19,56,.10); }
+  .mdt-acre input[type="checkbox"] { width:18px; height:18px; flex-shrink:0; cursor:pointer; accent-color:var(--blue); margin-top:2px; }
+  .mdt-acre label { font-family:'Epilogue',sans-serif; font-size:0.88rem; font-weight:600; color:var(--blue,#0A1338); cursor:pointer; margin:0; line-height:1.5; }
+  .mdt-acre-subtitle { font-weight:400; color:#4a6080; }
+  .mdt-acre-links { display:block; margin-top:0.35rem; font-weight:400; font-size:0.78rem; color:#666; }
   .mdt-docs { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--grey-200); }
   .mdt-docs-ttl { font-family: 'Epilogue', sans-serif; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey-500); margin-bottom: 0.75rem; }
   .mdt-doc-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--grey-100); }
@@ -753,7 +756,7 @@
       var _hbg = { type: null, nom: '', prenom: '', societe: '', adresse: '', cp: '', ville: '' };
       var _syncHebergeur = null; // référence à syncToHubspot() initialisée dans wireHebergement
       var TOTAL_STEPS = 4;
-      var STEP_FS = [ [0], [1], [], [2,3] ];
+      var STEP_FS = [ [0], [1], [], [2] ];
       var STEP_DESCS = [
         '<strong>Vos coordonnées</strong> — Identité, choix de l\'entité Cecca et type de parcours',
         '<strong>Votre société</strong> — Dénomination, forme juridique, capital social, siège et banque',
@@ -1257,16 +1260,18 @@
         if (isAssoc) {
           var acreId = 'mdt-acre-cb-' + key;
           html += '<div class="mdt-acre"><input type="checkbox" id="' + acreId + '"' + (data.acre ? ' checked' : '') + '>' +
-            '<label for="' + acreId + '">Bénéficie de l\'ACRE (Aide à la Création ou Reprise d\'Entreprise)</label></div>';
+            '<label for="' + acreId + '">Bénéficie de l\'ACRE' +
+            '<span class="mdt-acre-subtitle"> — Aide à la Création ou Reprise d\'Entreprise</span>' +
+            '<span class="mdt-acre-links">En savoir plus : <a href="https://www.service-public.fr/particuliers/vosdroits/F11677" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--blue);text-decoration:underline;">Service-public.fr</a> &nbsp;·&nbsp; <a href="https://www.francetravail.fr/candidat/en-emploi/vous-souhaitez-creer-ou-reprendre-une-entreprise/acre-aide-aux-createurs-ou-repreneurs-d-entrepri.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--blue);text-decoration:underline;">France Travail</a></span>' +
+            '</label></div>';
         }
         // Documents
         html += '<div class="mdt-docs"><p class="mdt-docs-ttl">Documents</p>';
-        html += mdtDocRow(key, 'cni', 'CNI / Passeport', true);
-        if (!isAssoc) {
-          html += mdtDocRow(key, 'domicile', 'Justificatif de domicile', true);
-          html += mdtDocRow(key, 'vitale', 'Carte vitale', true);
-          html += mdtDocRow(key, 'diplome', 'Diplôme', false);
-        }
+        html += mdtDocRow(key, 'cni',      'CNI / Passeport',           true);
+        html += mdtDocRow(key, 'domicile', 'Justificatif de domicile',  true);
+        html += mdtDocRow(key, 'vitale',   'Carte vitale',              true);
+        html += mdtDocRow(key, 'livret',   'Livret de famille',         true);
+        html += mdtDocRow(key, 'diplome',  'Diplôme',                   false);
         html += '</div>';
         card.innerHTML = html;
         // Wire contact principal radio
@@ -1338,16 +1343,20 @@
           for (var f = 0; f < AREQ.length; f++) {
             if (!d[AREQ[f]] || !String(d[AREQ[f]]).trim()) { mdtShowErr('Complétez tous les champs obligatoires du mandataire associé ' + (i+1) + '.'); return false; }
           }
-          if (!d.files || !d.files.cni) { mdtShowErr('Le mandataire associé ' + (i+1) + ' doit fournir une CNI / Passeport.'); return false; }
+          if (!d.files || !d.files.cni)     { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une CNI / Passeport.'); return false; }
+          if (!d.files.domicile)             { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir un justificatif de domicile.'); return false; }
+          if (!d.files.vitale)               { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une carte vitale.'); return false; }
+          if (!d.files.livret)               { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir un livret de famille.'); return false; }
         }
         for (var j = 0; j < _mdt.nonAssocCount; j++) {
           var d2 = _mdt.nonAssoc[j] || {};
           for (var f2 = 0; f2 < NREQ.length; f2++) {
-            if (!d2[NREQ[f2]] || !String(d2[NREQ[f2]]).trim()) { mdtShowErr('Complétez tous les champs obligatoires du mandataire non associé ' + (j+1) + '.'); return false; }
+            if (!d2[NREQ[f2]] || !String(d2[NREQ[f2]]).trim()) { mdtShowErr('Complétez tous les champs obligatoires du dirigeant non associé ' + (j+1) + '.'); return false; }
           }
-          if (!d2.files || !d2.files.cni) { mdtShowErr('Le mandataire non associé ' + (j+1) + ' doit fournir une CNI / Passeport.'); return false; }
-          if (!d2.files.domicile) { mdtShowErr('Le mandataire non associé ' + (j+1) + ' doit fournir un justificatif de domicile.'); return false; }
-          if (!d2.files.vitale) { mdtShowErr('Le mandataire non associé ' + (j+1) + ' doit fournir une carte vitale.'); return false; }
+          if (!d2.files || !d2.files.cni) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une CNI / Passeport.'); return false; }
+          if (!d2.files.domicile)          { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir un justificatif de domicile.'); return false; }
+          if (!d2.files.vitale)            { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une carte vitale.'); return false; }
+          if (!d2.files.livret)            { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir un livret de famille.'); return false; }
         }
         mdtHideErr(); return true;
       }
