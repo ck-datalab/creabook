@@ -1395,15 +1395,6 @@
           entite = etoileManagers.indexOf(sv.cb_manager) !== -1 ? 'cecca_etoile' : 'cecca';
           if (entite === 'cecca_etoile') montant = '2 160';
 
-          // Vider les champs hébergeur si la société n'est pas hébergée
-          // (HubSpot ne clear pas les propriétés via formulaire quand la valeur est vide)
-          if (sv.cb_est_heberge === 'non' && sv.email) {
-            fetch('https://api.hubapi.com/crm/v3/objects/contacts/' + encodeURIComponent(sv.email) + '?idProperty=email', {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ***REMOVED*** },
-              body: JSON.stringify({ properties: { cb_hebergeur_type: '', cb_hebergeur_nom: '', cb_hebergeur_prenom: '', cb_hebergeur_societe: '', cb_hebergeur_siren: '' } })
-            }).catch(function() {});
-          }
 
           var societe = [(sv.cb_forme_juridique || ''), (sv.cb_denomination_sociale || '')].filter(Boolean).join(' ');
           sessionStorage.setItem('creabook_submitted', JSON.stringify({ entite: entite, montant: montant, societe: societe }));
