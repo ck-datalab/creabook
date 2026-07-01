@@ -942,21 +942,25 @@
             // Synchroniser les données mandataire vers les champs cachés HubSpot
             syncMdtToHubspot();
             if (_syncHebergeur) _syncHebergeur();
-            // Désactiver temporairement required sur les inputs cachés pour que
-            // HubSpot ne bloque pas sur les champs conditionnels non visibles
+            // Retirer required de tous les fieldsets non visibles à cette étape
+            // (approche directe via STEP_FS — plus fiable que le walk-up DOM)
+            var visibleGroups = STEP_FS[_step] || [];
+            var allFss = _fDoc.querySelectorAll('form fieldset');
             var hidden = [];
-            _fDoc.querySelectorAll('[required],[aria-required="true"]').forEach(function(inp) {
-              var isHidden = false;
-              var el = inp;
-              while (el && el !== _fDoc.body) {
-                if (el.style.display === 'none') { isHidden = true; break; }
-                el = el.parentElement;
+            for (var fi = 0; fi < allFss.length; fi++) {
+              if (visibleGroups.indexOf(fi) === -1) {
+                allFss[fi].querySelectorAll('[required],[aria-required="true"]').forEach(function(inp) {
+                  inp.removeAttribute('required');
+                  inp.removeAttribute('aria-required');
+                  hidden.push(inp);
+                });
               }
-              if (isHidden) {
-                inp.removeAttribute('required');
-                inp.removeAttribute('aria-required');
-                hidden.push(inp);
-              }
+            }
+            // Retirer aussi required des wrappers de champs conditionnels cachés (ex: attestation hébergement)
+            _fDoc.querySelectorAll('.hs-form-field[style*="display: none"] [required], .hs-form-field[style*="display:none"] [required]').forEach(function(inp) {
+              inp.removeAttribute('required');
+              inp.removeAttribute('aria-required');
+              if (hidden.indexOf(inp) === -1) hidden.push(inp);
             });
             btn.click();
             // Restaurer après (au cas où la soumission échoue côté HubSpot)
@@ -965,7 +969,7 @@
                 inp.setAttribute('required', '');
                 inp.setAttribute('aria-required', 'true');
               });
-            }, 500);
+            }, 1000);
           }
         }
       }
