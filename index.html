@@ -545,6 +545,12 @@
   .mdt-doc-btn input[type="file"] { display: none; }
   .mdt-doc-fname { font-family: 'Epilogue', sans-serif; font-size: 0.78rem; color: var(--grey-400); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mdt-doc-fname.has-file { color: var(--green); font-weight: 500; }
+  .mdt-hbg-block { margin-top: 1rem; }
+  .mdt-hbg-block .mdt-lbl { display: block; margin-bottom: 0.4rem; }
+  .mdt-radio-row { display: flex; gap: 2rem; margin-top: 0.35rem; }
+  .mdt-radio-lbl { display: flex; align-items: center; gap: 0.5rem; font-family: 'Epilogue', sans-serif; font-size: 0.9rem; cursor: pointer; }
+  .mdt-radio-lbl input[type="radio"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--blue); }
+  .mdt-hbg-details { margin-top: 0.85rem; padding: 0.85rem 1rem; background: var(--blue-mist,#E8EAF0); border-left: 3px solid var(--blue); border-radius: 2px; }
   @media (max-width: 600px) {
     .mdt-counts, .mdt-row, .mdt-row-3 { grid-template-columns: 1fr; }
     .mdt-doc-row { flex-wrap: wrap; }
@@ -586,10 +592,14 @@
       </div>
       <div class="form-stepper-step" data-step="2">
         <div class="step-bubble">3</div>
-        <span class="step-label">Mandataire (Dirigeant)</span>
+        <span class="step-label">Dirigeant(s)</span>
       </div>
       <div class="form-stepper-step" data-step="3">
         <div class="step-bubble">4</div>
+        <span class="step-label">Associés</span>
+      </div>
+      <div class="form-stepper-step" data-step="4">
+        <div class="step-bubble">5</div>
         <span class="step-label">Documents</span>
       </div>
     </div>
@@ -620,7 +630,19 @@
       <div id="mdt-cards"></div>
     </div>
 
-        <!-- Step navigation buttons -->
+        <!-- Associés non mandataires (custom, hors iframe HubSpot) -->
+    <div id="assoc-section" style="display:none;">
+      <div id="assoc-err" style="display:none;background:#FEE2E2;border:1px solid #B04545;border-radius:2px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:#B04545;font-family:Epilogue,sans-serif;"></div>
+      <div class="mdt-counts">
+        <div class="mdt-count-block">
+          <label class="mdt-lbl">Nombre d'associés non mandataires</label>
+          <input type="number" id="assoc-count-in" class="mdt-count-inp" min="0" max="4" value="0">
+        </div>
+      </div>
+      <div id="assoc-cards"></div>
+    </div>
+
+    <!-- Step navigation buttons -->
     <div class="form-nav" id="form-nav">
       <button class="form-nav-btn" id="btn-prev" onclick="formPrevStep()" style="visibility:hidden">← Précédent</button>
       <span class="form-step-counter" id="form-step-counter">Étape 1 / 5</span>
@@ -755,13 +777,14 @@
       var _step = 0, _fDoc = null;
       var _hbg = { type: null, nom: '', prenom: '', societe: '', adresse: '', cp: '', ville: '' };
       var _syncHebergeur = null; // référence à syncToHubspot() initialisée dans wireHebergement
-      var TOTAL_STEPS = 4;
-      var STEP_FS = [ [0], [1], [], [2] ];
+      var TOTAL_STEPS = 5;
+      var STEP_FS = [ [0], [1], [], [], [2] ];
       var STEP_DESCS = [
         '<strong>Vos coordonnées</strong> — Identité, choix de l\'entité Cecca et type de parcours',
         '<strong>Votre société</strong> — Dénomination, forme juridique, capital social, siège et banque',
-        '<strong>Le(s) Mandataire(s)</strong> — Informations personnelles, apports et situation matrimoniale',
-        '<strong>Documents justificatifs</strong> — Pièces pour la société et le(s) mandataire(s).'
+        '<strong>Dirigeant(s)</strong> — Informations personnelles, apports et situation matrimoniale',
+        '<strong>Associés non mandataires</strong> — Associés non dirigeants, apports et domicile',
+        '<strong>Documents justificatifs</strong> — Pièces pour la société.'
       ];
 
       function applyDocConditionals() {
@@ -798,16 +821,19 @@
         for (var i = 0; i < fss.length; i++) fss[i].style.display = 'none';
         var groups = STEP_FS[_step];
         for (var g = 0; g < groups.length; g++) { if (fss[groups[g]]) fss[groups[g]].style.setProperty('display','block','important'); }
-        // Step 2 = mandataire custom section (hors iframe)
         var hsWrapper = document.getElementById('hs-form-wrapper');
-        var mdtSec = document.getElementById('mandataire-section');
-        if (hsWrapper) hsWrapper.style.display = _step === 2 ? 'none' : '';
+        var mdtSec   = document.getElementById('mandataire-section');
+        var assocSec = document.getElementById('assoc-section');
+        if (hsWrapper) hsWrapper.style.display = (_step === 2 || _step === 3) ? 'none' : '';
         if (mdtSec) {
           mdtSec.style.display = _step === 2 ? '' : 'none';
           if (_step === 2) mdtRenderAll();
         }
-        // Step 3 = documents : conditionner selon l'hébergeur
-        if (_step === 3) applyDocConditionals();
+        if (assocSec) {
+          assocSec.style.display = _step === 3 ? '' : 'none';
+          if (_step === 3) assocRenderAll();
+        }
+        if (_step === 4) applyDocConditionals();
       }
 
       function updateStepUI(skipScroll) {
@@ -852,6 +878,7 @@
 
       function validateCurrentStep() {
         if (_step === 2) return validateMandataireStep();
+        if (_step === 3) return validateAssocStep();
         if (!_fDoc) return true;
         var fss = _fDoc.querySelectorAll('form fieldset');
         var toCheck = STEP_FS[_step].slice();
@@ -1253,6 +1280,22 @@
         html += '<div class="mdt-row mdt-row-1">' + mdtSel('Régime matrimonial','regime',data.regime,MDT_REGIMES,true) + '</div>';
         html += '<div class="mdt-row">' + mdtSel('Rôle','role',data.role,MDT_ROLES,true) + mdtFg('Nationalité','nationalite',data.nationalite,'text',true) + '</div>';
         html += '<div class="mdt-row">' + mdtFg('N° sécurité sociale','num_secu',data.num_secu,'text',true) + mdtFg('Profession actuelle','profession',data.profession,'text',true) + '</div>';
+        html += '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse','adresse',data.adresse,'text',true) + '</div>';
+        html += '<div class="mdt-row">' + mdtFg('Code postal','cp',data.cp,'text',true) + mdtFg('Ville','ville',data.ville,'text',true) + '</div>';
+        // Hébergement
+        var hbgName = 'mdt-hbg-' + key;
+        var heberge = data.heberge || 'non';
+        html += '<div class="mdt-hbg-block">';
+        html += '<label class="mdt-lbl">Êtes-vous hébergé à titre gratuit ? <span style="color:#C0184A">*</span></label>';
+        html += '<div class="mdt-radio-row">';
+        html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="non"' + (heberge !== 'oui' ? ' checked' : '') + '> Non</label>';
+        html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="oui"' + (heberge === 'oui' ? ' checked' : '') + '> Oui</label>';
+        html += '</div>';
+        html += '<div class="mdt-hbg-details"' + (heberge === 'oui' ? '' : ' style="display:none"') + '>';
+        html += '<div class="mdt-row">' + mdtFg('Nom de l\'hébergeur','hbg_nom',data.hbg_nom,'text',true) + mdtFg('Prénom de l\'hébergeur','hbg_prenom',data.hbg_prenom,'text',true) + '</div>';
+        html += mdtDocRow(key, 'attestation_hbg', 'Attestation d\'hébergement', true);
+        html += '</div>';
+        html += '</div>';
         if (isAssoc) {
           html += '<div class="mdt-row mdt-row-1">' + mdtFg('Nombre de parts','nb_parts',data.nb_parts,'number',true) + '</div>';
           html += '<div class="mdt-row mdt-row-3">' +
@@ -1281,6 +1324,16 @@
         // Wire contact principal radio
         var cpRadio = card.querySelector('input[name="mdt-cp"]');
         if (cpRadio) cpRadio.addEventListener('change', function() { if (this.checked) _mdt.contactPrincipal = this.value; });
+        // Wire hébergement radio
+        card.querySelectorAll('input[name="mdt-hbg-' + key + '"]').forEach(function(radio) {
+          radio.addEventListener('change', function() {
+            var arr = isAssoc ? _mdt.assoc : _mdt.nonAssoc;
+            if (!arr[idx]) arr[idx] = {};
+            arr[idx].heberge = this.value;
+            var det = card.querySelector('.mdt-hbg-details');
+            if (det) det.style.display = this.value === 'oui' ? '' : 'none';
+          });
+        });
         // Wire ACRE checkbox (associés uniquement)
         if (isAssoc) {
           var acreCb = card.querySelector('input[type="checkbox"]');
@@ -1340,12 +1393,17 @@
         var cpIdx = parseInt(cpKey.charAt(1));
         var cpData = cpIsAssoc ? (_mdt.assoc[cpIdx] || {}) : (_mdt.nonAssoc[cpIdx] || {});
         if (!cpData.email || !cpData.email.trim()) { mdtShowErr('Veuillez renseigner l\'email du contact principal.'); return false; }
-        var AREQ = ['nom','prenom','role','nationalite','num_secu','profession','regime','nb_parts'];
-        var NREQ = ['nom','prenom','role','nationalite','num_secu','profession','regime'];
+        var AREQ = ['nom','prenom','role','nationalite','num_secu','profession','regime','nb_parts','adresse','cp','ville'];
+        var NREQ = ['nom','prenom','role','nationalite','num_secu','profession','regime','adresse','cp','ville'];
         for (var i = 0; i < _mdt.assocCount; i++) {
           var d = _mdt.assoc[i] || {};
           for (var f = 0; f < AREQ.length; f++) {
-            if (!d[AREQ[f]] || !String(d[AREQ[f]]).trim()) { mdtShowErr('Complétez tous les champs obligatoires du mandataire associé ' + (i+1) + '.'); return false; }
+            if (!d[AREQ[f]] || !String(d[AREQ[f]]).trim()) { mdtShowErr('Complétez tous les champs obligatoires du dirigeant associé ' + (i+1) + '.'); return false; }
+          }
+          if ((d.heberge || 'non') === 'oui') {
+            if (!d.hbg_nom || !d.hbg_nom.trim())       { mdtShowErr('Indiquez le nom de l\'hébergeur du dirigeant associé ' + (i+1) + '.'); return false; }
+            if (!d.hbg_prenom || !d.hbg_prenom.trim()) { mdtShowErr('Indiquez le prénom de l\'hébergeur du dirigeant associé ' + (i+1) + '.'); return false; }
+            if (!d.files || !d.files.attestation_hbg)  { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
           }
           if (!d.files || !d.files.cni)     { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une CNI / Passeport.'); return false; }
           if (!d.files.domicile)             { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir un justificatif de domicile.'); return false; }
@@ -1356,6 +1414,11 @@
           var d2 = _mdt.nonAssoc[j] || {};
           for (var f2 = 0; f2 < NREQ.length; f2++) {
             if (!d2[NREQ[f2]] || !String(d2[NREQ[f2]]).trim()) { mdtShowErr('Complétez tous les champs obligatoires du dirigeant non associé ' + (j+1) + '.'); return false; }
+          }
+          if ((d2.heberge || 'non') === 'oui') {
+            if (!d2.hbg_nom || !d2.hbg_nom.trim())       { mdtShowErr('Indiquez le nom de l\'hébergeur du dirigeant non associé ' + (j+1) + '.'); return false; }
+            if (!d2.hbg_prenom || !d2.hbg_prenom.trim()) { mdtShowErr('Indiquez le prénom de l\'hébergeur du dirigeant non associé ' + (j+1) + '.'); return false; }
+            if (!d2.files || !d2.files.attestation_hbg)  { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
           }
           if (!d2.files || !d2.files.cni) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une CNI / Passeport.'); return false; }
           if (!d2.files.domicile)          { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir un justificatif de domicile.'); return false; }
@@ -1373,6 +1436,120 @@
         if (ni) ni.addEventListener('input', function() { _mdt.nonAssocCount = Math.max(0, Math.min(4, parseInt(this.value)||0)); this.value = _mdt.nonAssocCount; mdtRenderAll(); });
       }
       initMandataireSection();
+
+      /* ── Associés non mandataires ───────────────────────────────────── */
+      var _assoc = { count: 0, items: [] };
+      var ASSOC_REGIMES = ['Célibataire','Marié(e) — communauté légale','Marié(e) — séparation de biens',
+        'Marié(e) — participation aux acquêts','Marié(e) — communauté universelle',
+        'Pacsé(e) — indivision','Pacsé(e) — séparation','Divorcé(e)','Veuf / Veuve'];
+
+      function buildAssocCard(idx) {
+        var data = _assoc.items[idx] || {};
+        var key  = 'as' + idx;
+        var card = document.createElement('div');
+        card.className = 'mdt-card';
+        var heberge = data.heberge || 'non';
+        var hbgName = 'assoc-hbg-' + key;
+        var html = '<div class="mdt-card-hd"><span class="mdt-card-title">Associé non mandataire ' + (idx + 1) + '</span></div>';
+        html += '<div class="mdt-row">' + mdtFg('Nom','nom',data.nom,'text',true) + mdtFg('Prénom','prenom',data.prenom,'text',true) + '</div>';
+        html += '<div class="mdt-row">' + mdtFg('Email','email',data.email,'text',false) + mdtFg('Téléphone','phone',data.phone,'text',false) + '</div>';
+        html += '<div class="mdt-row mdt-row-1">' + mdtSel('Régime matrimonial','regime',data.regime,ASSOC_REGIMES,true) + '</div>';
+        html += '<div class="mdt-row">' + mdtFg('N° sécurité sociale','num_secu',data.num_secu,'text',true) + mdtFg('Nombre de parts','nb_parts',data.nb_parts,'number',true) + '</div>';
+        html += '<div class="mdt-row mdt-row-3">' +
+          mdtFg('Apport en numéraire (€)','apport_num',data.apport_num,'number',false) +
+          mdtFg('Apport en nature (€)','apport_nat',data.apport_nat,'number',false) +
+          mdtFg('Apport en industrie (€)','apport_ind',data.apport_ind,'number',false) + '</div>';
+        html += '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse','adresse',data.adresse,'text',true) + '</div>';
+        html += '<div class="mdt-row">' + mdtFg('Code postal','cp',data.cp,'text',true) + mdtFg('Ville','ville',data.ville,'text',true) + '</div>';
+        html += '<div class="mdt-hbg-block">';
+        html += '<label class="mdt-lbl">Êtes-vous hébergé à titre gratuit ? <span style="color:#C0184A">*</span></label>';
+        html += '<div class="mdt-radio-row">';
+        html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="non"' + (heberge !== 'oui' ? ' checked' : '') + '> Non</label>';
+        html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="oui"' + (heberge === 'oui' ? ' checked' : '') + '> Oui</label>';
+        html += '</div>';
+        html += '<div class="mdt-hbg-details"' + (heberge === 'oui' ? '' : ' style="display:none"') + '>';
+        html += '<div class="mdt-row">' + mdtFg('Nom de l\'hébergeur','hbg_nom',data.hbg_nom,'text',true) + mdtFg('Prénom de l\'hébergeur','hbg_prenom',data.hbg_prenom,'text',true) + '</div>';
+        html += mdtDocRow(key, 'attestation_hbg', 'Attestation d\'hébergement', true);
+        html += '</div>';
+        html += '</div>';
+        html += '<div class="mdt-docs"><p class="mdt-docs-ttl">Documents</p>';
+        html += mdtDocRow(key, 'cni',      'CNI / Passeport',          true);
+        html += mdtDocRow(key, 'domicile', 'Justificatif de domicile', true);
+        html += mdtDocRow(key, 'vitale',   'Carte vitale',             true);
+        html += mdtDocRow(key, 'livret',   'Livret de famille',        true);
+        html += '</div>';
+        card.innerHTML = html;
+        // Wire hébergement radio
+        card.querySelectorAll('input[name="' + hbgName + '"]').forEach(function(radio) {
+          radio.addEventListener('change', function() {
+            if (!_assoc.items[idx]) _assoc.items[idx] = {};
+            _assoc.items[idx].heberge = this.value;
+            var det = card.querySelector('.mdt-hbg-details');
+            if (det) det.style.display = this.value === 'oui' ? '' : 'none';
+          });
+        });
+        // Wire text/select fields
+        card.querySelectorAll('[data-f]').forEach(function(inp) {
+          function save() {
+            if (!_assoc.items[idx]) _assoc.items[idx] = {};
+            _assoc.items[idx][inp.getAttribute('data-f')] = inp.value;
+          }
+          inp.addEventListener('input', save);
+          inp.addEventListener('change', save);
+        });
+        // Wire file inputs
+        card.querySelectorAll('input[type="file"]').forEach(function(inp) {
+          inp.addEventListener('change', function() {
+            var doc = this.getAttribute('data-doc');
+            if (!_assoc.items[idx]) _assoc.items[idx] = {};
+            if (!_assoc.items[idx].files) _assoc.items[idx].files = {};
+            _assoc.items[idx].files[doc] = this.files[0] || null;
+            var span = document.getElementById('mdt-fn-' + key + '-' + doc);
+            if (span) { span.textContent = this.files[0] ? this.files[0].name : 'Aucun fichier'; span.className = 'mdt-doc-fname' + (this.files[0] ? ' has-file' : ''); }
+          });
+        });
+        return card;
+      }
+
+      function assocRenderAll() {
+        var container = document.getElementById('assoc-cards');
+        if (!container) return;
+        _assoc.items.length = _assoc.count;
+        container.innerHTML = '';
+        for (var i = 0; i < _assoc.count; i++) {
+          if (!_assoc.items[i]) _assoc.items[i] = {};
+          container.appendChild(buildAssocCard(i));
+        }
+      }
+
+      function validateAssocStep() {
+        var AREQ = ['nom','prenom','regime','num_secu','nb_parts','adresse','cp','ville'];
+        for (var i = 0; i < _assoc.count; i++) {
+          var d = _assoc.items[i] || {};
+          for (var f = 0; f < AREQ.length; f++) {
+            if (!d[AREQ[f]] || !String(d[AREQ[f]]).trim()) { assocShowErr('Complétez tous les champs obligatoires de l\'associé ' + (i+1) + '.'); return false; }
+          }
+          if ((d.heberge || 'non') === 'oui') {
+            if (!d.hbg_nom || !d.hbg_nom.trim())       { assocShowErr('Indiquez le nom de l\'hébergeur de l\'associé ' + (i+1) + '.'); return false; }
+            if (!d.hbg_prenom || !d.hbg_prenom.trim()) { assocShowErr('Indiquez le prénom de l\'hébergeur de l\'associé ' + (i+1) + '.'); return false; }
+            if (!d.files || !d.files.attestation_hbg)  { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
+          }
+          if (!d.files || !d.files.cni)    { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une CNI / Passeport.'); return false; }
+          if (!d.files.domicile)            { assocShowErr('L\'associé ' + (i+1) + ' doit fournir un justificatif de domicile.'); return false; }
+          if (!d.files.vitale)              { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une carte vitale.'); return false; }
+          if (!d.files.livret)              { assocShowErr('L\'associé ' + (i+1) + ' doit fournir un livret de famille.'); return false; }
+        }
+        assocHideErr(); return true;
+      }
+
+      function assocShowErr(msg) { var el = document.getElementById('assoc-err'); if (el) { el.textContent = msg; el.style.display = ''; } }
+      function assocHideErr()    { var el = document.getElementById('assoc-err'); if (el) el.style.display = 'none'; }
+
+      function initAssocSection() {
+        var ci = document.getElementById('assoc-count-in');
+        if (ci) ci.addEventListener('input', function() { _assoc.count = Math.max(0, Math.min(4, parseInt(this.value)||0)); this.value = _assoc.count; assocRenderAll(); });
+      }
+      initAssocSection();
 
       (function() {
         var stored = sessionStorage.getItem('creabook_submitted');
