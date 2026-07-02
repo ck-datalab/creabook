@@ -529,12 +529,24 @@
   .mdt-cp-row { display:flex; align-items:center; gap:0.65rem; margin-bottom:1rem; padding:0.6rem 1rem; background:var(--green-mist,#E6F4ED); border:1px solid #9dd4b4; border-radius:2px; }
   .mdt-cp-row input[type="radio"] { width:16px; height:16px; flex-shrink:0; cursor:pointer; accent-color:var(--green,#1A6B3C); }
   .mdt-cp-row label { font-family:'Epilogue',sans-serif; font-size:0.9rem; font-weight:600; color:var(--green,#1A6B3C); cursor:pointer; margin:0; }
-  .mdt-acre { display:flex; align-items:flex-start; gap:0.9rem; margin:1.25rem 0 0.5rem; padding:1rem 1.1rem; background:linear-gradient(135deg,#f0f7ff 0%,#e8f0fb 100%); border:1.5px solid #b3cde8; border-left:4px solid var(--blue,#0A1338); border-radius:4px; cursor:pointer; transition:box-shadow .15s; }
-  .mdt-acre:hover { box-shadow:0 2px 10px rgba(10,19,56,.10); }
-  .mdt-acre input[type="checkbox"] { width:18px; height:18px; flex-shrink:0; cursor:pointer; accent-color:var(--blue); margin-top:2px; }
-  .mdt-acre label { font-family:'Epilogue',sans-serif; font-size:0.88rem; font-weight:600; color:var(--blue,#0A1338); cursor:pointer; margin:0; line-height:1.5; }
-  .mdt-acre-subtitle { font-weight:400; color:#4a6080; }
-  .mdt-acre-links { display:block; margin-top:0.35rem; font-weight:400; font-size:0.78rem; color:#666; }
+  /* ── ACRE card ── */
+  .acre-card { margin:1.5rem 0 0.5rem; padding:1.1rem 1.25rem 1rem; background:#fffbf2; border:1.5px solid #e8d9b5; border-left:4px solid var(--gold,#B8935A); border-radius:6px; }
+  .acre-badge { display:inline-flex; align-items:center; gap:0.4rem; background:#fff3cd; color:#7a5c00; border:1px solid #e8d9b5; border-radius:20px; padding:0.2rem 0.65rem; font-family:'Epilogue',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:0.6rem; }
+  .acre-badge svg { flex-shrink:0; color:#b8860b; }
+  .acre-title { font-family:'Fraunces',serif; font-size:1rem; font-weight:700; color:#3d2b00; margin:0 0 0.55rem; line-height:1.35; }
+  .acre-title em { font-style:italic; color:var(--gold,#B8935A); }
+  .acre-lead { font-family:'Epilogue',sans-serif; font-size:0.85rem; color:#4a3b1a; line-height:1.6; margin:0 0 0.85rem; }
+  .acre-cases { display:grid; grid-template-columns:1fr 1fr; gap:0.65rem; margin-bottom:0.85rem; }
+  @media(max-width:540px){ .acre-cases { grid-template-columns:1fr; } }
+  .acre-case { background:#fff; border:1px solid #e8d9b5; border-radius:4px; padding:0.75rem 0.9rem; }
+  .acre-case h4 { font-family:'Epilogue',sans-serif; font-size:0.8rem; font-weight:700; color:#3d2b00; margin:0 0 0.25rem; }
+  .acre-case p { font-family:'Epilogue',sans-serif; font-size:0.78rem; color:#6b5520; margin:0 0 0.5rem; line-height:1.5; }
+  .acre-link { display:inline-flex; align-items:center; gap:0.3rem; font-family:'Epilogue',sans-serif; font-size:0.78rem; font-weight:600; color:var(--blue,#1E4E7A); text-decoration:none; }
+  .acre-link:hover { text-decoration:underline; }
+  .acre-footnote { font-family:'Epilogue',sans-serif; font-size:0.78rem; color:#6b5520; margin:0 0 0.75rem; }
+  .acre-check { display:flex; align-items:center; gap:0.6rem; padding:0.65rem 0.85rem; background:#fff; border:1.5px solid #e8d9b5; border-radius:4px; cursor:pointer; font-family:'Epilogue',sans-serif; font-size:0.88rem; font-weight:600; color:#3d2b00; }
+  .acre-check input[type="checkbox"] { width:17px; height:17px; flex-shrink:0; accent-color:var(--gold,#B8935A); cursor:pointer; }
+  .acre-check:has(input:checked) { background:#fff8e8; border-color:var(--gold,#B8935A); }
   .mdt-docs { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--grey-200); }
   .mdt-docs-ttl { font-family: 'Epilogue', sans-serif; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey-500); margin-bottom: 0.75rem; }
   .mdt-doc-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--grey-100); }
@@ -939,8 +951,8 @@
         }
         setHidden('cb_mdt_assoc_count',    _mdt.assocCount    || 0);
         setHidden('cb_mdt_nonassoc_count', _mdt.nonAssocCount || 0);
-        var AKEYS = ['nom','prenom','regime','role','nationalite','num_secu','profession','nb_parts','apport_num','apport_nat','apport_ind','acre','adresse','cp','ville','heberge','hbg_nom','hbg_prenom'];
-        var NKEYS = ['nom','prenom','regime','role','nationalite','num_secu','profession','adresse','cp','ville','heberge','hbg_nom','hbg_prenom'];
+        var AKEYS = ['nom','prenom','regime','role','nationalite','num_secu','profession','nb_parts','apport_num','apport_nat','apport_ind','acre','adresse','cp','ville','heberge','hbg_type','hbg_nom','hbg_prenom','hbg_societe'];
+        var NKEYS = ['nom','prenom','regime','role','nationalite','num_secu','profession','adresse','cp','ville','heberge','hbg_type','hbg_nom','hbg_prenom','hbg_societe'];
         for (var i = 0; i < 4; i++) {
           var a = _mdt.assoc[i] || {};
           AKEYS.forEach(function(k) {
@@ -1271,12 +1283,14 @@
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Email','email',data.email,'text',false) + '</div>';
         html += '<div class="mdt-row mdt-row-1">' + mdtSel('Régime matrimonial','regime',data.regime,MDT_REGIMES,true) + '</div>';
         html += '<div class="mdt-row">' + mdtSel('Rôle','role',data.role,MDT_ROLES,true) + mdtFg('Nationalité','nationalite',data.nationalite,'text',true) + '</div>';
-        html += '<div class="mdt-row">' + mdtFg('N° sécurité sociale','num_secu',data.num_secu,'text',true) + mdtFg('Profession actuelle','profession',data.profession,'text',true) + '</div>';
-        html += '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse','adresse',data.adresse,'text',true) + '</div>';
+        html += '<div class="mdt-row">' + mdtFg('N° sécurité sociale','num_secu',data.num_secu,'text',true) + mdtFg('Profession actuelle','profession',data.profession,'text',false) + '</div>';
+        html += '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse (domicile)','adresse',data.adresse,'text',true) + '</div>';
         html += '<div class="mdt-row">' + mdtFg('Code postal','cp',data.cp,'text',true) + mdtFg('Ville','ville',data.ville,'text',true) + '</div>';
         // Hébergement
         var hbgName = 'mdt-hbg-' + key;
         var heberge = data.heberge || 'non';
+        var hbgTypeName = 'mdt-hbg-type-' + key;
+        var hbgType = data.hbg_type || 'physique';
         html += '<div class="mdt-hbg-block">';
         html += '<label class="mdt-lbl">Hébergé ? <span style="color:#C0184A">*</span></label>';
         html += '<div class="mdt-radio-row">';
@@ -1284,7 +1298,17 @@
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="oui"' + (heberge === 'oui' ? ' checked' : '') + '> Oui</label>';
         html += '</div>';
         html += '<div class="mdt-hbg-details"' + (heberge === 'oui' ? '' : ' style="display:none"') + '>';
+        html += '<label class="mdt-lbl" style="margin-top:0.6rem;">Type d\'hébergeur <span style="color:#C0184A">*</span></label>';
+        html += '<div class="mdt-radio-row">';
+        html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgTypeName + '" value="physique"' + (hbgType !== 'morale' ? ' checked' : '') + '> Personne physique</label>';
+        html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgTypeName + '" value="morale"' + (hbgType === 'morale' ? ' checked' : '') + '> Personne morale</label>';
+        html += '</div>';
+        html += '<div class="mdt-hbg-physique"' + (hbgType === 'morale' ? ' style="display:none"' : '') + '>';
         html += '<div class="mdt-row">' + mdtFg('Nom de l\'hébergeur','hbg_nom',data.hbg_nom,'text',true) + mdtFg('Prénom de l\'hébergeur','hbg_prenom',data.hbg_prenom,'text',true) + '</div>';
+        html += '</div>';
+        html += '<div class="mdt-hbg-morale"' + (hbgType !== 'morale' ? ' style="display:none"' : '') + '>';
+        html += '<div class="mdt-row mdt-row-1">' + mdtFg('Raison sociale de l\'hébergeur','hbg_societe',data.hbg_societe,'text',true) + '</div>';
+        html += '</div>';
         html += '</div>';
         html += '</div>';
         if (isAssoc) {
@@ -1296,41 +1320,87 @@
         }
         // ACRE (mandataires associés uniquement)
         if (isAssoc) {
-          var acreId = 'mdt-acre-cb-' + key;
-          html += '<div class="mdt-acre"><input type="checkbox" id="' + acreId + '"' + (data.acre ? ' checked' : '') + '>' +
-            '<label for="' + acreId + '">Bénéficie de l\'ACRE' +
-            '<span class="mdt-acre-subtitle"> — Aide à la Création ou Reprise d\'Entreprise</span>' +
-            '<span class="mdt-acre-links">En savoir plus : <a href="https://www.service-public.fr/particuliers/vosdroits/F11677" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--blue);text-decoration:underline;">Service-public.fr</a> &nbsp;·&nbsp; <a href="https://www.francetravail.fr/candidat/en-emploi/vous-souhaitez-creer-ou-reprendre-une-entreprise/acre-aide-aux-createurs-ou-repreneurs-d-entrepri.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--blue);text-decoration:underline;">France Travail</a></span>' +
-            '</label></div>';
+          html += '<aside class="acre-card" role="note">' +
+            '<div class="acre-badge">' +
+              '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+              '<span>Point de vigilance</span>' +
+            '</div>' +
+            '<h3 class="acre-title">Demande d\'ACRE — <em>60 jours après la création</em></h3>' +
+            '<p class="acre-lead">L\'ACRE (Aide aux Créateurs et Repreneurs d\'Entreprise) ouvre droit à une exonération partielle de charges sociales sur la première année d\'activité. La demande doit désormais être effectuée auprès de l\'URSSAF dans un délai impératif de <strong>60 jours suivant la création de votre société</strong>, sous peine de perte définitive du bénéfice.</p>' +
+            '<div class="acre-cases">' +
+              '<article class="acre-case">' +
+                '<h4>Travailleur indépendant</h4>' +
+                '<p>Gérant majoritaire SARL/EURL, entrepreneur individuel, profession libérale…</p>' +
+                '<a href="https://www.urssaf.fr/accueil/services/services-independants/comment-demander-acre-TI-PAM.html" target="_blank" rel="noopener noreferrer" class="acre-link">Formulaire URSSAF — TI / PAM <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></a>' +
+              '</article>' +
+              '<article class="acre-case">' +
+                '<h4>Mandataire social assimilé salarié</h4>' +
+                '<p>Président SAS/SASU, gérant minoritaire ou égalitaire SARL…</p>' +
+                '<a href="https://www.urssaf.fr/accueil/services/services-employeurs/comment-demander-acre-mandataire.html" target="_blank" rel="noopener noreferrer" class="acre-link">Formulaire URSSAF — Mandataire <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></a>' +
+              '</article>' +
+            '</div>' +
+            '<p class="acre-footnote">Votre comptable de la <strong>Team CECCA</strong> peut vous accompagner pour vérifier votre éligibilité et constituer votre dossier ACRE.</p>' +
+            '<label class="acre-check"><input type="checkbox" id="mdt-acre-cb-' + key + '"' + (data.acre ? ' checked' : '') + '> Je souhaite bénéficier de l\'ACRE</label>' +
+          '</aside>';
         }
         // Documents
         html += '<div class="mdt-docs"><p class="mdt-docs-ttl">Documents</p>';
         html += mdtDocRow(key, 'cni',      'CNI / Passeport',           true);
-        html += mdtDocRow(key, 'domicile', 'Justificatif de domicile',  true);
+        html += '<div class="mdt-domicile-row"' + (heberge === 'oui' ? ' style="display:none"' : '') + '>' + mdtDocRow(key, 'domicile', 'Justificatif de domicile', true) + '</div>';
         html += mdtDocRow(key, 'vitale',   'Carte vitale',              true);
         html += mdtDocRow(key, 'livret',   'Livret de famille',         true);
         html += mdtDocRow(key, 'diplome',  'Diplôme',                   false);
-        html += '<div class="mdt-attest-row"' + (heberge === 'oui' ? '' : ' style="display:none"') + '>' + mdtDocRow(key, 'attestation_hbg', 'Attestation d\'hébergement', true) + '</div>';
+        html += '<div class="mdt-hbg-docs-physique"' + (heberge === 'oui' && hbgType !== 'morale' ? '' : ' style="display:none"') + '>';
+        html += mdtDocRow(key, 'cni_hbg',      'CNI / Passeport de l\'hébergeur',       true);
+        html += mdtDocRow(key, 'domicile_hbg',  'Justificatif de domicile de l\'hébergeur', true);
+        html += mdtDocRow(key, 'attestation_hbg','Attestation d\'hébergement',              true);
+        html += '</div>';
+        html += '<div class="mdt-hbg-docs-morale"' + (heberge === 'oui' && hbgType === 'morale' ? '' : ' style="display:none"') + '>';
+        html += mdtDocRow(key, 'attestation_domiciliation','Attestation de domiciliation', true);
+        html += '</div>';
         html += '</div>';
         card.innerHTML = html;
         // Wire contact principal radio
         var cpRadio = card.querySelector('input[name="mdt-cp"]');
         if (cpRadio) cpRadio.addEventListener('change', function() { if (this.checked) _mdt.contactPrincipal = this.value; });
-        // Wire hébergement radio
+        // Wire hébergement oui/non
         card.querySelectorAll('input[name="mdt-hbg-' + key + '"]').forEach(function(radio) {
           radio.addEventListener('change', function() {
             var arr = isAssoc ? _mdt.assoc : _mdt.nonAssoc;
             if (!arr[idx]) arr[idx] = {};
             arr[idx].heberge = this.value;
+            var isOui = this.value === 'oui';
+            var t = arr[idx].hbg_type || 'physique';
             var det = card.querySelector('.mdt-hbg-details');
-            if (det) det.style.display = this.value === 'oui' ? '' : 'none';
-            var attest = card.querySelector('.mdt-attest-row');
-            if (attest) attest.style.display = this.value === 'oui' ? '' : 'none';
+            if (det) det.style.display = isOui ? '' : 'none';
+            var dr = card.querySelector('.mdt-domicile-row');
+            if (dr) dr.style.display = isOui ? 'none' : '';
+            var dp = card.querySelector('.mdt-hbg-docs-physique');
+            if (dp) dp.style.display = (isOui && t !== 'morale') ? '' : 'none';
+            var dm = card.querySelector('.mdt-hbg-docs-morale');
+            if (dm) dm.style.display = (isOui && t === 'morale') ? '' : 'none';
           });
         });
-        // Wire ACRE checkbox (associés uniquement)
+        // Wire hébergement type physique/morale
+        card.querySelectorAll('input[name="mdt-hbg-type-' + key + '"]').forEach(function(radio) {
+          radio.addEventListener('change', function() {
+            var arr = isAssoc ? _mdt.assoc : _mdt.nonAssoc;
+            if (!arr[idx]) arr[idx] = {};
+            arr[idx].hbg_type = this.value;
+            var isPhysique = this.value !== 'morale';
+            var ph = card.querySelector('.mdt-hbg-physique');
+            if (ph) ph.style.display = isPhysique ? '' : 'none';
+            var mo = card.querySelector('.mdt-hbg-morale');
+            if (mo) mo.style.display = isPhysique ? 'none' : '';
+            var dp = card.querySelector('.mdt-hbg-docs-physique');
+            if (dp) dp.style.display = isPhysique ? '' : 'none';
+            var dm = card.querySelector('.mdt-hbg-docs-morale');
+            if (dm) dm.style.display = isPhysique ? 'none' : '';
+          });
+        });
+        // Wire ACRE checkbox (mandataires associés uniquement)
         if (isAssoc) {
-          var acreCb = card.querySelector('input[type="checkbox"]');
+          var acreCb = card.querySelector('#mdt-acre-cb-' + key);
           if (acreCb) acreCb.addEventListener('change', function() {
             if (!_mdt.assoc[idx]) _mdt.assoc[idx] = {};
             _mdt.assoc[idx].acre = this.checked;
@@ -1387,20 +1457,28 @@
         var cpIdx = parseInt(cpKey.charAt(1));
         var cpData = cpIsAssoc ? (_mdt.assoc[cpIdx] || {}) : (_mdt.nonAssoc[cpIdx] || {});
         if (!cpData.email || !cpData.email.trim()) { mdtShowErr('Veuillez renseigner l\'email du contact principal.'); return false; }
-        var AREQ = ['nom','prenom','role','nationalite','num_secu','profession','regime','nb_parts','adresse','cp','ville'];
-        var NREQ = ['nom','prenom','role','nationalite','num_secu','profession','regime','adresse','cp','ville'];
+        var AREQ = ['nom','prenom','role','nationalite','num_secu','regime','nb_parts','adresse','cp','ville'];
+        var NREQ = ['nom','prenom','role','nationalite','num_secu','regime','adresse','cp','ville'];
         for (var i = 0; i < _mdt.assocCount; i++) {
           var d = _mdt.assoc[i] || {};
           for (var f = 0; f < AREQ.length; f++) {
             if (!d[AREQ[f]] || !String(d[AREQ[f]]).trim()) { mdtShowErr('Complétez tous les champs obligatoires du dirigeant associé ' + (i+1) + '.'); return false; }
           }
           if ((d.heberge || 'non') === 'oui') {
-            if (!d.hbg_nom || !d.hbg_nom.trim())       { mdtShowErr('Indiquez le nom de l\'hébergeur du dirigeant associé ' + (i+1) + '.'); return false; }
-            if (!d.hbg_prenom || !d.hbg_prenom.trim()) { mdtShowErr('Indiquez le prénom de l\'hébergeur du dirigeant associé ' + (i+1) + '.'); return false; }
-            if (!d.files || !d.files.attestation_hbg)  { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
+            var ht = d.hbg_type || 'physique';
+            if (ht === 'physique') {
+              if (!d.hbg_nom || !d.hbg_nom.trim())       { mdtShowErr('Indiquez le nom de l\'hébergeur du dirigeant associé ' + (i+1) + '.'); return false; }
+              if (!d.hbg_prenom || !d.hbg_prenom.trim()) { mdtShowErr('Indiquez le prénom de l\'hébergeur du dirigeant associé ' + (i+1) + '.'); return false; }
+              if (!d.files || !d.files.cni_hbg)           { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir la pièce d\'identité de l\'hébergeur.'); return false; }
+              if (!d.files.domicile_hbg)                  { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir le justificatif de domicile de l\'hébergeur.'); return false; }
+              if (!d.files.attestation_hbg)               { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
+            } else {
+              if (!d.hbg_societe || !d.hbg_societe.trim())       { mdtShowErr('Indiquez la raison sociale de l\'hébergeur du dirigeant associé ' + (i+1) + '.'); return false; }
+              if (!d.files || !d.files.attestation_domiciliation) { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une attestation de domiciliation.'); return false; }
+            }
           }
           if (!d.files || !d.files.cni)     { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une CNI / Passeport.'); return false; }
-          if (!d.files.domicile)             { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir un justificatif de domicile.'); return false; }
+          if ((d.heberge || 'non') !== 'oui' && !d.files.domicile) { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir un justificatif de domicile.'); return false; }
           if (!d.files.vitale)               { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une carte vitale.'); return false; }
           if (!d.files.livret)               { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir un livret de famille.'); return false; }
         }
@@ -1410,12 +1488,20 @@
             if (!d2[NREQ[f2]] || !String(d2[NREQ[f2]]).trim()) { mdtShowErr('Complétez tous les champs obligatoires du dirigeant non associé ' + (j+1) + '.'); return false; }
           }
           if ((d2.heberge || 'non') === 'oui') {
-            if (!d2.hbg_nom || !d2.hbg_nom.trim())       { mdtShowErr('Indiquez le nom de l\'hébergeur du dirigeant non associé ' + (j+1) + '.'); return false; }
-            if (!d2.hbg_prenom || !d2.hbg_prenom.trim()) { mdtShowErr('Indiquez le prénom de l\'hébergeur du dirigeant non associé ' + (j+1) + '.'); return false; }
-            if (!d2.files || !d2.files.attestation_hbg)  { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
+            var ht2 = d2.hbg_type || 'physique';
+            if (ht2 === 'physique') {
+              if (!d2.hbg_nom || !d2.hbg_nom.trim())       { mdtShowErr('Indiquez le nom de l\'hébergeur du dirigeant non associé ' + (j+1) + '.'); return false; }
+              if (!d2.hbg_prenom || !d2.hbg_prenom.trim()) { mdtShowErr('Indiquez le prénom de l\'hébergeur du dirigeant non associé ' + (j+1) + '.'); return false; }
+              if (!d2.files || !d2.files.cni_hbg)           { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir la pièce d\'identité de l\'hébergeur.'); return false; }
+              if (!d2.files.domicile_hbg)                   { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir le justificatif de domicile de l\'hébergeur.'); return false; }
+              if (!d2.files.attestation_hbg)                { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
+            } else {
+              if (!d2.hbg_societe || !d2.hbg_societe.trim())       { mdtShowErr('Indiquez la raison sociale de l\'hébergeur du dirigeant non associé ' + (j+1) + '.'); return false; }
+              if (!d2.files || !d2.files.attestation_domiciliation) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une attestation de domiciliation.'); return false; }
+            }
           }
           if (!d2.files || !d2.files.cni) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une CNI / Passeport.'); return false; }
-          if (!d2.files.domicile)          { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir un justificatif de domicile.'); return false; }
+          if ((d2.heberge || 'non') !== 'oui' && !d2.files.domicile) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir un justificatif de domicile.'); return false; }
           if (!d2.files.vitale)            { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une carte vitale.'); return false; }
           if (!d2.files.livret)            { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir un livret de famille.'); return false; }
         }
@@ -1453,8 +1539,10 @@
           mdtFg('Apport en numéraire (€)','apport_num',data.apport_num,'number',false) +
           mdtFg('Apport en nature (€)','apport_nat',data.apport_nat,'number',false) +
           mdtFg('Apport en industrie (€)','apport_ind',data.apport_ind,'number',false) + '</div>';
-        html += '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse','adresse',data.adresse,'text',true) + '</div>';
+        html += '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse (domicile)','adresse',data.adresse,'text',true) + '</div>';
         html += '<div class="mdt-row">' + mdtFg('Code postal','cp',data.cp,'text',true) + mdtFg('Ville','ville',data.ville,'text',true) + '</div>';
+        var hbgTypeName = 'assoc-hbg-type-' + key;
+        var hbgType = data.hbg_type || 'physique';
         html += '<div class="mdt-hbg-block">';
         html += '<label class="mdt-lbl">Hébergé ? <span style="color:#C0184A">*</span></label>';
         html += '<div class="mdt-radio-row">';
@@ -1462,26 +1550,63 @@
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="oui"' + (heberge === 'oui' ? ' checked' : '') + '> Oui</label>';
         html += '</div>';
         html += '<div class="mdt-hbg-details"' + (heberge === 'oui' ? '' : ' style="display:none"') + '>';
+        html += '<label class="mdt-lbl" style="margin-top:0.6rem;">Type d\'hébergeur <span style="color:#C0184A">*</span></label>';
+        html += '<div class="mdt-radio-row">';
+        html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgTypeName + '" value="physique"' + (hbgType !== 'morale' ? ' checked' : '') + '> Personne physique</label>';
+        html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgTypeName + '" value="morale"' + (hbgType === 'morale' ? ' checked' : '') + '> Personne morale</label>';
+        html += '</div>';
+        html += '<div class="mdt-hbg-physique"' + (hbgType === 'morale' ? ' style="display:none"' : '') + '>';
         html += '<div class="mdt-row">' + mdtFg('Nom de l\'hébergeur','hbg_nom',data.hbg_nom,'text',true) + mdtFg('Prénom de l\'hébergeur','hbg_prenom',data.hbg_prenom,'text',true) + '</div>';
+        html += '</div>';
+        html += '<div class="mdt-hbg-morale"' + (hbgType !== 'morale' ? ' style="display:none"' : '') + '>';
+        html += '<div class="mdt-row mdt-row-1">' + mdtFg('Raison sociale de l\'hébergeur','hbg_societe',data.hbg_societe,'text',true) + '</div>';
+        html += '</div>';
         html += '</div>';
         html += '</div>';
         html += '<div class="mdt-docs"><p class="mdt-docs-ttl">Documents</p>';
         html += mdtDocRow(key, 'cni',      'CNI / Passeport',          true);
-        html += mdtDocRow(key, 'domicile', 'Justificatif de domicile', true);
-        html += mdtDocRow(key, 'vitale',   'Carte vitale',             true);
-        html += mdtDocRow(key, 'livret',   'Livret de famille',        true);
-        html += '<div class="mdt-attest-row"' + (heberge === 'oui' ? '' : ' style="display:none"') + '>' + mdtDocRow(key, 'attestation_hbg', 'Attestation d\'hébergement', true) + '</div>';
+        html += '<div class="mdt-domicile-row"' + (heberge === 'oui' ? ' style="display:none"' : '') + '>' + mdtDocRow(key, 'domicile', 'Justificatif de domicile', true) + '</div>';
+        html += '<div class="mdt-hbg-docs-physique"' + (heberge === 'oui' && hbgType !== 'morale' ? '' : ' style="display:none"') + '>';
+        html += mdtDocRow(key, 'cni_hbg',      'Pièce d\'identité de l\'hébergeur',       true);
+        html += mdtDocRow(key, 'domicile_hbg',  'Justificatif de domicile de l\'hébergeur', true);
+        html += mdtDocRow(key, 'attestation_hbg','Attestation d\'hébergement',              true);
+        html += '</div>';
+        html += '<div class="mdt-hbg-docs-morale"' + (heberge === 'oui' && hbgType === 'morale' ? '' : ' style="display:none"') + '>';
+        html += mdtDocRow(key, 'attestation_domiciliation','Attestation de domiciliation', true);
+        html += '</div>';
         html += '</div>';
         card.innerHTML = html;
-        // Wire hébergement radio
+        // Wire hébergement oui/non
         card.querySelectorAll('input[name="' + hbgName + '"]').forEach(function(radio) {
           radio.addEventListener('change', function() {
             if (!_assoc.items[idx]) _assoc.items[idx] = {};
             _assoc.items[idx].heberge = this.value;
+            var isOui = this.value === 'oui';
+            var t = _assoc.items[idx].hbg_type || 'physique';
             var det = card.querySelector('.mdt-hbg-details');
-            if (det) det.style.display = this.value === 'oui' ? '' : 'none';
-            var attest = card.querySelector('.mdt-attest-row');
-            if (attest) attest.style.display = this.value === 'oui' ? '' : 'none';
+            if (det) det.style.display = isOui ? '' : 'none';
+            var dr = card.querySelector('.mdt-domicile-row');
+            if (dr) dr.style.display = isOui ? 'none' : '';
+            var dp = card.querySelector('.mdt-hbg-docs-physique');
+            if (dp) dp.style.display = (isOui && t !== 'morale') ? '' : 'none';
+            var dm = card.querySelector('.mdt-hbg-docs-morale');
+            if (dm) dm.style.display = (isOui && t === 'morale') ? '' : 'none';
+          });
+        });
+        // Wire hébergement type physique/morale
+        card.querySelectorAll('input[name="' + hbgTypeName + '"]').forEach(function(radio) {
+          radio.addEventListener('change', function() {
+            if (!_assoc.items[idx]) _assoc.items[idx] = {};
+            _assoc.items[idx].hbg_type = this.value;
+            var isPhysique = this.value !== 'morale';
+            var ph = card.querySelector('.mdt-hbg-physique');
+            if (ph) ph.style.display = isPhysique ? '' : 'none';
+            var mo = card.querySelector('.mdt-hbg-morale');
+            if (mo) mo.style.display = isPhysique ? 'none' : '';
+            var dp = card.querySelector('.mdt-hbg-docs-physique');
+            if (dp) dp.style.display = isPhysique ? '' : 'none';
+            var dm = card.querySelector('.mdt-hbg-docs-morale');
+            if (dm) dm.style.display = isPhysique ? 'none' : '';
           });
         });
         // Wire text/select fields
@@ -1526,14 +1651,20 @@
             if (!d[AREQ[f]] || !String(d[AREQ[f]]).trim()) { assocShowErr('Complétez tous les champs obligatoires de l\'associé ' + (i+1) + '.'); return false; }
           }
           if ((d.heberge || 'non') === 'oui') {
-            if (!d.hbg_nom || !d.hbg_nom.trim())       { assocShowErr('Indiquez le nom de l\'hébergeur de l\'associé ' + (i+1) + '.'); return false; }
-            if (!d.hbg_prenom || !d.hbg_prenom.trim()) { assocShowErr('Indiquez le prénom de l\'hébergeur de l\'associé ' + (i+1) + '.'); return false; }
-            if (!d.files || !d.files.attestation_hbg)  { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
+            var ht3 = d.hbg_type || 'physique';
+            if (ht3 === 'physique') {
+              if (!d.hbg_nom || !d.hbg_nom.trim())       { assocShowErr('Indiquez le nom de l\'hébergeur de l\'associé ' + (i+1) + '.'); return false; }
+              if (!d.hbg_prenom || !d.hbg_prenom.trim()) { assocShowErr('Indiquez le prénom de l\'hébergeur de l\'associé ' + (i+1) + '.'); return false; }
+              if (!d.files || !d.files.cni_hbg)           { assocShowErr('L\'associé ' + (i+1) + ' doit fournir la pièce d\'identité de l\'hébergeur.'); return false; }
+              if (!d.files.domicile_hbg)                  { assocShowErr('L\'associé ' + (i+1) + ' doit fournir le justificatif de domicile de l\'hébergeur.'); return false; }
+              if (!d.files.attestation_hbg)               { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
+            } else {
+              if (!d.hbg_societe || !d.hbg_societe.trim())       { assocShowErr('Indiquez la raison sociale de l\'hébergeur de l\'associé ' + (i+1) + '.'); return false; }
+              if (!d.files || !d.files.attestation_domiciliation) { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une attestation de domiciliation.'); return false; }
+            }
           }
           if (!d.files || !d.files.cni)    { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une CNI / Passeport.'); return false; }
-          if (!d.files.domicile)            { assocShowErr('L\'associé ' + (i+1) + ' doit fournir un justificatif de domicile.'); return false; }
-          if (!d.files.vitale)              { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une carte vitale.'); return false; }
-          if (!d.files.livret)              { assocShowErr('L\'associé ' + (i+1) + ' doit fournir un livret de famille.'); return false; }
+          if ((d.heberge || 'non') !== 'oui' && !d.files.domicile) { assocShowErr('L\'associé ' + (i+1) + ' doit fournir un justificatif de domicile.'); return false; }
         }
         assocHideErr(); return true;
       }
@@ -1613,7 +1744,7 @@
           inp.value = (val === null || val === undefined) ? '' : String(val);
         }
         setH('cb_assoc_count', _assoc.count || 0);
-        var KEYS = ['nom','prenom','email','phone','regime','num_secu','nb_parts','apport_num','apport_nat','apport_ind','adresse','cp','ville','heberge','hbg_nom','hbg_prenom'];
+        var KEYS = ['nom','prenom','email','phone','regime','num_secu','nb_parts','apport_num','apport_nat','apport_ind','adresse','cp','ville','heberge','hbg_type','hbg_nom','hbg_prenom','hbg_societe'];
         for (var i = 0; i < 4; i++) {
           var a = _assoc.items[i] || {};
           KEYS.forEach(function(k) { setH('cb_assoc_' + (i+1) + '_' + k, a[k] || ''); });
