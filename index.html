@@ -1286,7 +1286,7 @@
         var hbgName = 'mdt-hbg-' + key;
         var heberge = data.heberge || 'non';
         html += '<div class="mdt-hbg-block">';
-        html += '<label class="mdt-lbl">Êtes-vous hébergé à titre gratuit ? <span style="color:#C0184A">*</span></label>';
+        html += '<label class="mdt-lbl">Hébergé ? <span style="color:#C0184A">*</span></label>';
         html += '<div class="mdt-radio-row">';
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="non"' + (heberge !== 'oui' ? ' checked' : '') + '> Non</label>';
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="oui"' + (heberge === 'oui' ? ' checked' : '') + '> Oui</label>';
@@ -1462,7 +1462,7 @@
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse','adresse',data.adresse,'text',true) + '</div>';
         html += '<div class="mdt-row">' + mdtFg('Code postal','cp',data.cp,'text',true) + mdtFg('Ville','ville',data.ville,'text',true) + '</div>';
         html += '<div class="mdt-hbg-block">';
-        html += '<label class="mdt-lbl">Êtes-vous hébergé à titre gratuit ? <span style="color:#C0184A">*</span></label>';
+        html += '<label class="mdt-lbl">Hébergé ? <span style="color:#C0184A">*</span></label>';
         html += '<div class="mdt-radio-row">';
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="non"' + (heberge !== 'oui' ? ' checked' : '') + '> Non</label>';
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="oui"' + (heberge === 'oui' ? ' checked' : '') + '> Oui</label>';
