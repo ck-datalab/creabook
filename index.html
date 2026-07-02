@@ -642,12 +642,6 @@
       <div id="assoc-cards"></div>
     </div>
 
-    <!-- Attestations d'hébergement personnelles (step Documents, si des personnes sont hébergées) -->
-    <div id="personal-docs" style="display:none;margin-top:1.5rem;">
-      <p class="mdt-docs-ttl" style="font-family:'Epilogue',sans-serif;font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--grey-500);margin-bottom:0.75rem;">Attestations d'hébergement</p>
-      <div id="personal-attestations"></div>
-    </div>
-
     <!-- Step navigation buttons -->
     <div class="form-nav" id="form-nav">
       <button class="form-nav-btn" id="btn-prev" onclick="formPrevStep()" style="visibility:hidden">← Précédent</button>
@@ -839,9 +833,7 @@
           assocSec.style.display = _step === 3 ? '' : 'none';
           if (_step === 3) assocRenderAll();
         }
-        if (_step === 4) { applyDocConditionals(); renderPersonalAttestations(); }
-        var personalDocs = document.getElementById('personal-docs');
-        if (personalDocs) personalDocs.style.display = _step === 4 ? '' : 'none';
+        if (_step === 4) applyDocConditionals();
       }
 
       function updateStepUI(skipScroll) {
@@ -1329,6 +1321,7 @@
         html += mdtDocRow(key, 'vitale',   'Carte vitale',              true);
         html += mdtDocRow(key, 'livret',   'Livret de famille',         true);
         html += mdtDocRow(key, 'diplome',  'Diplôme',                   false);
+        html += '<div class="mdt-attest-row"' + (heberge === 'oui' ? '' : ' style="display:none"') + '>' + mdtDocRow(key, 'attestation_hbg', 'Attestation d\'hébergement', true) + '</div>';
         html += '</div>';
         card.innerHTML = html;
         // Wire contact principal radio
@@ -1342,6 +1335,8 @@
             arr[idx].heberge = this.value;
             var det = card.querySelector('.mdt-hbg-details');
             if (det) det.style.display = this.value === 'oui' ? '' : 'none';
+            var attest = card.querySelector('.mdt-attest-row');
+            if (attest) attest.style.display = this.value === 'oui' ? '' : 'none';
           });
         });
         // Wire ACRE checkbox (associés uniquement)
@@ -1413,6 +1408,7 @@
           if ((d.heberge || 'non') === 'oui') {
             if (!d.hbg_nom || !d.hbg_nom.trim())       { mdtShowErr('Indiquez le nom de l\'hébergeur du dirigeant associé ' + (i+1) + '.'); return false; }
             if (!d.hbg_prenom || !d.hbg_prenom.trim()) { mdtShowErr('Indiquez le prénom de l\'hébergeur du dirigeant associé ' + (i+1) + '.'); return false; }
+            if (!d.files || !d.files.attestation_hbg)  { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
           }
           if (!d.files || !d.files.cni)     { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une CNI / Passeport.'); return false; }
           if (!d.files.domicile)             { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir un justificatif de domicile.'); return false; }
@@ -1427,6 +1423,7 @@
           if ((d2.heberge || 'non') === 'oui') {
             if (!d2.hbg_nom || !d2.hbg_nom.trim())       { mdtShowErr('Indiquez le nom de l\'hébergeur du dirigeant non associé ' + (j+1) + '.'); return false; }
             if (!d2.hbg_prenom || !d2.hbg_prenom.trim()) { mdtShowErr('Indiquez le prénom de l\'hébergeur du dirigeant non associé ' + (j+1) + '.'); return false; }
+            if (!d2.files || !d2.files.attestation_hbg)  { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
           }
           if (!d2.files || !d2.files.cni) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une CNI / Passeport.'); return false; }
           if (!d2.files.domicile)          { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir un justificatif de domicile.'); return false; }
@@ -1484,6 +1481,7 @@
         html += mdtDocRow(key, 'domicile', 'Justificatif de domicile', true);
         html += mdtDocRow(key, 'vitale',   'Carte vitale',             true);
         html += mdtDocRow(key, 'livret',   'Livret de famille',        true);
+        html += '<div class="mdt-attest-row"' + (heberge === 'oui' ? '' : ' style="display:none"') + '>' + mdtDocRow(key, 'attestation_hbg', 'Attestation d\'hébergement', true) + '</div>';
         html += '</div>';
         card.innerHTML = html;
         // Wire hébergement radio
@@ -1493,6 +1491,8 @@
             _assoc.items[idx].heberge = this.value;
             var det = card.querySelector('.mdt-hbg-details');
             if (det) det.style.display = this.value === 'oui' ? '' : 'none';
+            var attest = card.querySelector('.mdt-attest-row');
+            if (attest) attest.style.display = this.value === 'oui' ? '' : 'none';
           });
         });
         // Wire text/select fields
@@ -1539,6 +1539,7 @@
           if ((d.heberge || 'non') === 'oui') {
             if (!d.hbg_nom || !d.hbg_nom.trim())       { assocShowErr('Indiquez le nom de l\'hébergeur de l\'associé ' + (i+1) + '.'); return false; }
             if (!d.hbg_prenom || !d.hbg_prenom.trim()) { assocShowErr('Indiquez le prénom de l\'hébergeur de l\'associé ' + (i+1) + '.'); return false; }
+            if (!d.files || !d.files.attestation_hbg)  { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
           }
           if (!d.files || !d.files.cni)    { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une CNI / Passeport.'); return false; }
           if (!d.files.domicile)            { assocShowErr('L\'associé ' + (i+1) + ' doit fournir un justificatif de domicile.'); return false; }
