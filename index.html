@@ -753,13 +753,12 @@
       function showNextSteps(entite, montant, societe) {
         var rib = RIBS[entite] || RIBS.cecca;
         var label = montant + ' €';
-        ['rib-montant','rib-montant-2'].forEach(function(id){ document.getElementById(id).textContent = label; });
-        ['rib-beneficiaire','rib-beneficiaire-2'].forEach(function(id){ document.getElementById(id).textContent = rib.beneficiaire; });
-        document.getElementById('rib-banque').textContent = rib.banque;
-        document.getElementById('rib-iban').textContent   = rib.iban;
-        document.getElementById('rib-bic').textContent    = rib.bic;
-        if (societe) document.getElementById('rib-libelle').textContent = societe;
+        ['rib-montant','rib-montant-2'].forEach(function(id){ var el = document.getElementById(id); if (el) el.textContent = label; });
+        ['rib-beneficiaire','rib-beneficiaire-2'].forEach(function(id){ var el = document.getElementById(id); if (el) el.textContent = rib.beneficiaire; });
+        ['rib-banque','rib-iban','rib-bic'].forEach(function(id){ var el = document.getElementById(id); if (el) el.textContent = rib[id.replace('rib-','')]; });
+        if (societe) { var lib = document.getElementById('rib-libelle'); if (lib) lib.textContent = societe; }
         var panel = document.getElementById('next-steps');
+        if (!panel) return;
         panel.classList.add('visible');
         setTimeout(function(){ panel.scrollIntoView({ behavior:'smooth', block:'start' }); }, 300);
       }
@@ -973,25 +972,14 @@
             syncMdtToHubspot();
             syncAssocToHubspot();
             if (_syncHebergeur) _syncHebergeur();
-            // Retirer required de tous les fieldsets non visibles à cette étape
-            // (approche directe via STEP_FS — plus fiable que le walk-up DOM)
-            var visibleGroups = STEP_FS[_step] || [];
-            var allFss = _fDoc.querySelectorAll('form fieldset');
+            // Retirer required de TOUS les champs du formulaire avant soumission :
+            // la validation est faite par notre code (validateCurrentStep), pas par HubSpot.
+            // Les champs fichier de HubSpot (cb_doc_*) bloqueraient la soumission autrement.
             var hidden = [];
-            for (var fi = 0; fi < allFss.length; fi++) {
-              if (visibleGroups.indexOf(fi) === -1) {
-                allFss[fi].querySelectorAll('[required],[aria-required="true"]').forEach(function(inp) {
-                  inp.removeAttribute('required');
-                  inp.removeAttribute('aria-required');
-                  hidden.push(inp);
-                });
-              }
-            }
-            // Retirer aussi required des wrappers de champs conditionnels cachés (ex: attestation hébergement)
-            _fDoc.querySelectorAll('.hs-form-field[style*="display: none"] [required], .hs-form-field[style*="display:none"] [required]').forEach(function(inp) {
+            _fDoc.querySelectorAll('[required],[aria-required="true"]').forEach(function(inp) {
               inp.removeAttribute('required');
               inp.removeAttribute('aria-required');
-              if (hidden.indexOf(inp) === -1) hidden.push(inp);
+              hidden.push(inp);
             });
             btn.click();
             // Restaurer après (au cas où la soumission échoue côté HubSpot)
@@ -1000,7 +988,7 @@
                 inp.setAttribute('required', '');
                 inp.setAttribute('aria-required', 'true');
               });
-            }, 1000);
+            }, 2000);
           }
         }
       }
@@ -1665,20 +1653,30 @@
           wireForm($form[0].ownerDocument);
         },
         onFormSubmitted: function(form, data) {
-          var entite = 'cecca';
-          var montant = '900';
-          var sv = (data && data.submissionValues) || {};
-          var etoileManagers = ['Simbou DANFAKHA', 'Yann POINLOUP', 'Mateus SOUTELO'];
-          entite = etoileManagers.indexOf(sv.cb_manager) !== -1 ? 'cecca_etoile' : 'cecca';
-          if (entite === 'cecca_etoile') montant = '2 160';
-
-
-          var societe = [(sv.cb_forme_juridique || ''), (sv.cb_denomination_sociale || '')].filter(Boolean).join(' ');
-          sessionStorage.setItem('creabook_submitted', JSON.stringify({ entite: entite, montant: montant, societe: societe }));
-          document.getElementById('form-stepper').style.display = 'none';
-          document.getElementById('form-nav').style.display = 'none';
-          document.getElementById('step-desc').style.display = 'none';
-          showNextSteps(entite, montant, societe);
+          try {
+            var entite = 'cecca';
+            var montant = '900';
+            var sv = (data && data.submissionValues) || {};
+            var etoileManagers = ['Simbou DANFAKHA', 'Yann POINLOUP', 'Mateus SOUTELO'];
+            entite = etoileManagers.indexOf(sv.cb_manager) !== -1 ? 'cecca_etoile' : 'cecca';
+            if (entite === 'cecca_etoile') montant = '2 160';
+            var societe = [(sv.cb_forme_juridique || ''), (sv.cb_denomination_sociale || '')].filter(Boolean).join(' ');
+            sessionStorage.setItem('creabook_submitted', JSON.stringify({ entite: entite, montant: montant, societe: societe }));
+            ['form-stepper','form-nav','step-desc','hs-form-wrapper','mandataire-section','assoc-section'].forEach(function(id) {
+              var el = document.getElementById(id);
+              if (el) el.style.display = 'none';
+            });
+            showNextSteps(entite, montant, societe);
+          } catch(e) {
+            var msg = 'Erreur après soumission — veuillez recharger la page. (' + (e.message || e) + ')';
+            var banner = document.getElementById('cb-step-err') || document.createElement('div');
+            banner.id = 'cb-step-err';
+            banner.style.cssText = 'background:#FEE2E2;border:1px solid #B04545;border-radius:2px;padding:0.6rem 1rem;margin:1rem 0;font-size:0.85rem;color:#B04545;font-family:Epilogue,sans-serif;';
+            banner.textContent = msg;
+            var nav = document.getElementById('form-nav');
+            if (nav) nav.parentNode.insertBefore(banner, nav);
+            console.error('[creabook] onFormSubmitted error:', e);
+          }
         }
       });
     </script>
