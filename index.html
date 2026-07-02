@@ -940,8 +940,8 @@
         }
         setHidden('cb_mdt_assoc_count',    _mdt.assocCount    || 0);
         setHidden('cb_mdt_nonassoc_count', _mdt.nonAssocCount || 0);
-        var AKEYS = ['nom','prenom','regime','role','nationalite','num_secu','profession','nb_parts','apport_num','apport_nat','apport_ind','acre'];
-        var NKEYS = ['nom','prenom','regime','role','nationalite','num_secu','profession'];
+        var AKEYS = ['nom','prenom','regime','role','nationalite','num_secu','profession','nb_parts','apport_num','apport_nat','apport_ind','acre','adresse','cp','ville','heberge','hbg_nom','hbg_prenom'];
+        var NKEYS = ['nom','prenom','regime','role','nationalite','num_secu','profession','adresse','cp','ville','heberge','hbg_nom','hbg_prenom'];
         for (var i = 0; i < 4; i++) {
           var a = _mdt.assoc[i] || {};
           AKEYS.forEach(function(k) {
@@ -971,6 +971,7 @@
           if (btn) {
             // Synchroniser les données mandataire vers les champs cachés HubSpot
             syncMdtToHubspot();
+            syncAssocToHubspot();
             if (_syncHebergeur) _syncHebergeur();
             // Retirer required de tous les fieldsets non visibles à cette étape
             // (approche directe via STEP_FS — plus fiable que le walk-up DOM)
@@ -1614,6 +1615,21 @@
           }
         }
         return null;
+      }
+
+      function syncAssocToHubspot() {
+        if (!_fDoc) return;
+        function setH(name, val) {
+          var inp = _fDoc.querySelector('input[name="' + name + '"]');
+          if (!inp) { inp = _fDoc.createElement('input'); inp.type = 'hidden'; inp.name = name; var f = _fDoc.querySelector('form'); if (f) f.appendChild(inp); }
+          inp.value = (val === null || val === undefined) ? '' : String(val);
+        }
+        setH('cb_assoc_count', _assoc.count || 0);
+        var KEYS = ['nom','prenom','email','phone','regime','num_secu','nb_parts','apport_num','apport_nat','apport_ind','adresse','cp','ville','heberge','hbg_nom','hbg_prenom'];
+        for (var i = 0; i < 4; i++) {
+          var a = _assoc.items[i] || {};
+          KEYS.forEach(function(k) { setH('cb_assoc_' + (i+1) + '_' + k, a[k] || ''); });
+        }
       }
 
       function initAssocSection() {
