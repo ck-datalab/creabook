@@ -610,10 +610,6 @@
         <div class="step-bubble">4</div>
         <span class="step-label">Associés</span>
       </div>
-      <div class="form-stepper-step" data-step="4">
-        <div class="step-bubble">5</div>
-        <span class="step-label">Documents</span>
-      </div>
     </div>
 
     <!-- Step description (updated dynamically) -->
@@ -788,14 +784,13 @@
       var _step = 0, _fDoc = null;
       var _hbg = { type: null, nom: '', prenom: '', societe: '', adresse: '', cp: '', ville: '' };
       var _syncHebergeur = null; // référence à syncToHubspot() initialisée dans wireHebergement
-      var TOTAL_STEPS = 5;
-      var STEP_FS = [ [0], [1], [], [], [2] ];
+      var TOTAL_STEPS = 4;
+      var STEP_FS = [ [0], [1, 2], [], [] ];
       var STEP_DESCS = [
         '<strong>Vos coordonnées</strong> — Identité, choix de l\'entité Cecca et type de parcours',
-        '<strong>Votre société</strong> — Dénomination, forme juridique, capital social, siège et banque',
+        '<strong>Votre société</strong> — Dénomination, forme juridique, capital social, siège, banque et justificatif de domicile',
         '<strong>Dirigeant(s)</strong> — Informations personnelles, apports et situation matrimoniale',
-        '<strong>Associés non mandataires</strong> — Associés non dirigeants, apports et domicile',
-        '<strong>Documents justificatifs</strong> — Pièces pour la société.'
+        '<strong>Associés non mandataires</strong> — Associés non dirigeants, apports et domicile'
       ];
 
       function applyDocConditionals() {
@@ -844,7 +839,7 @@
           assocSec.style.display = _step === 3 ? '' : 'none';
           if (_step === 3) assocRenderAll();
         }
-        if (_step === 4) applyDocConditionals();
+        if (_step === 1) applyDocConditionals();
       }
 
       function updateStepUI(skipScroll) {
@@ -918,9 +913,6 @@
         }
         // Validation hébergeur custom (step 1 seulement)
         if (_step === 1 && isValid) { isValid = validateHebergeur(); }
-        // Validation attestations hébergement personnelles (step 4 seulement)
-        var attestErr = null;
-        if (_step === 4 && isValid) { attestErr = validatePersonalAttestations(); if (attestErr) isValid = false; }
         // Show/hide inline error banner
         var errId = 'cb-step-err';
         var existing = document.getElementById(errId);
@@ -929,7 +921,7 @@
             var err = document.createElement('div');
             err.id = errId;
             err.style.cssText = 'background:#FEE2E2;border:1px solid #B04545;border-radius:2px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:#B04545;font-family:Epilogue,sans-serif;';
-            err.textContent = attestErr || 'Veuillez remplir tous les champs obligatoires avant de continuer.';
+            err.textContent = 'Veuillez remplir tous les champs obligatoires avant de continuer.';
             var nav = document.getElementById('form-nav');
             nav.parentNode.insertBefore(err, nav);
           } else { existing.style.display = ''; existing.textContent = attestErr || 'Veuillez remplir tous les champs obligatoires avant de continuer.'; }
@@ -1232,6 +1224,15 @@
         });
         var submitArea = doc.querySelector('.hs_submit');
         if (submitArea) submitArea.style.display = 'none';
+        // Ajouter un hint sous le label du justificatif de domicile société
+        var domSocWrapper = doc.querySelector('.hs_cb_doc_domicile_societe label');
+        if (domSocWrapper && !domSocWrapper.querySelector('.hs-field-desc')) {
+          var hint = doc.createElement('span');
+          hint.className = 'hs-field-desc';
+          hint.style.cssText = 'display:block;font-size:0.78rem;color:#666;margin-top:2px;font-weight:400;';
+          hint.textContent = 'Facture d\'électricité, d\'eau ou de gaz';
+          domSocWrapper.appendChild(hint);
+        }
         applyStepVisibility();
         updateStepUI(true);
       }
