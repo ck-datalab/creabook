@@ -331,7 +331,7 @@ app.post('/submit', async (req, res) => {
     [companyMapping.nom]: (s(soc.nom) || 'Société') + ' (En création)',
     siren_pappers:        '999999999',
     // Cycle de vie + source
-    lifecyclestage:       'Client',        // valeur interne HubSpot (confirmée par l'utilisateur)
+    lifecyclestage:       'customer',      // valeur interne HubSpot ('Client' est le label affiché)
     cb_source:            'Créabook',
     // Manager / entité
     cb_entite:            entiteLabel,
