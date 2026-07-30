@@ -376,8 +376,9 @@ app.post('/submit', async (req, res) => {
     cb_entite:          body.entity || 'cecca',
   };
 
-  if (ownerId)      dealProps.hubspot_owner_id = ownerId;
-  if (managerName)  dealProps.cb_manager       = managerName;
+  if (ownerId)                                          dealProps.hubspot_owner_id = ownerId;
+  if (managerName)                                      dealProps.cb_manager       = managerName;
+  if (managerName && MANAGER_SYNCHRO_VALID.has(managerName)) dealProps.manager    = managerName;
 
   for (const [crField, hsField] of Object.entries(dealMapping)) {
     const v = s(soc[crField]);
