@@ -1434,7 +1434,7 @@
         var uploads   = collected.uploads;
 
         Promise.all(uploads.map(function(u) {
-          return uploadFileToHS(u.file, u.label, u.personKey, u.folder);
+          return uploadFileToHS(u.file, u.label, u.personKey, u.folder, u.docKey);
         })).then(function(results) {
 
           // ── 1. Regrouper IDs + URLs par personne ──────────────────────
@@ -1446,10 +1446,10 @@
             if (r.id) {
               if (!fileIdsByPerson[r.personKey])  fileIdsByPerson[r.personKey]  = [];
               fileIdsByPerson[r.personKey].push(r.id);
-              if (r.docKey) {
-                if (!fileDocsByPerson[r.personKey]) fileDocsByPerson[r.personKey] = {};
-                fileDocsByPerson[r.personKey][r.docKey] = r.id;
-              }
+            }
+            if (r.docKey && r.url) {
+              if (!fileDocsByPerson[r.personKey]) fileDocsByPerson[r.personKey] = {};
+              fileDocsByPerson[r.personKey][r.docKey] = r.url;
             }
             if (r.url) { if (!fileUrlsByPerson[r.personKey]) fileUrlsByPerson[r.personKey] = []; fileUrlsByPerson[r.personKey].push(r.label + ' : ' + r.url); }
           });

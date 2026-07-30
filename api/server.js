@@ -525,17 +525,9 @@ async function hs(method, path, data) {
   return { code: res.status, data: await res.json() };
 }
 
-async function getFileUrl(fileId) {
-  if (!fileId) return null;
-  const r = await hs('GET', `/files/v3/files/${fileId}`, null);
-  return r.code < 300 ? (r.data.url || null) : null;
-}
-
-async function applyDocUrls(props, fileDocs, mapping) {
+function applyDocUrls(props, fileDocs, mapping) {
   for (const [docKey, hsProp] of Object.entries(mapping)) {
-    const fileId = (fileDocs || {})[docKey];
-    if (!fileId) continue;
-    const url = await getFileUrl(fileId);
+    const url = (fileDocs || {})[docKey];
     if (url) props[hsProp] = url;
   }
 }
@@ -565,7 +557,7 @@ async function createContactPP(d) {
   p.lifecyclestage   = 'customer';
   const ddn = ddmmyyyyToTs(d.ddn);
   if (ddn) p.date_of_birth = ddn;
-  await applyDocUrls(p, d.fileDocs, DOC_MAPPING_PP);
+  applyDocUrls(p, d.fileDocs,DOC_MAPPING_PP);
   const r = await hs('POST', '/crm/v3/objects/contacts', { properties: p });
   if (r.code < 300) return r.data.id || null;
   // 409 = contact déjà existant → patch avec nos données
@@ -591,7 +583,7 @@ async function createContactPM(d) {
   p.cb_type_personne = 'Personne Morale — Représentant Légal';
   p.cb_source        = 'Créabook';
   p.lifecyclestage   = 'customer';
-  await applyDocUrls(p, d.fileDocs, DOC_MAPPING_PM_RL);
+  applyDocUrls(p, d.fileDocs,DOC_MAPPING_PM_RL);
   const r = await hs('POST', '/crm/v3/objects/contacts', { properties: p });
   if (r.code < 300) return r.data.id || null;
   if (r.code === 409) {
@@ -619,7 +611,7 @@ async function createCompanyPM(d) {
   if (s(d.pm_pays))    p.country        = s(d.pm_pays);
   p.cb_source      = 'Créabook';
   p.lifecyclestage = 'customer';
-  await applyDocUrls(p, d.fileDocs, DOC_MAPPING_PM_COMPANY);
+  applyDocUrls(p, d.fileDocs,DOC_MAPPING_PM_COMPANY);
   const r = await hs('POST', '/crm/v3/objects/companies', { properties: p });
   return r.code < 300 ? (r.data.id || null) : null;
 }
