@@ -2068,8 +2068,8 @@
       }
       function wireBeList(card, key, arr, idx) {
         function wireBEItem(beEl, beData) {
-          beEl.querySelectorAll('[data-be-f]').forEach(function(inp) {
-            function saveBE() { beData[inp.getAttribute('data-be-f')] = inp.value; }
+          beEl.querySelectorAll('[data-f]').forEach(function(inp) {
+            function saveBE() { beData[inp.getAttribute('data-f')] = inp.value; }
             inp.addEventListener('input', saveBE);
             inp.addEventListener('change', saveBE);
           });
