@@ -314,9 +314,9 @@ app.post('/submit', async (req, res) => {
     capital:         'capital_pappers',
     objet:           'objet_social_pappers',
     // Siège social
-    siege_adresse:   'address',            // ← si non visible dans HubSpot, corriger ici
-    siege_cp:        'zip',
-    siege_ville:     'city',
+    siege_adresse:   'adresse_pappers',            // ← si non visible dans HubSpot, corriger ici
+    siege_cp:        'code_postal_pappers',
+    siege_ville:     'ville_pappers',
     // Infos Créa'Book
     date_debut:      'cb_date_debut_activite',
     type_parcours:   'cb_type_parcours',
@@ -486,6 +486,34 @@ function ddmmyyyyToTs(str) {
   return ts > 0 ? ts : null;
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+//  MAPPING : clé document Créabook  →  propriété HubSpot (URL fichier)
+//  Pour corriger un nom de propriété, modifiez uniquement la valeur à droite.
+// ════════════════════════════════════════════════════════════════════════════
+
+const DOC_MAPPING_PP = {
+  cni:                      'carte_didentite',
+  domicile:                 'cb_doc_domicile_dirigeant',
+  vitale:                   'cb_doc_vitale_dirigeant',
+  livret:                   'cb_doc_livret_famille',
+  diplome:                  'cb_doc_diplome_dirigeant',
+  attestation_hbg:          'cb_doc_attestation_hebergement',
+  cni_hbg:                  'cb_doc_cni_hebergeur',
+  domicile_hbg:             'cb_doc_domicile_hebergeur',
+  attestation_domiciliation:'cb_doc_attestation_domiciliation',
+};
+
+const DOC_MAPPING_PM_RL = {
+  pm_cni_rl:     'carte_didentite',
+  pm_cni_rp:     'cb_doc_cni_representant_permanent',
+  pm_domicile_rp:'cb_doc_domicile_representant_permanent',
+};
+
+const DOC_MAPPING_PM_COMPANY = {
+  pm_kbis: 'kbis_de_lentreprise',
+  pm_rbe:  'cb_doc_rbe',
+};
+
 async function hs(method, path, data) {
   const opts = {
     method,
@@ -494,6 +522,21 @@ async function hs(method, path, data) {
   if (data !== null) opts.body = JSON.stringify(data);
   const res = await fetch(`https://api.hubapi.com${path}`, opts);
   return { code: res.status, data: await res.json() };
+}
+
+async function getFileUrl(fileId) {
+  if (!fileId) return null;
+  const r = await hs('GET', `/files/v3/files/${fileId}`, null);
+  return r.code < 300 ? (r.data.url || null) : null;
+}
+
+async function applyDocUrls(props, fileDocs, mapping) {
+  for (const [docKey, hsProp] of Object.entries(mapping)) {
+    const fileId = (fileDocs || {})[docKey];
+    if (!fileId) continue;
+    const url = await getFileUrl(fileId);
+    if (url) props[hsProp] = url;
+  }
 }
 
 async function createContactPP(d) {
@@ -521,6 +564,7 @@ async function createContactPP(d) {
   p.lifecyclestage   = 'customer';
   const ddn = ddmmyyyyToTs(d.ddn);
   if (ddn) p.date_of_birth = ddn;
+  await applyDocUrls(p, d.fileDocs, DOC_MAPPING_PP);
   const r = await hs('POST', '/crm/v3/objects/contacts', { properties: p });
   if (r.code < 300) return r.data.id || null;
   // 409 = contact déjà existant → patch avec nos données
@@ -546,6 +590,7 @@ async function createContactPM(d) {
   p.cb_type_personne = 'Personne Morale — Représentant Légal';
   p.cb_source        = 'Créabook';
   p.lifecyclestage   = 'customer';
+  await applyDocUrls(p, d.fileDocs, DOC_MAPPING_PM_RL);
   const r = await hs('POST', '/crm/v3/objects/contacts', { properties: p });
   if (r.code < 300) return r.data.id || null;
   if (r.code === 409) {
@@ -573,6 +618,7 @@ async function createCompanyPM(d) {
   if (s(d.pm_pays))    p.country        = s(d.pm_pays);
   p.cb_source      = 'Créabook';
   p.lifecyclestage = 'customer';
+  await applyDocUrls(p, d.fileDocs, DOC_MAPPING_PM_COMPANY);
   const r = await hs('POST', '/crm/v3/objects/companies', { properties: p });
   return r.code < 300 ? (r.data.id || null) : null;
 }

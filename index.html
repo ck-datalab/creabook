@@ -566,6 +566,13 @@
   .mdt-doc-btn input[type="file"] { display: none; }
   .mdt-doc-fname { font-family: 'Epilogue', sans-serif; font-size: 0.78rem; color: var(--grey-400); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mdt-doc-fname.has-file { color: var(--green); font-weight: 500; }
+  .mdt-doc-del { display: none; flex-shrink: 0; width: 1.5rem; height: 1.5rem; border: 1px solid var(--grey-200); border-radius: 50%; background: white; cursor: pointer; font-size: 1rem; line-height: 1; color: var(--grey-400); align-items: center; justify-content: center; padding: 0; transition: border-color .15s, color .15s; }
+  .mdt-doc-del:hover { border-color: #C0184A; color: #C0184A; }
+  #cb-submit-overlay { display: none; position: fixed; inset: 0; background: rgba(10,10,10,0.65); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 1.25rem; }
+  #cb-submit-overlay.active { display: flex; }
+  .cb-spinner { width: 2.75rem; height: 2.75rem; border: 3px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: cb-spin 0.75s linear infinite; }
+  @keyframes cb-spin { to { transform: rotate(360deg); } }
+  .cb-submit-msg { color: white; font-family: 'Epilogue', sans-serif; font-size: 0.95rem; font-weight: 500; letter-spacing: 0.02em; }
   .mdt-hbg-block { margin-top: 1rem; }
   .mdt-hbg-block .mdt-lbl { display: block; margin-bottom: 0.4rem; }
   .mdt-radio-row { display: flex; gap: 2rem; margin-top: 0.35rem; }
@@ -576,6 +583,22 @@
     .mdt-counts, .mdt-row, .mdt-row-3 { grid-template-columns: 1fr; }
     .mdt-doc-row { flex-wrap: wrap; }
   }
+  /* ── Draft mode ──────────────────────────────────────────────────────────── */
+  #cb-draft-banner { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: #FEF3C7; border-bottom: 2px solid #D97706; padding: 0.6rem 1.5rem; font-family: 'Epilogue', sans-serif; font-size: 0.88rem; color: #78350F; text-align: center; }
+  #cb-draft-banner.active { display: block; }
+  body.cb-draft-client { padding-top: 2.5rem; }
+  #cb-draft-modal { display: none; position: fixed; inset: 0; background: rgba(10,10,10,0.6); z-index: 10000; align-items: center; justify-content: center; }
+  #cb-draft-modal.active { display: flex; }
+  .cb-draft-modal-box { background: white; border-radius: 4px; padding: 2rem; max-width: 560px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .cb-draft-modal-box h3 { font-family: 'Epilogue', sans-serif; font-size: 1.1rem; font-weight: 700; color: #0A1338; margin: 0 0 0.4rem; }
+  .cb-draft-modal-box p { font-family: 'Epilogue', sans-serif; font-size: 0.86rem; color: #555; margin: 0 0 1rem; }
+  .cb-draft-url-row { display: flex; gap: 0.5rem; align-items: stretch; }
+  #cb-draft-url-inp { flex: 1; font-family: monospace; font-size: 0.78rem; border: 1px solid #D0D0D0; border-radius: 2px; padding: 0.4rem 0.6rem; background: #F5F5F3; color: #333; }
+  .cb-draft-copy-btn { flex-shrink: 0; padding: 0.4rem 0.9rem; background: #0A1338; color: white; border: none; border-radius: 2px; font-family: 'Epilogue', sans-serif; font-size: 0.82rem; cursor: pointer; }
+  .cb-draft-close-btn { margin-top: 0.85rem; display: block; width: 100%; padding: 0.5rem; background: none; border: 1px solid #D0D0D0; border-radius: 2px; font-family: 'Epilogue', sans-serif; font-size: 0.85rem; cursor: pointer; color: #555; }
+  #cb-btn-draft { margin-top: 0.65rem; width: 100%; padding: 0.5rem 1rem; background: none; border: 1px dashed var(--blue); border-radius: 2px; color: var(--blue); font-family: 'Epilogue', sans-serif; font-size: 0.83rem; cursor: pointer; text-align: center; transition: background .15s; }
+  #cb-btn-draft:hover { background: var(--blue-mist); }
+  .cb-draft-locked { opacity: 0.55; cursor: not-allowed !important; background: #F0F0EE !important; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -603,20 +626,24 @@
 
     <!-- Step indicator -->
     <div class="form-stepper" id="form-stepper">
-      <div class="form-stepper-step active" data-step="0">
+      <div class="form-stepper-step active" data-step="-1">
         <div class="step-bubble">1</div>
+        <span class="step-label">Propriétaire</span>
+      </div>
+      <div class="form-stepper-step" data-step="0">
+        <div class="step-bubble">2</div>
         <span class="step-label">Identification</span>
       </div>
       <div class="form-stepper-step" data-step="1">
-        <div class="step-bubble">2</div>
+        <div class="step-bubble">3</div>
         <span class="step-label">Société</span>
       </div>
       <div class="form-stepper-step" data-step="2">
-        <div class="step-bubble">3</div>
+        <div class="step-bubble">4</div>
         <span class="step-label">Dirigeant(s)</span>
       </div>
       <div class="form-stepper-step" data-step="3">
-        <div class="step-bubble">4</div>
+        <div class="step-bubble">5</div>
         <span class="step-label">Associés</span>
       </div>
     </div>
@@ -627,9 +654,20 @@
 
 
 
+    <!-- Étape 0 : Propriétaire de la transaction -->
+    <div id="owner-panel">
+      <div class="mdt-fg" style="max-width:420px">
+        <label class="mdt-lbl" for="owner-select">Propriétaire de la transaction <span style="color:#C0184A">*</span></label>
+        <select id="owner-select" class="mdt-inp" style="height:46px;padding:0 0.9rem;cursor:pointer">
+          <option value="">— Chargement des collaborateurs…</option>
+        </select>
+        <div id="owner-err" style="display:none;margin-top:0.5rem;font-size:0.83rem;color:#B04545;font-family:Epilogue,sans-serif;">Veuillez sélectionner un propriétaire pour continuer.</div>
+      </div>
+    </div>
+
     <!-- HubSpot Form Embed -->
-    <div id="hs-diag" style="padding:1rem;color:#666;font-family:Epilogue,sans-serif;font-size:0.85rem;">Chargement du formulaire…</div>
-    <div id="hs-form-wrapper"></div>
+    <div id="hs-diag" style="display:none;padding:1rem;color:#666;font-family:Epilogue,sans-serif;font-size:0.85rem;">Chargement du formulaire…</div>
+    <div id="hs-form-wrapper" style="display:none"></div>
 
     <!-- Mandataire step (custom, hors iframe HubSpot) -->
     <div id="mandataire-section" style="display:none;">
@@ -665,6 +703,7 @@
       <span class="form-step-counter" id="form-step-counter">Étape 1 / 5</span>
       <button class="form-nav-btn primary" id="btn-next" onclick="formNextStep()">Suivant →</button>
     </div>
+    <button id="cb-btn-draft" onclick="generateDraftLink()">Formulaire non terminé — Générer un lien client</button>
 
     <!-- Post-submission: virement section -->
     <div id="next-steps" class="next-steps">
@@ -773,7 +812,7 @@
         ['rib-montant','rib-montant-2'].forEach(function(id){ var el = document.getElementById(id); if (el) el.textContent = label; });
         ['rib-beneficiaire','rib-beneficiaire-2'].forEach(function(id){ var el = document.getElementById(id); if (el) el.textContent = rib.beneficiaire; });
         ['rib-banque','rib-iban','rib-bic'].forEach(function(id){ var el = document.getElementById(id); if (el) el.textContent = rib[id.replace('rib-','')]; });
-        if (societe) { var lib = document.getElementById('rib-libelle'); if (lib) lib.textContent = societe; }
+        if (societe) { var lib = document.getElementById('rib-libelle'); if (lib) lib.textContent = 'Acompte Création - ' + societe; }
         var panel = document.getElementById('next-steps');
         if (!panel) return;
         panel.classList.add('visible');
@@ -790,17 +829,19 @@
       }
 
       // ── Multi-step state ───────────────────────────────────────────
-      var _step = 0, _fDoc = null;
+      var _step = -1, _fDoc = null;
+      var _selectedOwner = { name: '', id: '' };
       var _hbg = { type: null, nom: '', prenom: '', societe: '', adresse: '', cp: '', ville: '' };
       var _syncHebergeur = null; // référence à syncToHubspot() initialisée dans wireHebergement
       var TOTAL_STEPS = 4;
       var STEP_FS = [ [0], [1, 2], [], [] ];
-      var STEP_DESCS = [
-        '<strong>Vos coordonnées</strong> — Identité, choix de l\'entité Cecca et type de parcours',
-        '<strong>Votre société</strong> — Dénomination, forme juridique, capital social, siège, banque et justificatif de domicile',
-        '<strong>Dirigeant(s)</strong> — Informations personnelles, apports et situation matrimoniale',
-        '<strong>Associés non mandataires</strong> — Associés non dirigeants, apports et domicile'
-      ];
+      var STEP_DESCS = {
+        '-1': '<strong>Propriétaire de la transaction</strong> — Sélectionnez le collaborateur Cecca responsable de ce dossier',
+        0:    '<strong>Vos coordonnées</strong> — Identité, choix de l\'entité Cecca et type de parcours',
+        1:    '<strong>Votre société</strong> — Dénomination, forme juridique, capital social, siège, banque et justificatif de domicile',
+        2:    '<strong>Dirigeant(s)</strong> — Informations personnelles, apports et situation matrimoniale',
+        3:    '<strong>Associés non mandataires</strong> — Associés non dirigeants, apports et domicile',
+      };
 
       function applyDocConditionals() {
         if (!_fDoc) return;
@@ -853,13 +894,28 @@
 
       function applyStepVisibility() {
         if (!_fDoc) return;
-        var fss = _fDoc.querySelectorAll('form fieldset');
+        var ownerPanel = document.getElementById('owner-panel');
+        var hsWrapper  = document.getElementById('hs-form-wrapper');
+        var mdtSec     = document.getElementById('mandataire-section');
+        var assocSec   = document.getElementById('assoc-section');
+        var draftBtn   = document.getElementById('cb-btn-draft');
+
+        if (_step === -1) {
+          if (ownerPanel) ownerPanel.style.display = '';
+          if (hsWrapper)  hsWrapper.style.display  = 'none';
+          if (mdtSec)     mdtSec.style.display     = 'none';
+          if (assocSec)   assocSec.style.display   = 'none';
+          if (draftBtn && !_draftMode.active) draftBtn.style.display = 'none';
+          return;
+        }
+
+        if (ownerPanel) ownerPanel.style.display = 'none';
+        if (draftBtn && !_draftMode.active) draftBtn.style.display = '';
+
+        var fss = _fDoc ? _fDoc.querySelectorAll('form fieldset') : [];
         for (var i = 0; i < fss.length; i++) fss[i].style.display = 'none';
-        var groups = STEP_FS[_step];
+        var groups = STEP_FS[_step] || [];
         for (var g = 0; g < groups.length; g++) { if (fss[groups[g]]) fss[groups[g]].style.setProperty('display','block','important'); }
-        var hsWrapper = document.getElementById('hs-form-wrapper');
-        var mdtSec   = document.getElementById('mandataire-section');
-        var assocSec = document.getElementById('assoc-section');
         if (hsWrapper) hsWrapper.style.display = (_step === 2 || _step === 3) ? 'none' : '';
         if (mdtSec) {
           mdtSec.style.display = _step === 2 ? '' : 'none';
@@ -876,15 +932,20 @@
         var dots = document.querySelectorAll('#form-stepper .form-stepper-step');
         for (var i = 0; i < dots.length; i++) {
           dots[i].classList.remove('active','done');
-          if (i < _step) dots[i].classList.add('done');
-          if (i === _step) dots[i].classList.add('active');
+          if (_step === -1) {
+            if (i === 0) dots[i].classList.add('active');
+          } else {
+            if (i === 0) dots[i].classList.add('done');
+            else if (i - 1 < _step) dots[i].classList.add('done');
+            else if (i - 1 === _step) dots[i].classList.add('active');
+          }
         }
         var desc = document.getElementById('step-desc');
-        if (desc) desc.innerHTML = STEP_DESCS[_step];
+        if (desc) desc.innerHTML = STEP_DESCS[_step] || '';
         var ctr = document.getElementById('form-step-counter');
-        if (ctr) ctr.textContent = 'Étape ' + (_step + 1) + ' / ' + TOTAL_STEPS;
+        if (ctr) ctr.textContent = 'Etape ' + (_step + 2) + ' / ' + (TOTAL_STEPS + 1);
         var prev = document.getElementById('btn-prev');
-        if (prev) prev.style.visibility = _step > 0 ? 'visible' : 'hidden';
+        if (prev) prev.style.visibility = _step >= 0 ? 'visible' : 'hidden';
         var next = document.getElementById('btn-next');
         if (next) {
           if (_step === TOTAL_STEPS - 1) { next.textContent = 'Envoyer le dossier'; next.className = 'form-nav-btn submit-btn'; }
@@ -893,7 +954,12 @@
         if (!skipScroll) document.querySelector('.form-card').scrollIntoView({ behavior:'smooth', block:'start' });
       }
 
-      function formPrevStep() { if (_step > 0) { _step--; applyStepVisibility(); updateStepUI(); } }
+      function formPrevStep() {
+        if (_step === 0) { _step = -1; }
+        else if (_step > 0) { _step--; }
+        else return;
+        applyStepVisibility(); updateStepUI();
+      }
 
       // ── Step validation ────────────────────────────────────────────
       function validateHebergeur() {
@@ -913,6 +979,16 @@
       }
 
       function validateCurrentStep() {
+        if (_step === -1) {
+          var sel = document.getElementById('owner-select');
+          var err = document.getElementById('owner-err');
+          if (!sel || !sel.value) {
+            if (err) err.style.display = '';
+            return false;
+          }
+          if (err) err.style.display = 'none';
+          return true;
+        }
         if (_step === 2) return validateMandataireStep();
         if (_step === 3) return validateAssocStep();
         if (!_fDoc) return true;
@@ -926,6 +1002,8 @@
           for (var i = 0; i < inputs.length; i++) {
             var inp = inputs[i];
             if (inp.type === 'hidden') continue;
+            if (inp.style.display === 'none') continue;
+            if (inp.disabled) continue;
             var wrapper = inp.closest('.hs-form-field');
             if (wrapper && wrapper.style.display === 'none') continue;
             if (inp.readOnly) {
@@ -973,8 +1051,8 @@
         }
         setHidden('cb_mdt_assoc_count',    _mdt.assocCount    || 0);
         setHidden('cb_mdt_nonassoc_count', _mdt.nonAssocCount || 0);
-        var AKEYS = ['nom','prenom','email','phone','regime','role','nationalite','num_secu','profession','nb_parts','apport_num','apport_nat','apport_ind','acre','adresse','cp','ville','heberge','hbg_type','hbg_nom','hbg_prenom','hbg_societe','hbg_siren','pm_type','pm_denom','pm_forme','pm_capital','pm_siren','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays','pm_email','pm_tel','pm_rl_nom','pm_rl_prenom','pm_rl_qualite','pm_rl_email','pm_rl_tel','pm_nb_parts','pm_apport_num','pm_apport_nat','pm_fonction','pm_rp_nom','pm_rp_prenom','pm_rp_ddn','pm_rp_lieu','pm_rp_nationalite','pm_rp_adresse','pm_rp_email','pm_rp_tel','pm_rp_num_secu','pm_rp_regime'];
-        var NKEYS = ['nom','prenom','email','phone','regime','role','nationalite','num_secu','profession','adresse','cp','ville','heberge','hbg_type','hbg_nom','hbg_prenom','hbg_societe','hbg_siren','pm_type','pm_denom','pm_forme','pm_capital','pm_siren','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays','pm_email','pm_tel','pm_rl_nom','pm_rl_prenom','pm_rl_qualite','pm_rl_email','pm_rl_tel','pm_nb_parts','pm_apport_num','pm_apport_nat','pm_fonction','pm_rp_nom','pm_rp_prenom','pm_rp_ddn','pm_rp_lieu','pm_rp_nationalite','pm_rp_adresse','pm_rp_email','pm_rp_tel','pm_rp_num_secu','pm_rp_regime'];
+        var AKEYS = ['nom','prenom','email','phone','regime','role','nationalite','ddn','num_secu','profession','nb_parts','apport_num','apport_nat','apport_ind','acre','adresse','cp','ville','heberge','hbg_type','hbg_nom','hbg_prenom','hbg_societe','hbg_siren','pm_type','pm_denom','pm_forme','pm_capital','pm_siren','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays','pm_email','pm_tel','pm_rl_nom','pm_rl_prenom','pm_rl_qualite','pm_rl_email','pm_rl_tel','pm_nb_parts','pm_apport_num','pm_apport_nat','pm_fonction','pm_rp_nom','pm_rp_prenom','pm_rp_ddn','pm_rp_lieu','pm_rp_nationalite','pm_rp_adresse','pm_rp_email','pm_rp_tel','pm_rp_num_secu','pm_rp_regime'];
+        var NKEYS = ['nom','prenom','email','phone','regime','role','nationalite','ddn','num_secu','profession','adresse','cp','ville','heberge','hbg_type','hbg_nom','hbg_prenom','hbg_societe','hbg_siren','pm_type','pm_denom','pm_forme','pm_capital','pm_siren','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays','pm_email','pm_tel','pm_rl_nom','pm_rl_prenom','pm_rl_qualite','pm_rl_email','pm_rl_tel','pm_nb_parts','pm_apport_num','pm_apport_nat','pm_fonction','pm_rp_nom','pm_rp_prenom','pm_rp_ddn','pm_rp_lieu','pm_rp_nationalite','pm_rp_adresse','pm_rp_email','pm_rp_tel','pm_rp_num_secu','pm_rp_regime'];
         for (var i = 0; i < 4; i++) {
           var a = _mdt.assoc[i] || {};
           AKEYS.forEach(function(k) {
@@ -1004,9 +1082,238 @@
         }
       }
 
-      var UPLOAD_URL = '/creabook/upload.php';
-      var TOKEN_URL  = '/creabook/token.php';
-      var SUBMIT_URL = '/creabook/submit.php';
+      var UPLOAD_URL = '/upload';
+      var TOKEN_URL  = '/token';
+      var SUBMIT_URL = '/submit';
+      var DRAFT_URL  = '/draft';
+
+      var _pendingDraft = null;
+      var _draftMode    = { active: false, filledByCollab: {}, companyId: null };
+
+      function collectFormState() {
+        var hsFields = {};
+        if (_fDoc) {
+          _fDoc.querySelectorAll('input[name], select[name], textarea[name]').forEach(function(el) {
+            if (el.type === 'hidden') return;
+            hsFields[el.name] = el.value;
+          });
+        }
+        var mdtClean = {
+          assocCount:       _mdt.assocCount,
+          nonAssocCount:    _mdt.nonAssocCount,
+          contactPrincipal: _mdt.contactPrincipal,
+          assoc:    (_mdt.assoc || []).map(function(a) { var o = {}; if (a) Object.keys(a).forEach(function(k) { if (k !== 'files') o[k] = a[k]; }); return o; }),
+          nonAssoc: (_mdt.nonAssoc || []).map(function(a) { var o = {}; if (a) Object.keys(a).forEach(function(k) { if (k !== 'files') o[k] = a[k]; }); return o; }),
+        };
+        var assocClean = {
+          count: _assoc.count,
+          items: (_assoc.items || []).map(function(a) { var o = {}; if (a) Object.keys(a).forEach(function(k) { if (k !== 'files') o[k] = a[k]; }); return o; }),
+        };
+        return { hsFields: hsFields, mdt: mdtClean, assoc: assocClean, owner: _selectedOwner };
+      }
+
+      function collectFilledByCollab() {
+        var state = collectFormState();
+        var filled = {};
+        if (_selectedOwner.name) filled['owner'] = true;
+        Object.keys(state.hsFields).forEach(function(name) {
+          if (state.hsFields[name] && String(state.hsFields[name]).trim()) filled['hs:' + name] = true;
+        });
+        var FIELDS = ['nom','prenom','email','phone','regime','role','nationalite','ddn','num_secu','profession',
+          'nb_parts','apport_num','apport_nat','apport_ind','acre','adresse','cp','ville',
+          'heberge','hbg_type','hbg_nom','hbg_prenom','hbg_societe','hbg_siren','pm_type',
+          'pm_denom','pm_forme','pm_capital','pm_siren','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays',
+          'pm_email','pm_tel','pm_rl_nom','pm_rl_prenom','pm_rl_qualite','pm_rl_email','pm_rl_tel',
+          'pm_nb_parts','pm_apport_num','pm_apport_nat','pm_fonction'];
+        for (var i = 0; i < 4; i++) {
+          var a = (state.mdt.assoc || [])[i] || {};
+          FIELDS.forEach(function(k) { var v = a[k]; if (v !== undefined && v !== null && v !== '' && v !== false) filled['mdt:a:' + i + ':' + k] = true; });
+          var n = (state.mdt.nonAssoc || [])[i] || {};
+          FIELDS.forEach(function(k) { var v = n[k]; if (v !== undefined && v !== null && v !== '' && v !== false) filled['mdt:n:' + i + ':' + k] = true; });
+          var as = (state.assoc.items || [])[i] || {};
+          FIELDS.forEach(function(k) { var v = as[k]; if (v !== undefined && v !== null && v !== '' && v !== false) filled['assoc:' + i + ':' + k] = true; });
+        }
+        return filled;
+      }
+
+      function applyHsLocks() {
+        if (!_draftMode.active || !_fDoc) return;
+        var fbc = _draftMode.filledByCollab;
+        _fDoc.querySelectorAll('input[name], select[name], textarea[name]').forEach(function(el) {
+          if (el.type === 'hidden') return;
+          if (!fbc['hs:' + el.name]) return;
+          // readOnly for text/textarea (value still submits); disabled for select/radio/checkbox
+          if (el.tagName === 'INPUT' && el.type !== 'radio' && el.type !== 'checkbox') {
+            el.readOnly = true;
+          } else {
+            el.disabled = true;
+          }
+          el.setAttribute('tabindex', '-1');
+          el.classList.add('cb-draft-locked');
+          var wrapper = el.closest('.hs-form-field');
+          if (wrapper) {
+            wrapper.classList.add('cb-draft-locked-field');
+            wrapper.style.pointerEvents = 'none';
+          }
+          // Block the chosen.js visual widget for selects
+          if (el.tagName === 'SELECT') {
+            var chz = el.nextElementSibling;
+            if (chz && chz.classList.contains('chosen-container')) {
+              chz.style.pointerEvents = 'none';
+              chz.style.opacity = '0.55';
+            }
+          }
+        });
+      }
+
+      function applyCardLocks(cardEl, prefix, cardKey) {
+        if (!_draftMode.active) return;
+        var fbc = _draftMode.filledByCollab;
+        cardEl.querySelectorAll('[data-f]').forEach(function(inp) {
+          var field = inp.getAttribute('data-f');
+          if (!fbc[prefix + ':' + field]) return;
+          inp.classList.add('cb-draft-locked');
+          inp.setAttribute('tabindex', '-1');
+          if (inp.tagName === 'SELECT') {
+            // pointer-events on wrapper — select stays functional for data submission
+            var fg = inp.closest('.mdt-fg');
+            if (fg) fg.style.pointerEvents = 'none';
+          } else {
+            inp.readOnly = true;
+          }
+        });
+        [['mdt-hbg-' + cardKey, 'heberge'], ['mdt-hbg-type-' + cardKey, 'hbg_type'], ['mdt-type-' + cardKey, 'pm_type'],
+         ['assoc-hbg-' + cardKey, 'heberge'], ['assoc-hbg-type-' + cardKey, 'hbg_type'], ['assoc-type-' + cardKey, 'pm_type']
+        ].forEach(function(pair) {
+          if (!fbc[prefix + ':' + pair[1]]) return;
+          cardEl.querySelectorAll('input[name="' + pair[0] + '"]').forEach(function(r) {
+            r.classList.add('cb-draft-locked');
+            r.setAttribute('tabindex', '-1');
+            var lbl = r.closest('label') || r.parentNode;
+            if (lbl) lbl.style.pointerEvents = 'none';
+          });
+        });
+        var acreCb = cardEl.querySelector('#mdt-acre-cb-' + cardKey);
+        if (acreCb && fbc[prefix + ':acre']) {
+          acreCb.classList.add('cb-draft-locked');
+          acreCb.setAttribute('tabindex', '-1');
+          var acreLbl = acreCb.closest('label') || acreCb.parentNode;
+          if (acreLbl) acreLbl.style.pointerEvents = 'none';
+        }
+      }
+
+      function initFromDraft(data) {
+        _draftMode.active         = true;
+        _draftMode.filledByCollab = data.filledByCollab || {};
+        _draftMode.companyId      = data.companyId || null;
+        var state = data.state || {};
+
+        // Restaurer et verrouiller le propriétaire
+        if (state.owner && state.owner.name) {
+          _selectedOwner = state.owner;
+          // Passer directement à l'étape 0 (le client ne voit pas l'étape propriétaire)
+          _step = 0;
+          var sel = document.getElementById('owner-select');
+          if (sel) {
+            var opt = document.createElement('option');
+            opt.value = _selectedOwner.name;
+            opt.dataset.id = _selectedOwner.id || '';
+            opt.textContent = _selectedOwner.name;
+            sel.innerHTML = '';
+            sel.appendChild(opt);
+            sel.value = _selectedOwner.name;
+            sel.disabled = true;
+            sel.classList.add('cb-draft-locked');
+          }
+        }
+
+        if (state.hsFields && _fDoc) {
+          Object.keys(state.hsFields).forEach(function(name) {
+            var el = _fDoc.querySelector('[name="' + name + '"]');
+            if (!el) return;
+            el.value = state.hsFields[name];
+            if (el.tagName === 'SELECT') {
+              var evt = document.createEvent('HTMLEvents');
+              evt.initEvent('change', true, false);
+              el.dispatchEvent(evt);
+            }
+          });
+          applyHsLocks();
+        }
+
+        if (state.mdt) {
+          _mdt.assocCount       = state.mdt.assocCount    || 0;
+          _mdt.nonAssocCount    = state.mdt.nonAssocCount || 0;
+          _mdt.contactPrincipal = state.mdt.contactPrincipal || null;
+          _mdt.assoc    = (state.mdt.assoc    || []).map(function(x) { return x || {}; });
+          _mdt.nonAssoc = (state.mdt.nonAssoc || []).map(function(x) { return x || {}; });
+          var aiEl = document.getElementById('mdt-assoc-in');
+          var niEl = document.getElementById('mdt-nonassoc-in');
+          if (aiEl) aiEl.value = _mdt.assocCount;
+          if (niEl) niEl.value = _mdt.nonAssocCount;
+          mdtRenderAll();
+        }
+
+        if (state.assoc) {
+          _assoc.count = state.assoc.count || 0;
+          _assoc.items = (state.assoc.items || []).map(function(x) { return x || {}; });
+          var ciEl = document.querySelector('#assoc-section .mdt-count-inp');
+          if (ciEl) ciEl.value = _assoc.count;
+          assocRenderAll();
+        }
+
+        var banner = document.getElementById('cb-draft-banner');
+        if (banner) { banner.classList.add('active'); document.body.classList.add('cb-draft-client'); }
+        var draftBtn = document.getElementById('cb-btn-draft');
+        if (draftBtn) draftBtn.style.display = 'none';
+
+        // Appliquer l'affichage correct après restauration de _step
+        applyStepVisibility();
+        updateStepUI(true);
+      }
+
+      function generateDraftLink() {
+        var btn = document.getElementById('cb-btn-draft');
+        if (btn) { btn.disabled = true; btn.textContent = 'Génération en cours…'; }
+        showOverlay('Génération du lien client…');
+        var state = collectFormState();
+        var filledByCollab = collectFilledByCollab();
+        getOneToken().then(function(tok) {
+          return fetch(DRAFT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: tok, state: state, filledByCollab: filledByCollab }),
+          });
+        }).then(function(r) { return r.json(); }).then(function(d) {
+          hideOverlay();
+          if (!d.ok) throw new Error(d.error || 'Erreur serveur');
+          if (btn) btn.style.display = 'none';
+          showDraftModal(d.url);
+        }).catch(function(e) {
+          hideOverlay();
+          if (btn) { btn.disabled = false; btn.textContent = 'Formulaire non terminé — Générer un lien client'; }
+          alert('Erreur : ' + e.message);
+        });
+      }
+
+      function showDraftModal(url) {
+        var inp = document.getElementById('cb-draft-url-inp');
+        if (inp) inp.value = url;
+        var modal = document.getElementById('cb-draft-modal');
+        if (modal) modal.classList.add('active');
+      }
+      function hideDraftModal() {
+        var modal = document.getElementById('cb-draft-modal');
+        if (modal) modal.classList.remove('active');
+      }
+      function copyDraftUrl() {
+        var inp = document.getElementById('cb-draft-url-inp');
+        if (!inp) return;
+        inp.select();
+        try { document.execCommand('copy'); } catch(e) { if (navigator.clipboard) navigator.clipboard.writeText(inp.value); }
+        var btn = document.querySelector('.cb-draft-copy-btn');
+        if (btn) { btn.textContent = 'Copié !'; setTimeout(function() { btn.textContent = 'Copier'; }, 2000); }
+      }
 
       function getOneToken() {
         return fetch(TOKEN_URL, { cache: 'no-store' })
@@ -1014,7 +1321,7 @@
           .then(function(t) { if (!t.token) throw new Error('Token manquant'); return t.token; });
       }
 
-      function uploadFileToHS(file, label, personKey, folder) {
+      function uploadFileToHS(file, label, personKey, folder, docKey) {
         return getOneToken()
           .then(function(token) {
             var fd = new FormData();
@@ -1024,8 +1331,8 @@
             return fetch(UPLOAD_URL, { method: 'POST', body: fd });
           })
           .then(function(r) { return r.json(); })
-          .then(function(d) { return { label: label, personKey: personKey, id: d.id || null, url: d.url || null, error: d.error || null }; })
-          .catch(function(e) { return { label: label, personKey: personKey, id: null, url: null, error: e.message }; });
+          .then(function(d) { return { label: label, personKey: personKey, docKey: docKey || null, id: d.id || null, url: d.url || null, error: d.error || null }; })
+          .catch(function(e) { return { label: label, personKey: personKey, docKey: docKey || null, id: null, url: null, error: e.message }; });
       }
 
       function collectAllFiles() {
@@ -1041,7 +1348,7 @@
           if (!dataObj || !dataObj.files) return;
           Object.keys(dataObj.files).forEach(function(k) {
             var f = dataObj.files[k];
-            if (f instanceof File) uploads.push({ file: f, label: labelPrefix + ' — ' + k, personKey: personKey, folder: folder });
+            if (f instanceof File) uploads.push({ file: f, label: labelPrefix + ' — ' + k, personKey: personKey, folder: folder, docKey: k });
           });
         }
 
@@ -1050,7 +1357,7 @@
         for (var k = 0; k < (_assoc.count || 0); k++)       addFiles(_assoc.items[k],  'assoc_' + k, 'Associé ' + (k+1));
         if (_fDoc) {
           _fDoc.querySelectorAll('input[type="file"]').forEach(function(inp) {
-            if (inp.files && inp.files[0]) uploads.push({ file: inp.files[0], label: 'Société — ' + (inp.name || 'doc'), personKey: 'societe', folder: folder });
+            if (inp.files && inp.files[0]) uploads.push({ file: inp.files[0], label: 'Société — ' + (inp.name || 'doc'), personKey: 'societe', folder: folder, docKey: inp.name || 'doc' });
           });
         }
         return { uploads: uploads, folder: folder };
@@ -1062,7 +1369,7 @@
         return el ? el.value.trim() : '';
       }
 
-      function buildPersonData(d, fileIdsByPerson, key) {
+      function buildPersonData(d, fileIdsByPerson, fileDocsByPerson, key) {
         return {
           pm_type:      d.pm_type || 'pp',
           nom:          d.nom          || '',
@@ -1071,6 +1378,7 @@
           phone:        d.phone        || '',
           role:         d.role         || '',
           ddn:          d.ddn          || '',
+          num_secu:     d.num_secu     || '',
           nationalite:  d.nationalite  || '',
           adresse:      d.adresse      || '',
           cp:           d.cp           || '',
@@ -1099,13 +1407,28 @@
           pm_rl_qualite: d.pm_rl_qualite || '',
           pm_rl_email:   d.pm_rl_email   || '',
           pm_rl_tel:     d.pm_rl_tel     || '',
-          fileIds:       fileIdsByPerson[key] || [],
+          fileIds:       fileIdsByPerson[key]  || [],
+          fileDocs:      fileDocsByPerson[key] || {},
         };
       }
 
+      function showOverlay(msg) {
+        var o = document.getElementById('cb-submit-overlay');
+        var m = document.getElementById('cb-submit-msg');
+        if (m) m.textContent = msg || 'Envoi en cours…';
+        if (o) o.classList.add('active');
+      }
+      function hideOverlay() {
+        var o = document.getElementById('cb-submit-overlay');
+        if (o) o.classList.remove('active');
+      }
+
       function uploadAllAndSubmit() {
-        var navBtn = document.getElementById('form-next-btn');
-        if (navBtn) { navBtn.disabled = true; navBtn.textContent = 'Envoi des documents…'; }
+        var navBtn = document.getElementById('btn-next');
+        if (navBtn) { navBtn.disabled = true; navBtn.textContent = 'Envoi…'; }
+        showOverlay('En cours d\'envoi…');
+        var _capturedEntity = '';
+        var _capturedNom    = '';
 
         var collected = collectAllFiles();
         var uploads   = collected.uploads;
@@ -1116,10 +1439,18 @@
 
           // ── 1. Regrouper IDs + URLs par personne ──────────────────────
           var fileIdsByPerson  = {};
+          var fileDocsByPerson = {}; // { personKey: { docKey: fileId } }
           var fileUrlsByPerson = {};
           results.forEach(function(r) {
             if (!r || !r.personKey) return;
-            if (r.id)  { if (!fileIdsByPerson[r.personKey])  fileIdsByPerson[r.personKey]  = []; fileIdsByPerson[r.personKey].push(r.id); }
+            if (r.id) {
+              if (!fileIdsByPerson[r.personKey])  fileIdsByPerson[r.personKey]  = [];
+              fileIdsByPerson[r.personKey].push(r.id);
+              if (r.docKey) {
+                if (!fileDocsByPerson[r.personKey]) fileDocsByPerson[r.personKey] = {};
+                fileDocsByPerson[r.personKey][r.docKey] = r.id;
+              }
+            }
             if (r.url) { if (!fileUrlsByPerson[r.personKey]) fileUrlsByPerson[r.personKey] = []; fileUrlsByPerson[r.personKey].push(r.label + ' : ' + r.url); }
           });
 
@@ -1141,37 +1472,68 @@
             urlInp.value = allUrls.join('\n');
           }
 
+          // ── 3. Capturer toutes les valeurs du formulaire AVANT de le soumettre ──
+          // (HubSpot remplace le DOM après soumission, fv() retournerait '' ensuite)
+          var mdtAssocArr = [];
+          for (var i = 0; i < (_mdt.assocCount || 0); i++)    mdtAssocArr.push(buildPersonData(_mdt.assoc[i]    || {}, fileIdsByPerson, fileDocsByPerson, 'mdt_a_' + i));
+          var mdtNonAssocArr = [];
+          for (var j = 0; j < (_mdt.nonAssocCount || 0); j++) mdtNonAssocArr.push(buildPersonData(_mdt.nonAssoc[j] || {}, fileIdsByPerson, fileDocsByPerson, 'mdt_n_' + j));
+          var assocNonMdtArr = [];
+          for (var k = 0; k < (_assoc.count || 0); k++)        assocNonMdtArr.push(buildPersonData(_assoc.items[k]  || {}, fileIdsByPerson, fileDocsByPerson, 'assoc_' + k));
+
+          var _hebergeChk = _fDoc && _fDoc.querySelector('input[name="cb_est_heberge"]:checked');
+          var societe = {
+            nom:               fv('cb_denomination_sociale'),
+            forme:             fv('cb_forme_juridique'),
+            capital:           fv('cb_capital_social'),
+            objet:             fv('cb_objet_social'),
+            siege_ville:       fv('cb_siege_ville'),
+            siege_adresse:     fv('cb_siege_adresse') || '',
+            siege_cp:          fv('cb_siege_cp') || '',
+            date_debut:        fv('cb_date_debut'),
+            type_parcours:     fv('cb_type_parcours'),
+            montant_nominal:   fv('cb_montant_nominal_part'),
+            banque_nom:        fv('cb_banque_nom'),
+            banque_adresse:    fv('cb_banque_adresse'),
+            est_heberge:       _hebergeChk ? _hebergeChk.value : '',
+            hebergeur_nom:     fv('cb_hebergeur_nom'),
+            hebergeur_type:    fv('cb_hebergeur_type'),
+            hebergeur_prenom:  fv('cb_hebergeur_prenom'),
+            hebergeur_societe: fv('cb_hebergeur_societe'),
+            hebergeur_siren:   fv('cb_hebergeur_siren'),
+            nb_associes:       String((_mdt.assocCount || 0) + (_assoc.count || 0)),
+            activite:          fv('cb_activite'),
+            fileIds:           fileIdsByPerson['societe'] || [],
+          };
+
+          var managerVal     = _selectedOwner.name || fv('cb_manager');
+          var etoileMgrs     = ['Simbou DANFAKHA', 'Yann POINLOUP', 'Mateus SOUTELO', 'Julien DECLERCQ'];
+          var entityForDeal  = etoileMgrs.indexOf(managerVal) !== -1 ? 'cecca_etoile' : 'cecca';
+          _capturedEntity = entityForDeal;
+          _capturedNom    = (societe.nom || '').trim();
+
+          // ── Soumettre le formulaire HubSpot (workflow CRM) ──────────────────
+          // Fait APRÈS avoir capturé toutes les valeurs pour éviter le remplacement du DOM
           var hsBtn = _fDoc && (_fDoc.querySelector('input[type="submit"]') || _fDoc.querySelector('.hs-button'));
           var requiredInputs = [];
           if (_fDoc) {
-            _fDoc.querySelectorAll('[required],[aria-required="true"]').forEach(function(inp) { requiredInputs.push(inp); inp.removeAttribute('required'); inp.removeAttribute('aria-required'); });
+            _fDoc.querySelectorAll('[required],[aria-required="true"]').forEach(function(inp) {
+              requiredInputs.push(inp); inp.removeAttribute('required'); inp.removeAttribute('aria-required');
+            });
           }
-          if (hsBtn) hsBtn.click(); // déclenche le workflow HubSpot (transactions, etc.)
+          var draftDisabled = [];
+          if (_draftMode.active && _fDoc) {
+            _fDoc.querySelectorAll('select.cb-draft-locked[disabled], input.cb-draft-locked[disabled]').forEach(function(el) {
+              el.disabled = false; draftDisabled.push(el);
+            });
+          }
+          if (hsBtn) hsBtn.click();
           setTimeout(function() {
             requiredInputs.forEach(function(inp) { inp.setAttribute('required',''); inp.setAttribute('aria-required','true'); });
+            draftDisabled.forEach(function(el) { el.disabled = true; });
           }, 3000);
-
-          // ── 3. En parallèle : appel submit.php (contacts + société + docs) ──
-          if (navBtn) navBtn.textContent = 'Création des fiches…';
-
-          var mdtAssocArr = [];
-          for (var i = 0; i < (_mdt.assocCount || 0); i++)    mdtAssocArr.push(buildPersonData(_mdt.assoc[i]    || {}, fileIdsByPerson, 'mdt_a_' + i));
-          var mdtNonAssocArr = [];
-          for (var j = 0; j < (_mdt.nonAssocCount || 0); j++) mdtNonAssocArr.push(buildPersonData(_mdt.nonAssoc[j] || {}, fileIdsByPerson, 'mdt_n_' + j));
-          var assocNonMdtArr = [];
-          for (var k = 0; k < (_assoc.count || 0); k++)        assocNonMdtArr.push(buildPersonData(_assoc.items[k]  || {}, fileIdsByPerson, 'assoc_' + k));
-
-          var societe = {
-            nom:           fv('cb_denomination_sociale'),
-            forme:         fv('cb_forme_juridique'),
-            capital:       fv('cb_capital_social'),
-            objet:         fv('cb_objet_social'),
-            siege_ville:   fv('cb_siege_ville'),
-            siege_adresse: fv('cb_siege_adresse') || '',
-            siege_cp:      fv('cb_siege_cp') || '',
-            date_debut:    fv('cb_date_debut'),
-            fileIds:       fileIdsByPerson['societe'] || [],
-          };
+          if (navBtn) navBtn.textContent = 'Envoi…';
+          showOverlay('En cours d\'envoi…');
 
           return getOneToken().then(function(submitToken) {
             return fetch(SUBMIT_URL, {
@@ -1179,6 +1541,9 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 token:               submitToken,
+                draftCompanyId:      _draftMode.companyId || undefined,
+                entity:              entityForDeal,
+                manager:             managerVal,
                 societe:             societe,
                 mandatairesAssoc:    mdtAssocArr,
                 mandatairesNonAssoc: mdtNonAssocArr,
@@ -1189,14 +1554,20 @@
         })
         .then(function(r) { return r.json(); })
         .then(function(d) {
+          hideOverlay();
           if (navBtn) { navBtn.disabled = false; navBtn.textContent = 'Envoyer le dossier'; }
-          // Afficher l'écran de remerciement (submit.php a réussi)
-          var thanks = document.getElementById('screen-thanks');
-          var screens = document.querySelectorAll('.form-screen');
-          screens.forEach(function(s) { s.style.display = 'none'; });
-          if (thanks) thanks.style.display = '';
+          if (!d.ok && d.errors && d.errors.length) {
+            alert('Dossier envoyé avec avertissements :\n' + d.errors.join('\n'));
+          }
+          // Masquer le formulaire et afficher le RIB
+          var montant = _capturedEntity === 'cecca_etoile' ? '2 160' : '900';
+          ['form-stepper','form-nav','step-desc','hs-form-wrapper','mandataire-section','assoc-section','owner-panel','cb-btn-draft'].forEach(function(id) {
+            var el = document.getElementById(id); if (el) el.style.display = 'none';
+          });
+          showNextSteps(_capturedEntity, montant, _capturedNom);
         })
         .catch(function(e) {
+          hideOverlay();
           if (navBtn) { navBtn.disabled = false; navBtn.textContent = 'Envoyer le dossier'; }
           alert('Erreur : ' + e.message);
         });
@@ -1204,11 +1575,105 @@
 
       function formNextStep() {
         if (!validateCurrentStep()) return;
+        if (_step === -1) {
+          var sel = document.getElementById('owner-select');
+          _selectedOwner = { name: sel.value, id: sel.options[sel.selectedIndex].dataset.id || '' };
+          _step = 0;
+          applyStepVisibility(); updateStepUI();
+          return;
+        }
         if (_step < TOTAL_STEPS - 1) { _step++; applyStepVisibility(); updateStepUI(); }
         else { uploadAllAndSubmit(); }
       }
 
       // ── SSN formatter ──────────────────────────────────────────────
+      function wireDateInput(inp) {
+        inp.setAttribute('placeholder', 'jj/mm/aaaa');
+        inp.setAttribute('maxlength', '10');
+        inp.setAttribute('autocomplete', 'off');
+        inp.setAttribute('data-datef', '1');
+        inp.removeAttribute('type');
+        inp.setAttribute('type', 'text');
+
+        // Auto-format dd/mm/yyyy à la saisie
+        inp.addEventListener('input', function() {
+          var raw = inp.value.replace(/\D/g, '').substring(0, 8);
+          var out = '';
+          if (raw.length > 0) out = raw.substring(0, Math.min(2, raw.length));
+          if (raw.length > 2) out += '/' + raw.substring(2, Math.min(4, raw.length));
+          if (raw.length > 4) out += '/' + raw.substring(4);
+          inp.value = out;
+        });
+
+        // Sélecteur natif (input date caché) déclenché par un bouton calendrier
+        var doc    = inp.ownerDocument;
+        var parent = inp.parentNode;
+        parent.style.position = 'relative';
+        inp.style.paddingRight = '2.4rem';
+
+        var picker = doc.createElement('input');
+        picker.type = 'date';
+        picker.style.cssText = 'position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;top:0;right:0;';
+        parent.appendChild(picker);
+
+        var btn = doc.createElement('button');
+        btn.type = 'button';
+        btn.setAttribute('tabindex', '-1');
+        btn.setAttribute('aria-label', 'Ouvrir le calendrier');
+        btn.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:0;line-height:1;font-size:1.05rem;color:#555;';
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+        parent.appendChild(btn);
+
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          try { picker.showPicker(); } catch(_) { picker.click(); }
+        });
+
+        picker.addEventListener('change', function() {
+          if (!picker.value) return;
+          var p = picker.value.split('-'); // YYYY-MM-DD
+          if (p.length === 3) inp.value = p[2] + '/' + p[1] + '/' + p[0];
+          picker.value = '';
+        });
+      }
+
+      function applyDateFormatters(container) {
+        container.querySelectorAll('[data-datef="1"]').forEach(function(inp) {
+          wireDateInput(inp);
+        });
+      }
+
+      function wireDateFields(doc) {
+        ['cb_date_debut', 'cb_date_cloture', 'cb_date_cloture_1er_exercice'].forEach(function(name) {
+          var wrapper = doc.querySelector('.hs_' + name);
+          if (!wrapper) return;
+          var inputZone = wrapper.querySelector('.input') || wrapper;
+          // Cacher TOUS les inputs existants dans ce wrapper (datepicker en génère plusieurs)
+          inputZone.querySelectorAll('input').forEach(function(el) { el.style.display = 'none'; });
+          // Supprimer les boutons et widgets calendrier
+          wrapper.querySelectorAll('.ui-datepicker-trigger, .hs-datepicker-trigger, .ui-datepicker, img[class*="datepicker"]').forEach(function(el) { el.remove(); });
+          // Vérifier qu'on n'a pas déjà ajouté notre input (si wireForm appelé deux fois)
+          if (wrapper.querySelector('input[data-datef="1"]')) return;
+          // Transférer required/aria-required des inputs cachés vers notre nouvel input
+          var firstHidden = inputZone.querySelector('input');
+          var isRequired  = firstHidden && (firstHidden.hasAttribute('required') || firstHidden.getAttribute('aria-required') === 'true');
+          // Créer et ajouter notre input texte jj/mm/aaaa
+          var inp = doc.createElement('input');
+          inp.name      = name;
+          inp.type      = 'text';
+          inp.className = 'hs-input';
+          if (isRequired) { inp.setAttribute('aria-required', 'true'); }
+          inputZone.appendChild(inp);
+          wireDateInput(inp);
+          // Synchroniser la valeur vers l'input caché (pour la soumission HubSpot)
+          inp.addEventListener('input', function() {
+            inputZone.querySelectorAll('input[style*="display: none"], input[style*="display:none"]').forEach(function(h) {
+              h.value = inp.value;
+            });
+          });
+        });
+      }
+
       function wireSSNFormatters(doc) {
         var ssnFields = ['cb_num_secu'];
         ssnFields.forEach(function(name) {
@@ -1418,12 +1883,61 @@
         });
       }
 
+      var POLE_SECTORIEL_OPTIONS = [
+        'Activités de loisirs','Activités juridiques','Agence de voyages',
+        'Agence digitale communication & marketing','Agence immobilière et conciergerie immobilière',
+        'Agriculture','Associations','Audiovisuelle','Auto-école','Automobile','Autre','Avocats',
+        'Bijouterie','Boulangerie','BTP','Commerce','Commerce alimentaire','Commerce de gros',
+        'Conseil & prestation de service','Cosmétique','Courtage financement & assurance',
+        'Culturel','Développement durable','E-commerce','Equin','ESN','Evènement',
+        'Formation & éducation','Freelance et infopreneurs','Fret & transports',"Galerie d'art",
+        'Gestion de fonds et asset management','Grande distribution','Holding','Hôtel & camping',
+        'Immobilier locatif (SCI/LMNP) et marchand de bien immobilier','Import-export',
+        'Industrie','Informatique','Institut de beauté','Optique & Audio','Paysagiste',
+        'Pharmacie','Pompes funèbres','Restauration','Salle de sport','Salon de coiffure',
+        'Santé','SASU IR','Sécurité et surveillance','Service à la personne','Taxis & VTC',
+        'Tech','Textile et habillement',
+      ];
+
+      function wireActivite(doc) {
+        var wrapper = doc.querySelector('.hs_cb_activite');
+        if (!wrapper) return;
+        var inp = wrapper.querySelector('input[name="cb_activite"], textarea[name="cb_activite"]');
+        if (!inp) return;
+        var sel = doc.createElement('select');
+        sel.name = 'cb_activite';
+        sel.id   = inp.id || '';
+        sel.className = inp.className;
+        var blank = doc.createElement('option');
+        blank.value = ''; blank.textContent = '— Sélectionner —';
+        sel.appendChild(blank);
+        POLE_SECTORIEL_OPTIONS.forEach(function(opt) {
+          var o = doc.createElement('option');
+          o.value = opt; o.textContent = opt;
+          sel.appendChild(o);
+        });
+        inp.parentNode.replaceChild(sel, inp);
+        // Restaurer la valeur si draft
+        sel.addEventListener('change', function() {
+          if (_fDoc) {
+            var hid = _fDoc.querySelector('input[type="hidden"][name="cb_activite"]');
+            if (!hid) {
+              hid = _fDoc.createElement('input'); hid.type = 'hidden'; hid.name = 'cb_activite';
+              var form = _fDoc.querySelector('form'); if (form) form.appendChild(hid);
+            }
+            hid.value = sel.value;
+          }
+        });
+      }
+
       function wireForm(doc) {
         _fDoc = doc;
         injectFormCSS(doc);
         wireChosenDropdowns(doc);
         wireSSNFormatters(doc);
         markRequiredFields(doc);
+        wireActivite(doc);
+        wireDateFields(doc);
         wireHebergement(doc);
         var emailField = doc.querySelector('[name="email"]');
         if (emailField) emailField.setAttribute('autocomplete', 'off');
@@ -1443,6 +1957,7 @@
         }
         applyStepVisibility();
         updateStepUI(true);
+        if (_pendingDraft) { var _pd = _pendingDraft; _pendingDraft = null; initFromDraft(_pd); }
       }
 
       /* ── Mandataire custom section ──────────────────────────────── */
@@ -1461,11 +1976,15 @@
         return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '';
       }
       function mdtFg(label, field, value, type, required) {
-        var star = required ? ' <span style="color:#C0184A">*</span>' : '';
-        var t = type === 'number' ? 'number' : 'text';
-        var extra = type === 'number' ? ' min="0"' : '';
+        var star    = required ? ' <span style="color:#C0184A">*</span>' : '';
+        var isDate  = type === 'datef';
+        var isNum   = type === 'number';
+        var t       = isNum ? 'number' : 'text';
+        var extra   = isNum ? ' min="0"' : '';
+        var datAttr = isDate ? ' data-datef="1" maxlength="10"' : '';
+        var ph      = isDate ? 'jj/mm/aaaa' : label;
         return '<div class="mdt-fg"><label class="mdt-lbl">' + label + star + '</label>' +
-          '<input type="' + t + '"' + extra + ' class="mdt-inp" data-f="' + field + '" value="' + mdtEsc(value) + '" placeholder="' + label + '"></div>';
+          '<input type="' + t + '"' + extra + datAttr + ' class="mdt-inp" data-f="' + field + '" value="' + mdtEsc(value) + '" placeholder="' + ph + '"></div>';
       }
       function mdtSel(label, field, value, opts, required) {
         var star = required ? ' <span style="color:#C0184A">*</span>' : '';
@@ -1480,6 +1999,7 @@
           '<span class="mdt-doc-lbl">' + label + star + '</span>' +
           '<label class="mdt-doc-btn">Choisir<input type="file" data-doc="' + doc + '" accept=".pdf,.jpg,.jpeg,.png,.webp"></label>' +
           '<span class="mdt-doc-fname" id="mdt-fn-' + key + '-' + doc + '">Aucun fichier</span>' +
+          '<button type="button" class="mdt-doc-del" id="mdt-del-' + key + '-' + doc + '" title="Supprimer ce fichier">×</button>' +
           '</div>';
       }
       function buildBEItem(key, beIdx, beData) {
@@ -1488,7 +2008,7 @@
         return '<div class="pm-be-item" data-be-idx="' + beIdx + '">' +
           '<div class="pm-be-hd"><span>Bénéficiaire effectif ' + (beIdx+1) + '</span>' + delBtn + '</div>' +
           '<div class="mdt-row">' + mdtFg('Nom','be_nom',d.nom,'text',true) + mdtFg('Prénom','be_prenom',d.prenom,'text',true) + '</div>' +
-          '<div class="mdt-row">' + mdtFg('Date de naissance','be_ddn',d.ddn,'text',true) + mdtFg('Nationalité','be_nationalite',d.nationalite,'text',true) + '</div>' +
+          '<div class="mdt-row">' + mdtFg('Date de naissance','be_ddn',d.ddn,'datef',true) + mdtFg('Nationalité','be_nationalite',d.nationalite,'text',true) + '</div>' +
           '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse du domicile','be_adresse',d.adresse,'text',true) + '</div>' +
           '<div class="mdt-row">' + mdtFg('% détention directe','be_pct_direct',d.pct_direct,'number',true) + mdtFg('% détention indirecte','be_pct_indirect',d.pct_indirect,'number',false) + '</div>' +
           '<div class="mdt-row mdt-row-1">' + mdtSel('Nature du contrôle','be_nature',d.nature_controle,PM_NATURE_CONTROLE,false) + '</div>' +
@@ -1523,7 +2043,7 @@
           html += '<div class="mdt-row mdt-row-1">' + mdtSel('Fonction dans la société créée','pm_fonction',d.pm_fonction,PM_FONCTIONS,true) + '</div>';
           html += '<p class="pm-section-sep">Représentant permanent</p>';
           html += '<div class="mdt-row">' + mdtFg('Nom','pm_rp_nom',d.pm_rp_nom,'text',true) + mdtFg('Prénom','pm_rp_prenom',d.pm_rp_prenom,'text',true) + '</div>';
-          html += '<div class="mdt-row">' + mdtFg('Date de naissance','pm_rp_ddn',d.pm_rp_ddn,'text',true) + mdtFg('Lieu de naissance','pm_rp_lieu',d.pm_rp_lieu,'text',true) + '</div>';
+          html += '<div class="mdt-row">' + mdtFg('Date de naissance','pm_rp_ddn',d.pm_rp_ddn,'datef',true) + mdtFg('Lieu de naissance','pm_rp_lieu',d.pm_rp_lieu,'text',true) + '</div>';
           html += '<div class="mdt-row mdt-row-1">' + mdtFg('Nationalité','pm_rp_nationalite',d.pm_rp_nationalite,'text',true) + '</div>';
           html += '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse personnelle','pm_rp_adresse',d.pm_rp_adresse,'text',true) + '</div>';
           html += '<div class="mdt-row">' + mdtFg('Email','pm_rp_email',d.pm_rp_email,'text',true) + mdtFg('Téléphone','pm_rp_tel',d.pm_rp_tel,'text',true) + '</div>';
@@ -1599,7 +2119,10 @@
           '<input type="' + type + '" class="mdt-inp" data-f="' + field + '" value="' + mdtEsc(value || '') + '" placeholder="' + label + '"></div>';
       }
       function buildMdtCard(idx, isAssoc, isFirst) {
-        var data = (isAssoc ? _mdt.assoc[idx] : _mdt.nonAssoc[idx]) || {};
+        var arr  = isAssoc ? _mdt.assoc : _mdt.nonAssoc;
+        if (!arr[idx]) arr[idx] = {};
+        var data = arr[idx];
+        if (!data.pm_pays) data.pm_pays = 'France';
         var key = (isAssoc ? 'a' : 'n') + idx;
         var card = document.createElement('div');
         card.className = 'mdt-card';
@@ -1620,7 +2143,8 @@
         html += '<div class="mdt-row">' + mdtFgCp('Email','email',data.email,'email',isCp) + mdtFgCp('Téléphone portable','phone',data.phone,'tel',isCp) + '</div>';
         html += '<div class="mdt-row mdt-row-1">' + mdtSel('Régime matrimonial','regime',data.regime,MDT_REGIMES,true) + '</div>';
         html += '<div class="mdt-row">' + mdtSel('Rôle','role',data.role,MDT_ROLES,true) + mdtFg('Nationalité','nationalite',data.nationalite,'text',true) + '</div>';
-        html += '<div class="mdt-row">' + mdtFg('N° sécurité sociale','num_secu',data.num_secu,'text',true) + mdtFg('Profession actuelle','profession',data.profession,'text',false) + '</div>';
+        html += '<div class="mdt-row">' + mdtFg('Date de naissance','ddn',data.ddn,'datef',true) + mdtFg('Profession actuelle','profession',data.profession,'text',false) + '</div>';
+        html += '<div class="mdt-row mdt-row-1">' + mdtFg('N° sécurité sociale','num_secu',data.num_secu,'text',true) + '</div>';
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse (domicile)','adresse',data.adresse,'text',true) + '</div>';
         html += '<div class="mdt-row">' + mdtFg('Code postal','cp',data.cp,'text',true) + mdtFg('Ville','ville',data.ville,'text',true) + '</div>';
         // Hébergement
@@ -1645,6 +2169,7 @@
         html += '</div>';
         html += '<div class="mdt-hbg-morale"' + (hbgType !== 'morale' ? ' style="display:none"' : '') + '>';
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Raison sociale de l\'hébergeur','hbg_societe',data.hbg_societe,'text',true) + '</div>';
+        html += '<div class="mdt-row mdt-row-1">' + mdtFg('SIREN de l\'hébergeur','hbg_siren',data.hbg_siren,'text',true,'[0-9]{9}','123456789') + '</div>';
         html += '</div>';
         html += '</div>';
         html += '</div>';
@@ -1789,11 +2314,23 @@
             if (!arr[idx]) arr[idx] = {};
             if (!arr[idx].files) arr[idx].files = {};
             arr[idx].files[doc] = this.files[0] || null;
-            var span = document.getElementById('mdt-fn-' + key + '-' + doc);
-            if (span) {
-              span.textContent = this.files[0] ? this.files[0].name : 'Aucun fichier';
-              span.className = 'mdt-doc-fname' + (this.files[0] ? ' has-file' : '');
-            }
+            var span   = document.getElementById('mdt-fn-' + key + '-' + doc);
+            var delBtn = document.getElementById('mdt-del-' + key + '-' + doc);
+            if (span) { span.textContent = this.files[0] ? this.files[0].name : 'Aucun fichier'; span.className = 'mdt-doc-fname' + (this.files[0] ? ' has-file' : ''); }
+            if (delBtn) delBtn.style.display = this.files[0] ? 'inline-flex' : 'none';
+          });
+        });
+        // Wire delete buttons
+        card.querySelectorAll('.mdt-doc-del').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var doc    = this.id.replace('mdt-del-' + key + '-', '');
+            var arr    = isAssoc ? _mdt.assoc : _mdt.nonAssoc;
+            var inp    = card.querySelector('input[type="file"][data-doc="' + doc + '"]');
+            var span   = document.getElementById('mdt-fn-' + key + '-' + doc);
+            if (inp) inp.value = '';
+            if (arr[idx] && arr[idx].files) arr[idx].files[doc] = null;
+            if (span) { span.textContent = 'Aucun fichier'; span.className = 'mdt-doc-fname'; }
+            this.style.display = 'none';
           });
         });
         return card;
@@ -1806,11 +2343,11 @@
         container.innerHTML  = '';
         if (_mdt.assocCount > 0) {
           var h = document.createElement('h3'); h.className = 'mdt-section-ttl'; h.textContent = 'Mandataires associés'; container.appendChild(h);
-          for (var i = 0; i < _mdt.assocCount; i++) { if (!_mdt.assoc[i]) _mdt.assoc[i] = {}; container.appendChild(buildMdtCard(i, true, i === 0)); }
+          for (var i = 0; i < _mdt.assocCount; i++) { if (!_mdt.assoc[i]) _mdt.assoc[i] = {}; var _ac = buildMdtCard(i, true, i === 0); container.appendChild(_ac); applyCardLocks(_ac, 'mdt:a:' + i, 'a' + i); applyDateFormatters(_ac); }
         }
         if (_mdt.nonAssocCount > 0) {
           var h2 = document.createElement('h3'); h2.className = 'mdt-section-ttl'; h2.textContent = 'Mandataires non associés'; container.appendChild(h2);
-          for (var j = 0; j < _mdt.nonAssocCount; j++) { if (!_mdt.nonAssoc[j]) _mdt.nonAssoc[j] = {}; container.appendChild(buildMdtCard(j, false, j === 0 && _mdt.assocCount === 0)); }
+          for (var j = 0; j < _mdt.nonAssocCount; j++) { if (!_mdt.nonAssoc[j]) _mdt.nonAssoc[j] = {}; var _nc = buildMdtCard(j, false, j === 0 && _mdt.assocCount === 0); container.appendChild(_nc); applyCardLocks(_nc, 'mdt:n:' + j, 'n' + j); applyDateFormatters(_nc); }
         }
       }
       function validatePM(d, label, showErr, isMandataire, hasParts) {
@@ -1930,7 +2467,9 @@
         'Pacsé(e) — indivision','Pacsé(e) — séparation','Divorcé(e)','Veuf / Veuve'];
 
       function buildAssocCard(idx) {
-        var data = _assoc.items[idx] || {};
+        if (!_assoc.items[idx]) _assoc.items[idx] = {};
+        var data = _assoc.items[idx];
+        if (!data.pm_pays) data.pm_pays = 'France';
         var key  = 'as' + idx;
         var card = document.createElement('div');
         card.className = 'mdt-card';
@@ -1947,6 +2486,8 @@
         html += '<div class="mdt-row">' + mdtFg('Nom','nom',data.nom,'text',true) + mdtFg('Prénom','prenom',data.prenom,'text',true) + '</div>';
         html += '<div class="mdt-row">' + mdtFg('Email','email',data.email,'text',false) + mdtFg('Téléphone','phone',data.phone,'text',false) + '</div>';
         html += '<div class="mdt-row mdt-row-1">' + mdtSel('Régime matrimonial','regime',data.regime,ASSOC_REGIMES,true) + '</div>';
+        html += '<div class="mdt-row">' + mdtFg('Date de naissance','ddn',data.ddn,'datef',true) + mdtFg('Nationalité','nationalite',data.nationalite,'text',true) + '</div>';
+        html += '<div class="mdt-row">' + mdtFg('N° sécurité sociale','num_secu',data.num_secu,'text',true) + mdtFg('Profession','profession',data.profession,'text',false) + '</div>';
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Nombre de parts','nb_parts',data.nb_parts,'number',true) + '</div>';
         html += '<div class="mdt-row mdt-row-3">' +
           mdtFg('Apport en numéraire (€)','apport_num',data.apport_num,'number',false) +
@@ -1973,6 +2514,7 @@
         html += '</div>';
         html += '<div class="mdt-hbg-morale"' + (hbgType !== 'morale' ? ' style="display:none"' : '') + '>';
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Raison sociale de l\'hébergeur','hbg_societe',data.hbg_societe,'text',true) + '</div>';
+        html += '<div class="mdt-row mdt-row-1">' + mdtFg('SIREN de l\'hébergeur','hbg_siren',data.hbg_siren,'text',true,'[0-9]{9}','123456789') + '</div>';
         html += '</div>';
         html += '</div>';
         html += '</div>';
@@ -2051,12 +2593,26 @@
         // Wire file inputs
         card.querySelectorAll('input[type="file"]').forEach(function(inp) {
           inp.addEventListener('change', function() {
-            var doc = this.getAttribute('data-doc');
+            var doc    = this.getAttribute('data-doc');
+            var delBtn = document.getElementById('mdt-del-' + key + '-' + doc);
             if (!_assoc.items[idx]) _assoc.items[idx] = {};
             if (!_assoc.items[idx].files) _assoc.items[idx].files = {};
             _assoc.items[idx].files[doc] = this.files[0] || null;
             var span = document.getElementById('mdt-fn-' + key + '-' + doc);
             if (span) { span.textContent = this.files[0] ? this.files[0].name : 'Aucun fichier'; span.className = 'mdt-doc-fname' + (this.files[0] ? ' has-file' : ''); }
+            if (delBtn) delBtn.style.display = this.files[0] ? 'inline-flex' : 'none';
+          });
+        });
+        // Wire delete buttons
+        card.querySelectorAll('.mdt-doc-del').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var doc  = this.id.replace('mdt-del-' + key + '-', '');
+            var inp  = card.querySelector('input[type="file"][data-doc="' + doc + '"]');
+            var span = document.getElementById('mdt-fn-' + key + '-' + doc);
+            if (inp) inp.value = '';
+            if (_assoc.items[idx] && _assoc.items[idx].files) _assoc.items[idx].files[doc] = null;
+            if (span) { span.textContent = 'Aucun fichier'; span.className = 'mdt-doc-fname'; }
+            this.style.display = 'none';
           });
         });
         return card;
@@ -2069,7 +2625,7 @@
         container.innerHTML = '';
         for (var i = 0; i < _assoc.count; i++) {
           if (!_assoc.items[i]) _assoc.items[i] = {};
-          container.appendChild(buildAssocCard(i));
+          var _sc = buildAssocCard(i); container.appendChild(_sc); applyCardLocks(_sc, 'assoc:' + i, 'as' + i); applyDateFormatters(_sc);
         }
       }
 
@@ -2208,6 +2764,49 @@
         }
       })();
 
+      // ── Detect draft link on page load ──────────────────────────────────────
+      (function() {
+        var params = new URLSearchParams(window.location.search);
+        var draftToken = params.get('draft');
+        if (!draftToken) return;
+        fetch('/draft/' + encodeURIComponent(draftToken))
+          .then(function(r) {
+            if (r.status === 410) { alert('Ce lien de formulaire a expiré (30 jours).\nDemandez un nouveau lien à votre conseiller Cecca.'); return null; }
+            if (!r.ok) { alert('Lien de formulaire invalide ou corrompu.'); return null; }
+            return r.json();
+          })
+          .then(function(data) {
+            if (!data || !data.ok) return;
+            if (_fDoc) { initFromDraft(data); }
+            else { _pendingDraft = data; }
+          })
+          .catch(function(e) { console.error('[creabook] draft load error:', e); });
+      })();
+
+      // Charger la liste des propriétaires depuis l'API
+      fetch('/owners')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var sel = document.getElementById('owner-select');
+          if (!sel || sel.disabled) return; // déjà verrouillé en mode draft
+          sel.innerHTML = '<option value="">— Sélectionner un collaborateur —</option>';
+          (d.owners || []).forEach(function(o) {
+            var opt = document.createElement('option');
+            opt.value = o.name;
+            opt.dataset.id = o.id;
+            opt.textContent = o.name;
+            sel.appendChild(opt);
+          });
+        })
+        .catch(function() {
+          var sel = document.getElementById('owner-select');
+          if (sel && !sel.disabled) sel.innerHTML = '<option value="">— Erreur chargement —</option>';
+        });
+
+      // Affichage initial : étape propriétaire
+      applyStepVisibility();
+      updateStepUI(true);
+
       hbspt.forms.create({
         portalId: "26706563",
         formId:   "a2537a21-fc0c-4d78-9271-5bdd1e89fa72",
@@ -2224,7 +2823,7 @@
             var entite = 'cecca';
             var montant = '900';
             var sv = (data && data.submissionValues) || {};
-            var etoileManagers = ['Simbou DANFAKHA', 'Yann POINLOUP', 'Mateus SOUTELO'];
+            var etoileManagers = ['Simbou DANFAKHA', 'Yann POINLOUP', 'Mateus SOUTELO', 'Julien DECLERCQ'];
             entite = etoileManagers.indexOf(sv.cb_manager) !== -1 ? 'cecca_etoile' : 'cecca';
             if (entite === 'cecca_etoile') montant = '2 160';
             var societe = [(sv.cb_forme_juridique || ''), (sv.cb_denomination_sociale || '')].filter(Boolean).join(' ');
@@ -2247,5 +2846,23 @@
         }
       });
     </script>
+<div id="cb-submit-overlay">
+  <div class="cb-spinner"></div>
+  <p class="cb-submit-msg" id="cb-submit-msg">Envoi en cours…</p>
+</div>
+<div id="cb-draft-banner">
+  <strong>Mode client</strong> — Les champs grisés ont été pré-remplis par votre conseiller Cecca et ne peuvent pas être modifiés.
+</div>
+<div id="cb-draft-modal">
+  <div class="cb-draft-modal-box">
+    <h3>Lien généré</h3>
+    <p>Copiez ce lien et envoyez-le à votre client. Il est valide pendant <strong>30 jours</strong>.</p>
+    <div class="cb-draft-url-row">
+      <input type="text" id="cb-draft-url-inp" readonly>
+      <button class="cb-draft-copy-btn" onclick="copyDraftUrl()">Copier</button>
+    </div>
+    <button class="cb-draft-close-btn" onclick="hideDraftModal()">Fermer</button>
+  </div>
+</div>
 </body>
 </html>
