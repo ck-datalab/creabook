@@ -19,6 +19,10 @@ const TOKEN_SECRET   = process.env.TOKEN_SECRET;
 if (!HUBSPOT_TOKEN) throw new Error('HUBSPOT_TOKEN manquant');
 if (!TOKEN_SECRET)  throw new Error('TOKEN_SECRET manquant');
 
+// ── Managers Cecca Étoile (source unique — modifier ici uniquement) ───────────
+const ETOILE_MANAGERS = new Set(['SIMBOU DANFAKHA', 'YANN POINLOUP', 'MATEUS SOUTELO', 'JULIEN DECLERCQ']);
+const isEtoile = name => ETOILE_MANAGERS.has((name || '').trim().toUpperCase());
+
 // ── Cache HubSpot pipeline + owners ──────────────────────────────────────────
 
 let DEAL_PIPELINE_ID      = null;
@@ -34,11 +38,12 @@ async function initHubSpotCache() {
       headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}` },
     });
     const pData = await pRes.json();
-    const pipe  = (pData.results || []).find(p => p.label.trim().toLowerCase() === "création d'entreprise");
+    const pipe  = (pData.results || []).find(p => p.label.trim().toLowerCase() === 'juridique mission exceptionnelle');
     if (pipe) {
       DEAL_PIPELINE_ID = pipe.id;
-      const first = (pipe.stages || []).sort((a, b) => a.displayOrder - b.displayOrder)[0];
-      if (first) DEAL_STAGE_ID = first.id;
+      const stage = (pipe.stages || []).find(s => s.label.trim().toLowerCase() === 'accord verbal')
+                 || (pipe.stages || []).sort((a, b) => a.displayOrder - b.displayOrder)[0];
+      if (stage) DEAL_STAGE_ID = stage.id;
     }
     console.log(`Pipeline deal : ${DEAL_PIPELINE_ID} / étape : ${DEAL_STAGE_ID}`);
   } catch (e) {
@@ -46,17 +51,20 @@ async function initHubSpotCache() {
   }
 
   try {
-    const oRes  = await fetch('https://api.hubapi.com/crm/v3/owners/?limit=100', {
-      headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}` },
-    });
-    const oData = await oRes.json();
-    (oData.results || []).forEach(o => {
-      const full = `${o.firstName || ''} ${o.lastName || ''}`.trim();
-      if (full) {
-        OWNERS_BY_NAME[full.toUpperCase()] = o.id;
-        if (!OWNERS_LIST.find(x => x.id === o.id)) OWNERS_LIST.push({ name: full, id: o.id });
-      }
-    });
+    let after = null;
+    do {
+      const url   = `https://api.hubapi.com/crm/v3/owners/?${after ? `after=${after}` : ''}`;
+      const oRes  = await fetch(url, { headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}` } });
+      const oData = await oRes.json();
+      (oData.results || []).forEach(o => {
+        const full = `${o.firstName || ''} ${o.lastName || ''}`.trim();
+        if (full) {
+          OWNERS_BY_NAME[full.toUpperCase()] = o.id;
+          if (!OWNERS_LIST.find(x => x.id === o.id)) OWNERS_LIST.push({ name: full, id: o.id });
+        }
+      });
+      after = oData.paging?.next?.after || null;
+    } while (after);
     OWNERS_LIST.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
     console.log(`Owners chargés : ${OWNERS_LIST.length}`);
   } catch (e) {
@@ -181,7 +189,7 @@ app.post('/draft', async (req, res) => {
   const hsF    = state.hsFields || {};
 
   const draftManagerName = s(hsF.cb_manager);
-  const draftEtoile      = ['SIMBOU DANFAKHA','YANN POINLOUP','MATEUS SOUTELO','JULIEN DECLERCQ'].includes(draftManagerName.toUpperCase());
+  const draftEtoile      = isEtoile(draftManagerName);
   const draftEntite      = draftEtoile ? 'Cecca Étoile' : 'Cecca';
 
   const companyProps = { name: (s(hsF.cb_denomination_sociale) || 'Brouillon') + ' (En création)', siren_pappers: '999999999' };
@@ -366,7 +374,7 @@ app.post('/submit', async (req, res) => {
   const dealProps = {
     // Identité
     dealname:           (s(soc.nom) || 'Nouvelle société') + ' — Création de société',
-    amount:             body.entity === 'cecca_etoile' ? '2160' : '900',
+    montant_de_la_creation: body.entity === 'cecca_etoile' ? '2160' : '900',
     // Pipeline (IDs chargés au démarrage)
     pipeline:           DEAL_PIPELINE_ID || 'default',
     dealstage:          DEAL_STAGE_ID    || 'appointmentscheduled',
@@ -374,6 +382,8 @@ app.post('/submit', async (req, res) => {
     cb_source:          'Créabook',
     source:             'Créabook',
     cb_entite:          body.entity || 'cecca',
+    transaction_irpp:   'false',
+    creation_a_faire:   'true',
   };
 
   if (ownerId)                                          dealProps.hubspot_owner_id = ownerId;

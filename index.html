@@ -6,34 +6,34 @@
 <title>Créa'Book — Dépôt de dossier | Cecca</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     --ink:       #0A0A0A;
     --paper:     #FAFAF7;
-    --paper-2:   #F2F1EB;
-    --blue:      #0A1338;
-    --blue-dark: #050A1F;
-    --blue-mist: #E8EAF0;
-    --gold:      #C0184A;
-    --gold-soft: #F5D5DE;
-    --grey-500:  #6B6B65;
-    --grey-400:  #9B9B95;
-    --grey-300:  #C0BFB8;
-    --grey-200:  #D4D4CE;
-    --grey-100:  #EEEDE7;
-    --green:     #1A6B3C;
-    --green-mist:#E6F4ED;
-    --shadow-sm: 0 1px 2px rgba(10,10,10,.04), 0 1px 3px rgba(10,10,10,.06);
-    --shadow-md: 0 4px 12px rgba(10,10,10,.06), 0 2px 4px rgba(10,10,10,.04);
-    --shadow-lg: 0 20px 40px rgba(10,10,10,.08), 0 8px 16px rgba(10,10,10,.06);
+    --paper-2:   #F5F2EE;
+    --blue:      #1A2E4F;
+    --blue-dark: #0F1F38;
+    --blue-mist: #EEF1F6;
+    --gold:      #7A1F30;
+    --gold-soft: #F5E8EA;
+    --grey-500:  #6A645B;
+    --grey-400:  #9A938A;
+    --grey-300:  #D1CBC2;
+    --grey-200:  #E8E3DD;
+    --grey-100:  #F3F0EB;
+    --green:     #1A6A4F;
+    --green-mist:#E8F2EC;
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
 
   body {
-    font-family: 'Epilogue', -apple-system, sans-serif;
+    font-family: 'Inter', -apple-system, sans-serif;
     font-size: 15px;
     line-height: 1.55;
     color: var(--ink);
@@ -41,24 +41,30 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  h1, h2, h3 { font-family: 'Epilogue', Georgia, serif; font-weight: 400; letter-spacing: -0.015em; }
+  h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
 
   /* Hero */
   .hero {
-    background: var(--blue) url('assets/cecca-hero-bg.png') center/cover no-repeat;
+    background: linear-gradient(135deg, #5B1421 0%, #3D1B3F 35%, #1A2E4F 70%, #0F1F38 100%);
     color: white;
-    padding: 4rem 3rem;
+    padding: 3.5rem 3rem;
     text-align: center;
     position: relative;
+    overflow: hidden;
   }
-  .hero::before {
+  .hero::after {
     content: '';
     position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(5,10,31,0.15) 0%, rgba(5,10,31,0.45) 100%);
+    top: -40%;
+    right: -5%;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, rgba(255,255,255,0.06), transparent 70%);
     pointer-events: none;
   }
   .hero > * { position: relative; z-index: 1; }
+  .hero-logo { height: 36px; width: auto; margin-bottom: 2rem; color: white; display: inline-block; }
+  .hero-logo svg { height: 36px; width: auto; display: block; }
   .hero .eyebrow {
     font-size: 0.72rem;
     letter-spacing: 0.2em;
@@ -122,7 +128,6 @@
     border: 1px solid var(--grey-200);
     border-radius: 4px;
     padding: 2.5rem;
-    box-shadow: var(--shadow-lg);
   }
 
   .form-card-header {
@@ -146,11 +151,13 @@
   .hs-form fieldset { max-width: 100% !important; }
   .hs-form .hs-form-field { margin-bottom: 1.25rem !important; }
   .hs-form label {
-    font-family: 'Epilogue', sans-serif !important;
-    font-size: 0.98rem !important;
-    font-weight: 500 !important;
-    color: var(--ink) !important;
-    margin-bottom: 0.5rem !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.09em !important;
+    color: var(--grey-500) !important;
+    margin-bottom: 0.4rem !important;
     display: block !important;
   }
   .hs-form input[type="text"],
@@ -162,14 +169,13 @@
     width: 100% !important;
     padding: 0.7rem 0.9rem !important;
     border: 1px solid var(--grey-200) !important;
-    border-radius: 2px !important;
-    font-family: 'Epilogue', sans-serif !important;
+    border-radius: 4px !important;
+    font-family: 'Inter', sans-serif !important;
     font-size: 0.92rem !important;
     color: var(--ink) !important;
-    background: var(--paper) !important;
+    background: white !important;
     transition: border-color .2s !important;
     outline: none !important;
-    box-shadow: var(--shadow-sm) !important;
   }
   .hs-form select {
     -webkit-appearance: none !important;
@@ -186,27 +192,25 @@
   .hs-form input:focus,
   .hs-form select:focus,
   .hs-form textarea:focus {
-    border-color: var(--blue) !important;
+    border-color: var(--gold) !important;
     background: white !important;
   }
   .hs-form .hs-button {
-    background: var(--ink) !important;
-    color: var(--paper) !important;
-    font-family: 'Epilogue', sans-serif !important;
-    font-size: 0.92rem !important;
-    font-weight: 500 !important;
-    padding: 0.9rem 2rem !important;
+    background: var(--gold) !important;
+    color: white !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    padding: 0.85rem 2rem !important;
     border: none !important;
-    border-radius: 2px !important;
+    border-radius: 4px !important;
     cursor: pointer !important;
-    transition: all .2s !important;
-    letter-spacing: 0.02em !important;
+    transition: background .2s !important;
+    letter-spacing: 0.03em !important;
     margin-top: 1rem !important;
   }
   .hs-form .hs-button:hover {
     background: var(--blue-dark) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: var(--shadow-md) !important;
   }
   .hs-form .hs-error-msgs {
     list-style: none !important;
@@ -218,13 +222,13 @@
     font-weight: 400 !important;
   }
   .hs-form .submitted-message {
-    font-family: 'Epilogue', sans-serif;
+    font-family: 'Inter', sans-serif;
     text-align: center;
     padding: 2rem;
     color: var(--grey-500);
   }
   .hs-form .submitted-message h2 {
-    font-family: 'Epilogue', serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     color: var(--ink);
     margin-bottom: 0.5rem;
   }
@@ -234,7 +238,7 @@
     background: var(--blue-mist);
     border-left: 3px solid var(--blue);
     padding: 1rem 1.25rem;
-    border-radius: 2px;
+    border-radius: 4px;
     margin-bottom: 2rem;
     font-size: 0.88rem;
     color: var(--blue-dark);
@@ -278,7 +282,7 @@
   }
   .success-banner .check svg { width: 16px; height: 16px; }
   .success-banner h3 {
-    font-family: 'Epilogue', serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 1.1rem;
     color: var(--green);
     margin-bottom: 0.25rem;
@@ -366,9 +370,9 @@
     gap: 0.4rem;
     background: white;
     border: 1px solid var(--grey-200);
-    border-radius: 2px;
+    border-radius: 4px;
     padding: 0.4rem 0.75rem;
-    font-family: 'Epilogue', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 0.78rem;
     font-weight: 500;
     color: var(--grey-500);
@@ -385,7 +389,7 @@
     font-size: 0.82rem;
     color: var(--grey-500);
     background: var(--grey-100);
-    border-radius: 2px;
+    border-radius: 4px;
     padding: 0.6rem 0.9rem;
   }
 
@@ -428,7 +432,7 @@
     background: var(--grey-200);
     transition: background .3s;
   }
-  .form-stepper-step.done:not(:last-child)::after { background: var(--blue); }
+  .form-stepper-step.done:not(:last-child)::after { background: var(--gold); }
   .step-bubble {
     width: 28px; height: 28px;
     border-radius: 50%;
@@ -441,27 +445,27 @@
     transition: all .25s; flex-shrink: 0;
   }
   .form-stepper-step.active .step-bubble {
-    background: var(--blue); border-color: var(--blue); color: white;
-    box-shadow: 0 0 0 3px var(--blue-mist);
+    background: var(--gold); border-color: var(--gold); color: white;
+    outline: 2px solid var(--gold-soft);
   }
   .form-stepper-step.done .step-bubble {
-    background: var(--blue); border-color: var(--blue); color: white; font-size: 0;
+    background: var(--gold); border-color: var(--gold); color: white; font-size: 0;
   }
   .form-stepper-step.done .step-bubble::before { content: '✓'; font-size: 0.75rem; }
   .step-label {
-    font-size: 0.68rem; font-weight: 500; color: var(--grey-400);
-    text-align: center; letter-spacing: 0.01em; white-space: nowrap;
+    font-size: 0.65rem; font-weight: 600; color: var(--grey-400);
+    text-align: center; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
   }
-  .form-stepper-step.active .step-label { color: var(--blue); font-weight: 600; }
-  .form-stepper-step.done .step-label { color: var(--blue); }
+  .form-stepper-step.active .step-label { color: var(--gold); font-weight: 700; }
+  .form-stepper-step.done .step-label { color: var(--grey-500); }
 
   /* Step description */
   .step-desc {
     font-size: 0.85rem; color: var(--grey-500);
     margin-bottom: 1.75rem;
     padding: 0.75rem 1rem;
-    background: var(--grey-100); border-radius: 2px;
-    border-left: 3px solid var(--blue);
+    background: var(--paper-2); border-radius: 4px;
+    border-left: 3px solid var(--gold);
     line-height: 1.5;
   }
   .step-desc strong { color: var(--ink); }
@@ -475,20 +479,80 @@
   .form-step-counter { font-size: 0.8rem; color: var(--grey-400); white-space: nowrap; }
   .form-nav-btn {
     display: inline-flex; align-items: center; gap: 0.4rem;
-    padding: 0.7rem 1.5rem; border-radius: 2px;
-    font-family: 'Epilogue', sans-serif; font-size: 0.88rem; font-weight: 500;
+    padding: 0.7rem 1.5rem; border-radius: 4px;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.85rem; font-weight: 600;
     cursor: pointer; transition: all .2s;
     border: 1px solid var(--grey-200); background: white; color: var(--grey-500);
-    white-space: nowrap;
+    white-space: nowrap; letter-spacing: 0.01em;
   }
   .form-nav-btn:hover { border-color: var(--blue); color: var(--blue); }
-  .form-nav-btn.primary { background: var(--blue); color: white; border-color: var(--blue); }
-  .form-nav-btn.primary:hover {
-    background: var(--blue-dark); border-color: var(--blue-dark);
-    transform: translateY(-1px); box-shadow: var(--shadow-md);
-  }
-  .form-nav-btn.submit-btn { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .form-nav-btn.primary { background: var(--gold); color: white; border-color: var(--gold); }
+  .form-nav-btn.primary:hover { background: var(--blue-dark); border-color: var(--blue-dark); }
+  .form-nav-btn.submit-btn { background: var(--gold); color: white; border-color: var(--gold); }
   .form-nav-btn.submit-btn:hover { background: var(--blue-dark); border-color: var(--blue-dark); }
+
+  /* ── Toast force-étape (mode collab uniquement) ───────────────────────── */
+  .cb-force-toast {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+    z-index: 9999; width: min(480px, calc(100vw - 2rem));
+    background: #1C1006; color: #FFF8EC;
+    border: 1px solid #B8711A; border-radius: 8px;
+    padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.75rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,.35);
+    animation: cb-toast-in .18s ease;
+  }
+  .cb-force-toast.hiding { animation: cb-toast-out .18s ease forwards; }
+  @keyframes cb-toast-in  { from { opacity:0; transform:translateX(-50%) translateY(12px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+  @keyframes cb-toast-out { from { opacity:1; transform:translateX(-50%) translateY(0); } to { opacity:0; transform:translateX(-50%) translateY(12px); } }
+  .cb-force-toast-msg {
+    font-family: 'Inter', sans-serif; font-size: 0.85rem; line-height: 1.5;
+    display: flex; align-items: flex-start; gap: 0.6rem;
+  }
+  .cb-force-toast-msg::before {
+    content: '⚠'; font-size: 1rem; flex-shrink: 0; margin-top: 0.05rem;
+  }
+  .cb-force-toast-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+  .cb-force-toast-btn {
+    font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600;
+    padding: 0.4rem 0.9rem; border-radius: 5px; border: none; cursor: pointer;
+  }
+  .cb-force-toast-btn.cancel  { background: transparent; color: #FFF8EC; border: 1px solid rgba(255,255,255,.25); }
+  .cb-force-toast-btn.confirm { background: #B8711A; color: white; }
+  .cb-force-toast-btn:hover { opacity: 0.85; }
+
+  /* ── Toast erreur validation ──────────────────────────────────────────── */
+  .cb-err-toast {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+    z-index: 9998; width: min(420px, calc(100vw - 2rem));
+    background: #1C0606; color: #FFECEC;
+    border: 1px solid #B04545; border-radius: 8px;
+    padding: 0.85rem 1rem 0.85rem 1.1rem;
+    display: flex; align-items: flex-start; gap: 0.75rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,.35);
+    font-family: 'Inter', sans-serif; font-size: 0.84rem; line-height: 1.5;
+    animation: cb-toast-in .18s ease;
+  }
+  .cb-err-toast.hiding { animation: cb-toast-out .18s ease forwards; }
+  .cb-err-toast-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.05rem; }
+
+  /* ── Toast info (restauration session) ───────────────────────────────── */
+  .cb-info-toast {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+    z-index: 9997; width: min(420px, calc(100vw - 2rem));
+    background: #0E1F16; color: #D1FAE5;
+    border: 1px solid #2D6A4F; border-radius: 8px;
+    padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.6rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,.35);
+    font-family: 'Inter', sans-serif; font-size: 0.82rem; line-height: 1.5;
+    animation: cb-toast-in .18s ease;
+  }
+  .cb-info-toast.hiding { animation: cb-toast-out .18s ease forwards; }
+  .cb-err-toast-msg  { flex: 1; }
+  .cb-err-toast-close {
+    background: none; border: none; color: rgba(255,236,236,.6);
+    font-size: 1.1rem; cursor: pointer; flex-shrink: 0; padding: 0; line-height: 1;
+  }
+  .cb-err-toast-close:hover { color: #FFECEC; }
 
   @media (max-width: 640px) {
     .hero { padding: 2.5rem 1.5rem; }
@@ -503,108 +567,120 @@
   #mandataire-section { padding: 0.25rem 0; }
   .mdt-counts { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.75rem; }
   .mdt-count-block { display: flex; flex-direction: column; }
-  .mdt-lbl { font-family: 'Epilogue', sans-serif; font-size: 0.98rem; font-weight: 500; color: var(--ink); margin-bottom: 0.5rem; display: block; }
+  .mdt-lbl { font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; color: var(--grey-500); margin-bottom: 0.4rem; display: block; }
   .mdt-count-inp, .mdt-inp {
     width: 100%; padding: 0.7rem 0.9rem;
-    border: 1px solid var(--grey-200); border-radius: 2px;
-    font-family: 'Epilogue', sans-serif; font-size: 0.92rem;
-    color: var(--ink); background: var(--paper); box-sizing: border-box;
+    border: 1px solid var(--grey-200); border-radius: 4px;
+    font-family: 'Inter', sans-serif; font-size: 0.92rem;
+    color: var(--ink); background: white; box-sizing: border-box;
     transition: border-color .2s;
   }
-  .mdt-count-inp:focus, .mdt-inp:focus { border-color: var(--blue); outline: none; }
+  .mdt-count-inp:focus, .mdt-inp:focus { border-color: var(--gold); outline: none; }
   select.mdt-inp {
     appearance: none; -webkit-appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230A0A0A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em;
     padding-right: 2.5rem; height: 46px;
   }
-  .mdt-section-ttl { font-family: 'Epilogue', sans-serif; font-size: 1rem; font-weight: 600; color: var(--ink); margin: 1.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--blue); }
-  .mdt-card { background: var(--paper-2, #F2F1EB); border: 1px solid var(--grey-200); border-radius: 2px; padding: 1.25rem; margin-bottom: 1rem; }
+  #owner-dropdown { display:none; position:absolute; top:calc(100% + 2px); left:0; right:0; background:var(--paper); border:1px solid var(--blue); border-radius:4px; margin:0; padding:0; list-style:none; max-height:220px; overflow-y:auto; z-index:999; }
+  #owner-dropdown li { padding:0.65rem 0.9rem; font-family:'Inter',sans-serif; font-size:0.92rem; color:var(--ink); cursor:pointer; }
+  #owner-dropdown li:hover, #owner-dropdown li.owner-dd-active { background:var(--blue-mist); }
+  .mdt-section-ttl { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 700; color: var(--ink); margin: 1.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--blue); }
+  .mdt-card { background: var(--paper-2, #F5F2EE); border: 1px solid var(--grey-200); border-radius: 4px; padding: 1.25rem; margin-bottom: 1rem; }
   .mdt-card-hd { margin-bottom: 1rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--grey-200); }
-  .mdt-card-title { font-family: 'Epilogue', sans-serif; font-size: 0.88rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--blue); }
+  .mdt-card-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gold); }
   .mdt-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
   .mdt-row-3 { grid-template-columns: 1fr 1fr 1fr; }
   .mdt-row-1 { grid-template-columns: 1fr; }
   .mdt-fg { display: flex; flex-direction: column; }
-  .mdt-cp-row { display:flex; align-items:center; gap:0.65rem; margin-bottom:1rem; padding:0.6rem 1rem; background:var(--green-mist,#E6F4ED); border:1px solid #9dd4b4; border-radius:2px; }
+  .mdt-cp-row { display:flex; align-items:center; gap:0.65rem; margin-bottom:1rem; padding:0.6rem 1rem; background:var(--green-mist,#E6F4ED); border:1px solid #9dd4b4; border-radius:4px; }
   .mdt-cp-row input[type="radio"] { width:16px; height:16px; flex-shrink:0; cursor:pointer; accent-color:var(--green,#1A6B3C); }
-  .mdt-cp-row label { font-family:'Epilogue',sans-serif; font-size:0.9rem; font-weight:600; color:var(--green,#1A6B3C); cursor:pointer; margin:0; }
+  .mdt-cp-row label { font-family:'Inter',sans-serif; font-size:0.9rem; font-weight:600; color:var(--green,#1A6B3C); cursor:pointer; margin:0; }
   /* ── PP/PM toggle & PM sections ── */
-  .mdt-type-row { display:flex; gap:1.5rem; margin-bottom:1rem; padding:0.65rem 1rem; background:#f0f4f8; border:1px solid #c8d8e8; border-radius:4px; }
-  .pm-section-sep { font-size:0.72rem; font-weight:700; letter-spacing:0.08em; color:#1E4E7A; text-transform:uppercase; margin:1.25rem 0 0.5rem; padding-bottom:0.3rem; border-bottom:1px solid #dce3ec; }
-  .pm-be-item { border:1px solid #dce3ec; border-radius:6px; padding:0.85rem 1rem; margin-bottom:0.75rem; background:#fafbfc; }
-  .pm-be-hd { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; font-weight:600; font-size:0.85rem; color:#1E4E7A; }
-  .pm-be-del { font-size:0.75rem; padding:0.2rem 0.5rem; border:1px solid #e0c0c0; border-radius:4px; background:#fff5f5; color:#C0184A; cursor:pointer; }
+  .mdt-type-row { display:flex; gap:1.5rem; margin-bottom:1rem; padding:0.65rem 1rem; background:var(--blue-mist); border:1px solid var(--grey-200); border-radius:4px; }
+  .pm-section-sep { font-size:0.72rem; font-weight:700; letter-spacing:0.08em; color:var(--blue); text-transform:uppercase; margin:1.25rem 0 0.5rem; padding-bottom:0.3rem; border-bottom:1px solid var(--grey-200); }
+  .pm-be-item { border:1px solid var(--grey-200); border-radius:4px; padding:0.85rem 1rem; margin-bottom:0.75rem; background:var(--paper-2); }
+  .pm-be-hd { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; font-weight:600; font-size:0.85rem; color:var(--blue); }
+  .pm-be-del { font-size:0.75rem; padding:0.2rem 0.5rem; border:1px solid var(--grey-300); border-radius:4px; background:var(--gold-soft); color:var(--gold); cursor:pointer; }
   .pm-be-del:hover { background:#ffeaea; }
-  .pm-be-add { margin-top:0.5rem; margin-bottom:0.5rem; padding:0.5rem 1rem; border:1.5px dashed #1E4E7A; border-radius:6px; background:transparent; color:#1E4E7A; font-size:0.83rem; font-weight:600; cursor:pointer; width:100%; }
-  .pm-be-add:hover { background:#f0f4f8; }
+  .pm-be-add { margin-top:0.5rem; margin-bottom:0.5rem; padding:0.5rem 1rem; border:1.5px dashed var(--blue); border-radius:4px; background:transparent; color:var(--blue); font-size:0.83rem; font-weight:600; cursor:pointer; width:100%; }
+  .pm-be-add:hover { background:var(--blue-mist); }
   /* ── ACRE card ── */
-  .acre-card { margin:1.5rem 0 0.5rem; padding:1.1rem 1.25rem 1rem; background:#fffbf2; border:1.5px solid #e8d9b5; border-left:4px solid var(--gold,#B8935A); border-radius:6px; }
-  .acre-badge { display:inline-flex; align-items:center; gap:0.4rem; background:#fff3cd; color:#7a5c00; border:1px solid #e8d9b5; border-radius:20px; padding:0.2rem 0.65rem; font-family:'Epilogue',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:0.6rem; }
+  .acre-card { margin:1.5rem 0 0.5rem; padding:1.1rem 1.25rem 1rem; background:var(--paper-2); border:1.5px solid var(--grey-200); border-left:4px solid var(--blue); border-radius:4px; }
+  .acre-badge { display:inline-flex; align-items:center; gap:0.4rem; background:var(--blue-mist); color:var(--blue); border:1px solid var(--grey-200); border-radius:20px; padding:0.2rem 0.65rem; font-family:'Inter',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:0.6rem; }
   .acre-badge svg { flex-shrink:0; color:#b8860b; }
   .acre-title { font-family:'Fraunces',serif; font-size:1rem; font-weight:700; color:#3d2b00; margin:0 0 0.55rem; line-height:1.35; }
   .acre-title em { font-style:italic; color:var(--gold,#B8935A); }
-  .acre-lead { font-family:'Epilogue',sans-serif; font-size:0.85rem; color:#4a3b1a; line-height:1.6; margin:0 0 0.85rem; }
+  .acre-lead { font-family:'Inter',sans-serif; font-size:0.85rem; color:#4a3b1a; line-height:1.6; margin:0 0 0.85rem; }
   .acre-cases { display:grid; grid-template-columns:1fr 1fr; gap:0.65rem; margin-bottom:0.85rem; }
   @media(max-width:540px){ .acre-cases { grid-template-columns:1fr; } }
-  .acre-case { background:#fff; border:1px solid #e8d9b5; border-radius:4px; padding:0.75rem 0.9rem; }
-  .acre-case h4 { font-family:'Epilogue',sans-serif; font-size:0.8rem; font-weight:700; color:#3d2b00; margin:0 0 0.25rem; }
-  .acre-case p { font-family:'Epilogue',sans-serif; font-size:0.78rem; color:#6b5520; margin:0 0 0.5rem; line-height:1.5; }
-  .acre-link { display:inline-flex; align-items:center; gap:0.3rem; font-family:'Epilogue',sans-serif; font-size:0.78rem; font-weight:600; color:var(--blue,#1E4E7A); text-decoration:none; }
+  .acre-case { background:#fff; border:1px solid var(--grey-200); border-radius:4px; padding:0.75rem 0.9rem; }
+  .acre-case h4 { font-family:'Inter',sans-serif; font-size:0.8rem; font-weight:700; color:#3d2b00; margin:0 0 0.25rem; }
+  .acre-case p { font-family:'Inter',sans-serif; font-size:0.78rem; color:#6b5520; margin:0 0 0.5rem; line-height:1.5; }
+  .acre-link { display:inline-flex; align-items:center; gap:0.3rem; font-family:'Inter',sans-serif; font-size:0.78rem; font-weight:600; color:var(--blue,#1A2E4F); text-decoration:none; }
   .acre-link:hover { text-decoration:underline; }
-  .acre-footnote { font-family:'Epilogue',sans-serif; font-size:0.78rem; color:#6b5520; margin:0 0 0.75rem; }
-  .acre-check { display:flex; align-items:center; gap:0.6rem; padding:0.65rem 0.85rem; background:#fff; border:1.5px solid #e8d9b5; border-radius:4px; cursor:pointer; font-family:'Epilogue',sans-serif; font-size:0.88rem; font-weight:600; color:#3d2b00; }
+  .acre-footnote { font-family:'Inter',sans-serif; font-size:0.78rem; color:#6b5520; margin:0 0 0.75rem; }
+  .acre-check { display:flex; align-items:center; gap:0.6rem; padding:0.65rem 0.85rem; background:#fff; border:1.5px solid var(--grey-200); border-radius:4px; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.88rem; font-weight:600; color:var(--blue); }
   .acre-check input[type="checkbox"] { width:17px; height:17px; flex-shrink:0; accent-color:var(--gold,#B8935A); cursor:pointer; }
   .acre-check:has(input:checked) { background:#fff8e8; border-color:var(--gold,#B8935A); }
   .mdt-docs { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--grey-200); }
-  .mdt-docs-ttl { font-family: 'Epilogue', sans-serif; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey-500); margin-bottom: 0.75rem; }
+  .mdt-docs-ttl { font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey-500); margin-bottom: 0.75rem; }
   .mdt-doc-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--grey-100); }
   .mdt-doc-row:last-child { border-bottom: none; }
-  .mdt-doc-lbl { flex: 1; font-family: 'Epilogue', sans-serif; font-size: 0.88rem; color: var(--ink); }
-  .mdt-doc-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.85rem; border: 1px solid var(--grey-300); border-radius: 2px; font-family: 'Epilogue', sans-serif; font-size: 0.8rem; cursor: pointer; white-space: nowrap; background: white; transition: border-color .15s; }
+  .mdt-doc-lbl { flex: 1; font-family: 'Inter', sans-serif; font-size: 0.88rem; color: var(--ink); }
+  .mdt-doc-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.85rem; border: 1px solid var(--grey-300); border-radius: 4px; font-family: 'Inter', sans-serif; font-size: 0.8rem; cursor: pointer; white-space: nowrap; background: white; transition: border-color .15s; }
   .mdt-doc-btn:hover { border-color: var(--blue); }
   .mdt-doc-btn input[type="file"] { display: none; }
-  .mdt-doc-fname { font-family: 'Epilogue', sans-serif; font-size: 0.78rem; color: var(--grey-400); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mdt-doc-fname { font-family: 'Inter', sans-serif; font-size: 0.78rem; color: var(--grey-400); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mdt-doc-fname.has-file { color: var(--green); font-weight: 500; }
   .mdt-doc-del { display: none; flex-shrink: 0; width: 1.5rem; height: 1.5rem; border: 1px solid var(--grey-200); border-radius: 50%; background: white; cursor: pointer; font-size: 1rem; line-height: 1; color: var(--grey-400); align-items: center; justify-content: center; padding: 0; transition: border-color .15s, color .15s; }
-  .mdt-doc-del:hover { border-color: #C0184A; color: #C0184A; }
+  .mdt-doc-del:hover { border-color: #7A1F30; color: #7A1F30; }
   #cb-submit-overlay { display: none; position: fixed; inset: 0; background: rgba(10,10,10,0.65); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 1.25rem; }
   #cb-submit-overlay.active { display: flex; }
   .cb-spinner { width: 2.75rem; height: 2.75rem; border: 3px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: cb-spin 0.75s linear infinite; }
   @keyframes cb-spin { to { transform: rotate(360deg); } }
-  .cb-submit-msg { color: white; font-family: 'Epilogue', sans-serif; font-size: 0.95rem; font-weight: 500; letter-spacing: 0.02em; }
+  .cb-submit-msg { color: white; font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: 500; letter-spacing: 0.02em; }
   .mdt-hbg-block { margin-top: 1rem; }
   .mdt-hbg-block .mdt-lbl { display: block; margin-bottom: 0.4rem; }
   .mdt-radio-row { display: flex; gap: 2rem; margin-top: 0.35rem; }
-  .mdt-radio-lbl { display: flex; align-items: center; gap: 0.5rem; font-family: 'Epilogue', sans-serif; font-size: 0.9rem; cursor: pointer; }
+  .mdt-radio-lbl { display: flex; align-items: center; gap: 0.5rem; font-family: 'Inter', sans-serif; font-size: 0.9rem; cursor: pointer; }
   .mdt-radio-lbl input[type="radio"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--blue); }
-  .mdt-hbg-details { margin-top: 0.85rem; padding: 0.85rem 1rem; background: var(--blue-mist,#E8EAF0); border-left: 3px solid var(--blue); border-radius: 2px; }
+  .mdt-hbg-details { margin-top: 0.85rem; padding: 0.85rem 1rem; background: var(--blue-mist,#EEF1F6); border-left: 3px solid var(--blue); border-radius: 4px; }
   @media (max-width: 600px) {
     .mdt-counts, .mdt-row, .mdt-row-3 { grid-template-columns: 1fr; }
     .mdt-doc-row { flex-wrap: wrap; }
   }
   /* ── Draft mode ──────────────────────────────────────────────────────────── */
-  #cb-draft-banner { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: #FEF3C7; border-bottom: 2px solid #D97706; padding: 0.6rem 1.5rem; font-family: 'Epilogue', sans-serif; font-size: 0.88rem; color: #78350F; text-align: center; }
+  #cb-draft-banner { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: #FEF3C7; border-bottom: 2px solid #D97706; padding: 0.6rem 1.5rem; font-family: 'Inter', sans-serif; font-size: 0.88rem; color: #78350F; text-align: center; }
   #cb-draft-banner.active { display: block; }
   body.cb-draft-client { padding-top: 2.5rem; }
   #cb-draft-modal { display: none; position: fixed; inset: 0; background: rgba(10,10,10,0.6); z-index: 10000; align-items: center; justify-content: center; }
   #cb-draft-modal.active { display: flex; }
-  .cb-draft-modal-box { background: white; border-radius: 4px; padding: 2rem; max-width: 560px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-  .cb-draft-modal-box h3 { font-family: 'Epilogue', sans-serif; font-size: 1.1rem; font-weight: 700; color: #0A1338; margin: 0 0 0.4rem; }
-  .cb-draft-modal-box p { font-family: 'Epilogue', sans-serif; font-size: 0.86rem; color: #555; margin: 0 0 1rem; }
-  .cb-draft-url-row { display: flex; gap: 0.5rem; align-items: stretch; }
-  #cb-draft-url-inp { flex: 1; font-family: monospace; font-size: 0.78rem; border: 1px solid #D0D0D0; border-radius: 2px; padding: 0.4rem 0.6rem; background: #F5F5F3; color: #333; }
-  .cb-draft-copy-btn { flex-shrink: 0; padding: 0.4rem 0.9rem; background: #0A1338; color: white; border: none; border-radius: 2px; font-family: 'Epilogue', sans-serif; font-size: 0.82rem; cursor: pointer; }
-  .cb-draft-close-btn { margin-top: 0.85rem; display: block; width: 100%; padding: 0.5rem; background: none; border: 1px solid #D0D0D0; border-radius: 2px; font-family: 'Epilogue', sans-serif; font-size: 0.85rem; cursor: pointer; color: #555; }
-  #cb-btn-draft { margin-top: 0.65rem; width: 100%; padding: 0.5rem 1rem; background: none; border: 1px dashed var(--blue); border-radius: 2px; color: var(--blue); font-family: 'Epilogue', sans-serif; font-size: 0.83rem; cursor: pointer; text-align: center; transition: background .15s; }
+  .cb-draft-modal-box { background: white; border: 1px solid var(--grey-200); border-radius: 4px; padding: 2rem; max-width: 600px; width: 92%; }
+  .cb-draft-modal-box h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--blue); margin: 0 0 0.3rem; }
+  .cb-draft-modal-box > p { font-family: 'Inter', sans-serif; font-size: 0.86rem; color: var(--grey-500); margin: 0 0 1rem; }
+  .cb-draft-email-preview { border: 1px solid var(--grey-200); border-radius: 4px; background: var(--paper-2); padding: 1.25rem 1.4rem; margin-bottom: 1rem; white-space: pre-wrap; font-family: 'Inter', sans-serif; font-size: 0.88rem; line-height: 1.7; color: var(--ink); user-select: all; }
+  .cb-draft-email-link { color: var(--gold); text-decoration: underline; word-break: break-all; font-weight: 600; }
+  .cb-draft-actions { display: flex; gap: 0.6rem; margin-bottom: 0.75rem; }
+  .cb-draft-copy-btn { flex: 1; padding: 0.6rem 1rem; background: var(--gold); color: white; border: none; border-radius: 4px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: background .15s; }
+  .cb-draft-copy-btn:hover { background: var(--blue-dark); }
+  .cb-draft-open-btn { padding: 0.6rem 1rem; background: none; border: 1px solid var(--grey-200); border-radius: 4px; font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--blue); cursor: pointer; white-space: nowrap; transition: border-color .15s; text-decoration: none; display: flex; align-items: center; }
+  .cb-draft-open-btn:hover { border-color: var(--blue); }
+  .cb-draft-close-btn { display: block; width: 100%; padding: 0.5rem; background: none; border: 1px solid var(--grey-200); border-radius: 4px; font-family: 'Inter', sans-serif; font-size: 0.85rem; cursor: pointer; color: var(--grey-500); transition: border-color .15s; }
+  .cb-draft-close-btn:hover { border-color: var(--grey-400); }
+  #cb-btn-draft { margin-top: 0.65rem; width: 100%; padding: 0.5rem 1rem; background: none; border: 1px dashed var(--blue); border-radius: 4px; color: var(--blue); font-family: 'Inter', sans-serif; font-size: 0.83rem; cursor: pointer; text-align: center; transition: background .15s; }
   #cb-btn-draft:hover { background: var(--blue-mist); }
   .cb-draft-locked { opacity: 0.55; cursor: not-allowed !important; background: #F0F0EE !important; pointer-events: none; }
+  .mdt-fg.cb-draft-locked-wrap, label.cb-draft-locked-wrap { opacity: 0.55; pointer-events: none !important; cursor: not-allowed; }
 </style>
 </head>
 <body>
 
 <!-- Hero -->
 <section class="hero">
+  <div class="hero-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1391.47 280" fill="currentColor" role="img" aria-label="CECCA"><path d="M30.29,37.13c-19.84,50.9-19.84,154.72,0,205.61,1.28,3.24,6.1,2.31,6.1-1.17V38.3c0-3.48-4.82-4.41-6.1-1.17Z"/><path d="M5.7,70.72c-7.6,41.94-7.6,96.49,0,138.43.34,1.87,3.1,1.62,3.1-.28V71c0-1.9-2.75-2.15-3.1-.28Z"/><path d="M145.05,12.68V0c-11.11.31-22.47,8.42-29.85,17.77-1.59,2.04-4.85.94-4.85-1.64v-7.88c0-2.17-2.12-3.67-4.18-3-12.09,3.94-20.64,19.36-26.44,34.44-1.08,2.8-5.23,2.04-5.23-.96V14.98c0-2.79-3.38-4.24-5.36-2.27-26.58,35.74-28.57,128.91-22.24,179.61,4.54,37.65,12.63,65.52,22.27,74.66,2.01,1.91,5.33.47,5.33-2.3v-23.56c0-3,4.15-3.76,5.23-.96,5.8,15.11,14.34,30.51,26.44,34.46,2.06.67,4.18-.83,4.18-3v-7.88c0-2.58,3.26-3.68,4.85-1.64,7.46,9.56,18.84,17.63,29.85,17.9v-12.69c35.37,1.55,69.5-7.86,93.83-30.46,18.3-16.9,30.08-40.73,30.12-64.65h-49.82c-3.66,38.61-36.36,54.24-74.13,51.69v13.75c-11.26-.8-22.39-12.81-30.03-36.03-.83-2.52-4.61-2.05-4.67.6,0,.07,0,22.09,0,22.16,0,2.64-2.94,4.25-5.15,2.8-26.86-16.74-27.25-156.98-.02-174.45,2.22-1.45,5.17.14,5.17,2.79v22.1c0,.71.23,1.29.59,1.72,1.17,1.4,3.45.83,4.02-.9,7.64-23.34,18.8-35.41,30.09-36.22v13.87c35.16-2.8,72.21,15.45,74.13,52.86h49.82c.2-11.8-2.36-23.3-7.88-34.99-20.31-42.45-68.36-63.97-116.07-61.28Z"/><path d="M496.77,28.83c-18.77-10.81-40.97-16.22-66.61-16.22s-47.5,5.37-66.96,16.1c-19.46,10.74-34.68,25.68-45.65,44.83-10.97,19.15-16.45,41.4-16.45,66.73s5.41,46.92,16.22,66.15c10.81,19.23,25.87,34.25,45.18,45.07,19.31,10.81,41.78,16.22,67.42,16.22,19.15,0,36.11-2.36,50.86-7.07,14.75-4.71,27.26-11.04,37.53-19,10.27-7.96,18.22-16.83,23.87-26.65,5.64-9.81,8.92-19.73,9.85-29.77h-50.05c-.46,4.63-2.17,9.31-5.1,14.02-2.94,4.72-7.22,9.08-12.86,13.09-5.64,4.02-12.82,7.22-21.55,9.62-8.73,2.4-19.04,3.59-30.93,3.59-16.99,0-31.59-3.48-43.79-10.43-12.2-6.95-21.55-16.88-28.03-29.77-4.19-8.33-7.01-17.72-8.49-28.15h203.35c.31-1.39.54-4.02.7-7.88.15-3.86.23-7.26.23-10.19,0-24.71-5.1-46.57-15.29-65.57-10.19-19-24.68-33.9-43.44-44.72ZM351.85,118.03c1.64-8.89,4.36-16.98,8.22-24.21,6.72-12.59,16.14-22.32,28.27-29.19,12.12-6.87,26.22-10.31,42.29-10.31s29.46,3.21,40.2,9.62c10.73,6.41,18.8,14.91,24.21,25.49,4.52,8.86,7.13,18.4,7.87,28.61h-151.05Z"/><path d="M803.42,43.43c-10.04-9.27-22.32-16.72-36.84-22.36-14.52-5.64-31.13-8.46-49.82-8.46-24.72,0-46.84,5.1-66.38,15.29-19.54,10.19-34.91,24.75-46.11,43.67-11.2,18.92-16.8,41.44-16.8,67.54s5.6,48.81,16.8,68.12c11.2,19.31,26.57,34.18,46.11,44.6,19.54,10.43,41.67,15.64,66.38,15.64,19.15,0,36.03-2.78,50.63-8.34,14.6-5.56,26.84-12.98,36.73-22.24,9.88-9.27,17.38-19.58,22.48-30.93,5.1-11.35,7.65-22.59,7.65-33.71h-49.82c-.78,9.27-3.63,17.88-8.57,25.83-4.95,7.96-12.28,14.29-22.01,19-9.73,4.71-22.24,7.07-37.54,7.07-14.21,0-27.22-3.24-39.04-9.73-11.82-6.49-21.24-16.02-28.27-28.62-7.03-12.59-10.54-28.15-10.54-46.69s3.55-33.98,10.66-46.34c7.1-12.36,16.57-21.58,28.38-27.69,11.82-6.1,24.75-9.15,38.81-9.15,12.82,0,24.02,2.09,33.6,6.26,9.58,4.17,17.3,9.81,23.17,16.91,5.87,7.11,9.42,15.22,10.66,24.33.15.93.31,1.89.46,2.9.15,1.01.23,1.89.23,2.67h49.82v-1.62c0-11.12-2.63-22.24-7.88-33.37-5.25-11.12-12.9-21.32-22.94-30.58Z"/><path d="M1081.92,43.43c-10.04-9.27-22.32-16.72-36.84-22.36-14.52-5.64-31.13-8.46-49.82-8.46-24.72,0-46.84,5.1-66.38,15.29-19.54,10.19-34.91,24.75-46.11,43.67-11.2,18.92-16.8,41.44-16.8,67.54s5.6,48.81,16.8,68.12c11.2,19.31,26.57,34.18,46.11,44.6,19.54,10.43,41.67,15.64,66.38,15.64,19.15,0,36.03-2.78,50.63-8.34,14.6-5.56,26.84-12.98,36.73-22.24,9.88-9.27,17.38-19.58,22.48-30.93,5.1-11.35,7.65-22.59,7.65-33.71h-49.82c-.78,9.27-3.63,17.88-8.57,25.83-4.95,7.96-12.28,14.29-22.01,19-9.73,4.71-22.24,7.07-37.54,7.07-14.21,0-27.22-3.24-39.04-9.73-11.82-6.49-21.24-16.02-28.27-28.62-7.03-12.59-10.54-28.15-10.54-46.69s3.55-33.98,10.66-46.34c7.1-12.36,16.57-21.58,28.38-27.69,11.82-6.1,24.75-9.15,38.81-9.15,12.82,0,24.02,2.09,33.6,6.26,9.58,4.17,17.3,9.81,23.17,16.91,5.87,7.11,9.42,15.22,10.66,24.33.15.93.31,1.89.46,2.9.15,1.01.23,1.89.23,2.67h49.82v-1.62c0-11.12-2.63-22.24-7.88-33.37-5.25-11.12-12.9-21.32-22.94-30.58Z"/><path d="M1386.72,256.13c-1.93-3.09-3.59-7.03-4.98-11.82-1.24-4.17-2.08-8.92-2.55-14.25-.46-5.33-.69-10.85-.69-16.57v-117.47c0-18.38-5.02-33.75-15.06-46.11-10.04-12.36-23.52-21.66-40.43-27.92-16.91-6.26-35.65-9.38-56.19-9.38-22.4,0-42.25,3.44-59.55,10.31-17.3,6.88-30.86,16.88-40.66,30.01-9.81,13.13-14.71,29.12-14.71,47.96h49.35c0-15.91,5.67-27.53,17.03-34.87,11.35-7.33,27.46-11.01,48.31-11.01,19.77,0,34.99,3.24,45.65,9.73,10.66,6.49,15.99,15.99,15.99,28.5v.46c0,6.34-5.99,10.89-17.96,13.67-11.97,2.78-32.55,5.64-61.75,8.57-19.62,1.85-37.11,5.76-52.48,11.7-15.37,5.95-27.42,14.33-36.15,25.14-8.73,10.81-13.09,24.48-13.09,41.01,0,15.45,3.86,28.65,11.58,39.62,7.72,10.97,18.57,19.39,32.55,25.26,13.98,5.87,30.24,8.8,48.77,8.8,15.91,0,30.39-1.85,43.44-5.56,13.05-3.71,24.25-8.88,33.6-15.52,5.04-3.58,9.36-7.51,13.03-11.76.68,4.28,1.62,8.14,2.84,11.53,1.39,4.02,2.97,7.53,4.75,10.54,1.77,3.01,3.13,4.98,4.05,5.91h50.05c-1.24-1.24-2.82-3.4-4.75-6.49ZM1328.45,162.75c0,14.21-3.55,25.99-10.66,35.33-7.11,9.35-16.57,16.3-28.38,20.85-11.82,4.56-24.91,6.84-39.27,6.84-17.92,0-31.24-2.97-39.97-8.92-8.73-5.94-13.09-14.87-13.09-26.76s5.25-21.2,15.76-26.53c10.5-5.33,26.18-8.92,47.03-10.77,15.13-1.54,29.85-3.51,44.14-5.91,9.03-1.51,17.17-3.32,24.44-5.42v21.29Z"/></svg>
+  </div>
   <span class="eyebrow">Création d'entreprise</span>
   <h1>Votre dossier complété<br><em>simplement</em></h1>
   <p>Remplissez ce formulaire pour transmettre toutes les informations nécessaires à la création de votre société. L'équipe Cecca prend en charge le reste.</p>
@@ -657,28 +733,31 @@
     <!-- Étape 0 : Propriétaire de la transaction -->
     <div id="owner-panel">
       <div class="mdt-fg" style="max-width:420px">
-        <label class="mdt-lbl" for="owner-select">Propriétaire de la transaction <span style="color:#C0184A">*</span></label>
-        <select id="owner-select" class="mdt-inp" style="height:46px;padding:0 0.9rem;cursor:pointer">
-          <option value="">— Chargement des collaborateurs…</option>
-        </select>
-        <div id="owner-err" style="display:none;margin-top:0.5rem;font-size:0.83rem;color:#B04545;font-family:Epilogue,sans-serif;">Veuillez sélectionner un propriétaire pour continuer.</div>
+        <label class="mdt-lbl" for="owner-input">Propriétaire de la transaction <span style="color:#7A1F30">*</span></label>
+        <div style="position:relative;">
+          <input id="owner-input" class="mdt-inp" type="text" autocomplete="off"
+                 placeholder="Recherchez un propriétaire Cecca…"
+                 style="height:46px;padding:0 0.9rem;">
+          <ul id="owner-dropdown" role="listbox" aria-label="Collaborateurs"></ul>
+        </div>
+        <div id="owner-err" style="display:none;margin-top:0.5rem;font-size:0.83rem;color:#B04545;font-family:Inter,sans-serif;">Veuillez sélectionner un propriétaire pour continuer.</div>
       </div>
     </div>
 
     <!-- HubSpot Form Embed -->
-    <div id="hs-diag" style="display:none;padding:1rem;color:#666;font-family:Epilogue,sans-serif;font-size:0.85rem;">Chargement du formulaire…</div>
+    <div id="hs-diag" style="display:none;padding:1rem;color:#666;font-family:Inter,sans-serif;font-size:0.85rem;">Chargement du formulaire…</div>
     <div id="hs-form-wrapper" style="display:none"></div>
 
     <!-- Mandataire step (custom, hors iframe HubSpot) -->
     <div id="mandataire-section" style="display:none;">
-      <div id="mdt-err" style="display:none;background:#FEE2E2;border:1px solid #B04545;border-radius:2px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:#B04545;font-family:Epilogue,sans-serif;"></div>
+      <div id="mdt-err" style="display:none;background:#FEE2E2;border:1px solid #B04545;border-radius:4px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:#B04545;font-family:Inter,sans-serif;"></div>
       <div class="mdt-counts">
         <div class="mdt-count-block">
-          <label class="mdt-lbl">Nombre de mandataires associés en plus <span style="color:#C0184A">*</span></label>
+          <label class="mdt-lbl">Nombre de mandataires associés en plus <span style="color:#7A1F30">*</span></label>
           <input type="number" id="mdt-assoc-in" class="mdt-count-inp" min="0" max="4" value="0">
         </div>
         <div class="mdt-count-block">
-          <label class="mdt-lbl">Nombre de mandataires non associés en plus <span style="color:#C0184A">*</span></label>
+          <label class="mdt-lbl">Nombre de mandataires non associés en plus <span style="color:#7A1F30">*</span></label>
           <input type="number" id="mdt-nonassoc-in" class="mdt-count-inp" min="0" max="4" value="0">
         </div>
       </div>
@@ -687,7 +766,7 @@
 
         <!-- Associés non mandataires (custom, hors iframe HubSpot) -->
     <div id="assoc-section" style="display:none;">
-      <div id="assoc-err" style="display:none;background:#FEE2E2;border:1px solid #B04545;border-radius:2px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:#B04545;font-family:Epilogue,sans-serif;"></div>
+      <div id="assoc-err" style="display:none;background:#FEE2E2;border:1px solid #B04545;border-radius:4px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:#B04545;font-family:Inter,sans-serif;"></div>
       <div class="mdt-counts">
         <div class="mdt-count-block">
           <label class="mdt-lbl">Nombre d'associés non mandataires</label>
@@ -703,7 +782,7 @@
       <span class="form-step-counter" id="form-step-counter">Étape 1 / 5</span>
       <button class="form-nav-btn primary" id="btn-next" onclick="formNextStep()">Suivant →</button>
     </div>
-    <button id="cb-btn-draft" onclick="generateDraftLink()">Formulaire non terminé — Générer un lien client</button>
+    <button id="cb-btn-draft" onclick="generateDraftLink()">Formulaire non terminé — Générer un mail client</button>
 
     <!-- Post-submission: virement section -->
     <div id="next-steps" class="next-steps">
@@ -800,6 +879,17 @@
       onerror="document.getElementById('hs-diag').textContent='Script HubSpot non charge';"
     ></script>
     <script>
+      // ── Managers Cecca Étoile (source unique — modifier ici uniquement) ──────
+      var ETOILE_MANAGERS = new Set([
+        'SIMBOU DANFAKHA',
+        'YANN POINLOUP',
+        'MATEUS SOUTELO',
+        'JULIEN DECLERCQ',
+      ]);
+      function isEtoile(name) {
+        return ETOILE_MANAGERS.has((name || '').trim().toUpperCase());
+      }
+
       // ── RIBs ──────────────────────────────────────────────────────
       var RIBS = {
         cecca:        { beneficiaire:'CECCA',        banque:'LCL', iban:'FR76 3000 2062 3500 0007 3467 Z97', bic:'CRLYFRPPXXX' },
@@ -834,6 +924,8 @@
       var _hbg = { type: null, nom: '', prenom: '', societe: '', adresse: '', cp: '', ville: '' };
       var _syncHebergeur = null; // référence à syncToHubspot() initialisée dans wireHebergement
       var TOTAL_STEPS = 4;
+      var _capturedEntity = '';
+      var _capturedNom    = '';
       var STEP_FS = [ [0], [1, 2], [], [] ];
       var STEP_DESCS = {
         '-1': '<strong>Propriétaire de la transaction</strong> — Sélectionnez le collaborateur Cecca responsable de ce dossier',
@@ -861,7 +953,7 @@
           // Note visuelle sous le label
           var note = wrapper.querySelector('.cb-doc-note');
           if (!note) { note = _fDoc.createElement('span'); note.className = 'cb-doc-note'; note.style.cssText = 'display:block;font-size:0.75rem;color:#666;margin-top:2px;'; wrapper.querySelector('label') && wrapper.querySelector('label').appendChild(note); }
-          if (required) { note.textContent = '(obligatoire)'; note.style.color = '#C0184A'; }
+          if (required) { note.textContent = '(obligatoire)'; note.style.color = '#7A1F30'; }
           else { note.textContent = ''; }
         }
 
@@ -893,7 +985,6 @@
       }
 
       function applyStepVisibility() {
-        if (!_fDoc) return;
         var ownerPanel = document.getElementById('owner-panel');
         var hsWrapper  = document.getElementById('hs-form-wrapper');
         var mdtSec     = document.getElementById('mandataire-section');
@@ -959,6 +1050,7 @@
         else if (_step > 0) { _step--; }
         else return;
         applyStepVisibility(); updateStepUI();
+        saveCollabState();
       }
 
       // ── Step validation ────────────────────────────────────────────
@@ -978,12 +1070,12 @@
         hbgOk(); return true;
       }
 
-      function validateCurrentStep() {
+      function validateCurrentStep(silent) {
         if (_step === -1) {
-          var sel = document.getElementById('owner-select');
           var err = document.getElementById('owner-err');
-          if (!sel || !sel.value) {
+          if (!_selectedOwner.name) {
             if (err) err.style.display = '';
+            showErrToast('Veuillez sélectionner un propriétaire pour continuer.');
             return false;
           }
           if (err) err.style.display = 'none';
@@ -1021,19 +1113,11 @@
         }
         // Validation hébergeur custom (step 1 seulement)
         if (_step === 1 && isValid) { isValid = validateHebergeur(); }
-        // Show/hide inline error banner
-        var errId = 'cb-step-err';
-        var existing = document.getElementById(errId);
         if (!isValid) {
-          if (!existing) {
-            var err = document.createElement('div');
-            err.id = errId;
-            err.style.cssText = 'background:#FEE2E2;border:1px solid #B04545;border-radius:2px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:#B04545;font-family:Epilogue,sans-serif;';
-            err.textContent = 'Veuillez remplir tous les champs obligatoires avant de continuer.';
-            var nav = document.getElementById('form-nav');
-            nav.parentNode.insertBefore(err, nav);
-          } else { existing.style.display = ''; existing.textContent = attestErr || 'Veuillez remplir tous les champs obligatoires avant de continuer.'; }
-        } else if (existing) { existing.style.display = 'none'; }
+          if (!silent) showErrToast('Veuillez remplir tous les champs obligatoires avant de continuer.');
+        } else {
+          dismissErrToast();
+        }
         return isValid;
       }
 
@@ -1136,13 +1220,104 @@
         return filled;
       }
 
+      // ── Persistence session collab (localStorage) ──────────────────────────
+      var COLLAB_STORAGE_KEY    = 'creabook_collab_v1';
+      var _pendingCollabRestore = null;
+      var _collabSaveTimer      = null;
+
+      function saveCollabState() {
+        if (_draftMode.active) return; // ne jamais écraser en mode client
+        try {
+          var snap = collectFormState();
+          snap.step = _step;
+          snap.hbg  = _hbg;
+          localStorage.setItem(COLLAB_STORAGE_KEY, JSON.stringify(snap));
+        } catch (e) { /* quota ou mode privé */ }
+      }
+
+      function saveCollabDebounced() {
+        clearTimeout(_collabSaveTimer);
+        _collabSaveTimer = setTimeout(saveCollabState, 600);
+      }
+
+      function clearCollabState() {
+        try { localStorage.removeItem(COLLAB_STORAGE_KEY); } catch (e) {}
+      }
+
+      function showInfoToast(msg) {
+        var el = document.createElement('div');
+        el.className = 'cb-info-toast';
+        el.innerHTML = '<span style="flex-shrink:0">✓</span><span>' + msg + '</span>';
+        document.body.appendChild(el);
+        setTimeout(function() {
+          el.classList.add('hiding');
+          setTimeout(function() { el.remove(); }, 200);
+        }, 3000);
+      }
+
+      function restoreCollabState() {
+        if (new URLSearchParams(window.location.search).get('draft')) return;
+        try {
+          var raw = localStorage.getItem(COLLAB_STORAGE_KEY);
+          if (!raw) return;
+          var data = JSON.parse(raw);
+          if (!data) return;
+
+          // Owner
+          if (data.owner && data.owner.name) {
+            _selectedOwner = { name: data.owner.name, id: data.owner.id || '' };
+            var ownerInp = document.getElementById('owner-input');
+            if (ownerInp) ownerInp.value = _selectedOwner.name;
+            var ownerErr = document.getElementById('owner-err');
+            if (ownerErr) ownerErr.style.display = 'none';
+          }
+
+          // Hébergeur
+          if (data.hbg) _hbg = Object.assign({}, _hbg, data.hbg);
+
+          // Mandataires
+          if (data.mdt) {
+            _mdt.assocCount       = data.mdt.assocCount       || 0;
+            _mdt.nonAssocCount    = data.mdt.nonAssocCount    || 0;
+            _mdt.contactPrincipal = data.mdt.contactPrincipal || null;
+            _mdt.assoc    = data.mdt.assoc    || [];
+            _mdt.nonAssoc = data.mdt.nonAssoc || [];
+            var ai = document.getElementById('mdt-assoc-in');
+            var ni = document.getElementById('mdt-nonassoc-in');
+            if (ai) ai.value = _mdt.assocCount;
+            if (ni) ni.value = _mdt.nonAssocCount;
+          }
+
+          // Associés non mandataires
+          if (data.assoc) {
+            _assoc.count = data.assoc.count || 0;
+            _assoc.items = data.assoc.items || [];
+            var ci = document.getElementById('assoc-count-in');
+            if (ci) ci.value = _assoc.count;
+          }
+
+          // Champs HubSpot — restaurés après chargement de l'iframe
+          if (data.hsFields && Object.keys(data.hsFields).length) {
+            _pendingCollabRestore = data.hsFields;
+          }
+
+          // Naviguer à l'étape sauvegardée si l'owner est connu
+          if (typeof data.step === 'number' && data.step >= 0 && data.owner && data.owner.name) {
+            _step = data.step;
+            applyStepVisibility();
+            updateStepUI(true);
+          }
+
+          showInfoToast('Formulaire restauré depuis votre dernière session.');
+        } catch (e) {}
+      }
+
       function applyHsLocks() {
         if (!_draftMode.active || !_fDoc) return;
         var fbc = _draftMode.filledByCollab;
         _fDoc.querySelectorAll('input[name], select[name], textarea[name]').forEach(function(el) {
           if (el.type === 'hidden') return;
           if (!fbc['hs:' + el.name]) return;
-          // readOnly for text/textarea (value still submits); disabled for select/radio/checkbox
           if (el.tagName === 'INPUT' && el.type !== 'radio' && el.type !== 'checkbox') {
             el.readOnly = true;
           } else {
@@ -1150,12 +1325,13 @@
           }
           el.setAttribute('tabindex', '-1');
           el.classList.add('cb-draft-locked');
+          // Griser le wrapper entier (label + champ)
           var wrapper = el.closest('.hs-form-field');
           if (wrapper) {
             wrapper.classList.add('cb-draft-locked-field');
-            wrapper.style.pointerEvents = 'none';
+            wrapper.style.cssText += ';pointer-events:none!important;opacity:0.55!important;';
           }
-          // Block the chosen.js visual widget for selects
+          // Griser le widget chosen.js (select visuel)
           if (el.tagName === 'SELECT') {
             var chz = el.nextElementSibling;
             if (chz && chz.classList.contains('chosen-container')) {
@@ -1169,36 +1345,43 @@
       function applyCardLocks(cardEl, prefix, cardKey) {
         if (!_draftMode.active) return;
         var fbc = _draftMode.filledByCollab;
+        function lockWrap(el) {
+          if (!el) return;
+          el.classList.add('cb-draft-locked-wrap');
+          el.style.pointerEvents = 'none';
+        }
         cardEl.querySelectorAll('[data-f]').forEach(function(inp) {
           var field = inp.getAttribute('data-f');
           if (!fbc[prefix + ':' + field]) return;
-          inp.classList.add('cb-draft-locked');
           inp.setAttribute('tabindex', '-1');
+          // Griser le wrapper entier (.mdt-fg = label + champ)
+          var fg = inp.closest('.mdt-fg');
+          lockWrap(fg);
           if (inp.tagName === 'SELECT') {
-            // pointer-events on wrapper — select stays functional for data submission
-            var fg = inp.closest('.mdt-fg');
-            if (fg) fg.style.pointerEvents = 'none';
+            inp.disabled = true;
           } else {
             inp.readOnly = true;
+            inp.classList.add('cb-draft-locked');
           }
         });
         [['mdt-hbg-' + cardKey, 'heberge'], ['mdt-hbg-type-' + cardKey, 'hbg_type'], ['mdt-type-' + cardKey, 'pm_type'],
          ['assoc-hbg-' + cardKey, 'heberge'], ['assoc-hbg-type-' + cardKey, 'hbg_type'], ['assoc-type-' + cardKey, 'pm_type']
         ].forEach(function(pair) {
           if (!fbc[prefix + ':' + pair[1]]) return;
+          // Griser le container radio entier
           cardEl.querySelectorAll('input[name="' + pair[0] + '"]').forEach(function(r) {
-            r.classList.add('cb-draft-locked');
+            r.disabled = true;
             r.setAttribute('tabindex', '-1');
             var lbl = r.closest('label') || r.parentNode;
-            if (lbl) lbl.style.pointerEvents = 'none';
+            lockWrap(lbl);
           });
         });
         var acreCb = cardEl.querySelector('#mdt-acre-cb-' + cardKey);
         if (acreCb && fbc[prefix + ':acre']) {
-          acreCb.classList.add('cb-draft-locked');
+          acreCb.disabled = true;
           acreCb.setAttribute('tabindex', '-1');
           var acreLbl = acreCb.closest('label') || acreCb.parentNode;
-          if (acreLbl) acreLbl.style.pointerEvents = 'none';
+          lockWrap(acreLbl);
         }
       }
 
@@ -1213,17 +1396,11 @@
           _selectedOwner = state.owner;
           // Passer directement à l'étape 0 (le client ne voit pas l'étape propriétaire)
           _step = 0;
-          var sel = document.getElementById('owner-select');
-          if (sel) {
-            var opt = document.createElement('option');
-            opt.value = _selectedOwner.name;
-            opt.dataset.id = _selectedOwner.id || '';
-            opt.textContent = _selectedOwner.name;
-            sel.innerHTML = '';
-            sel.appendChild(opt);
-            sel.value = _selectedOwner.name;
-            sel.disabled = true;
-            sel.classList.add('cb-draft-locked');
+          var inp = document.getElementById('owner-input');
+          if (inp) {
+            inp.value = _selectedOwner.name;
+            inp.disabled = true;
+            inp.classList.add('cb-draft-locked');
           }
         }
 
@@ -1288,31 +1465,87 @@
           hideOverlay();
           if (!d.ok) throw new Error(d.error || 'Erreur serveur');
           if (btn) btn.style.display = 'none';
-          showDraftModal(d.url);
+          showDraftModal(d.url, _selectedOwner.name || 'Votre conseiller Cecca');
         }).catch(function(e) {
           hideOverlay();
-          if (btn) { btn.disabled = false; btn.textContent = 'Formulaire non terminé — Générer un lien client'; }
-          alert('Erreur : ' + e.message);
+          if (btn) { btn.disabled = false; btn.textContent = 'Formulaire non terminé — Générer un mail client'; }
+          showErrToast('Erreur : ' + e.message);
         });
       }
 
-      function showDraftModal(url) {
-        var inp = document.getElementById('cb-draft-url-inp');
-        if (inp) inp.value = url;
+      var _draftEmailText = '';
+      var _draftEmailHtml = '';
+
+      function showDraftModal(url, managerName) {
+        // Plain text : le lien brut pour le fallback et mailto:
+        _draftEmailText = [
+          'Bonjour,',
+          '',
+          'Nous avons préparé votre formulaire de création de société.',
+          'Il ne vous manque plus qu\'à compléter le formulaire en ligne ci-dessous :',
+          '',
+          url,
+          '',
+          'Ce lien est valide pendant 30 jours. Vos informations sont transmises en toute sécurité.',
+          '',
+          'Cordialement,',
+          managerName,
+          'Cabinet CECCA — cecca.fr',
+        ].join('\n');
+
+        // HTML : hyperlien "Créabook"
+        var urlEsc = url.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        var p = function(txt) { return '<p style="margin:0 0 10px 0">' + txt + '</p>'; };
+        _draftEmailHtml = '<div style="font-family:Inter,sans-serif;font-size:14px;line-height:1.6;color:#0A0A0A;max-width:520px">'
+          + p('Bonjour,')
+          + p('Nous avons préparé votre formulaire de création de société.<br>Il ne vous manque plus qu\'à compléter le formulaire en ligne ci-dessous :')
+          + p('<a href="' + urlEsc + '" style="color:#7A1F30;font-weight:600;text-decoration:underline">Créabook</a>')
+          + p('Ce lien est valide pendant 30 jours. Vos informations sont transmises en toute sécurité.')
+          + p('Cordialement,<br>' + managerName.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '<br>Cabinet CECCA — cecca.fr')
+          + '</div>';
+
+        var preview = document.getElementById('cb-draft-email-preview');
+        if (preview) preview.innerHTML = _draftEmailHtml;
+
+        var openBtn = document.getElementById('cb-draft-open-btn');
+        if (openBtn) {
+          var subject = encodeURIComponent('Votre formulaire Créa\'Book — Cecca');
+          var body    = encodeURIComponent(_draftEmailText);
+          openBtn.href = 'mailto:?subject=' + subject + '&body=' + body;
+        }
+
         var modal = document.getElementById('cb-draft-modal');
         if (modal) modal.classList.add('active');
       }
+
       function hideDraftModal() {
         var modal = document.getElementById('cb-draft-modal');
         if (modal) modal.classList.remove('active');
       }
-      function copyDraftUrl() {
-        var inp = document.getElementById('cb-draft-url-inp');
-        if (!inp) return;
-        inp.select();
-        try { document.execCommand('copy'); } catch(e) { if (navigator.clipboard) navigator.clipboard.writeText(inp.value); }
+
+      function copyDraftEmail() {
         var btn = document.querySelector('.cb-draft-copy-btn');
-        if (btn) { btn.textContent = 'Copié !'; setTimeout(function() { btn.textContent = 'Copier'; }, 2000); }
+        var ok = function() {
+          if (btn) { btn.textContent = '✓ Copié !'; setTimeout(function() { btn.textContent = 'Copier le mail'; }, 2500); }
+        };
+        // Copier HTML + texte brut : colle un vrai hyperlien dans Gmail, Outlook, etc.
+        if (navigator.clipboard && window.ClipboardItem) {
+          navigator.clipboard.write([new ClipboardItem({
+            'text/html':  new Blob([_draftEmailHtml],  { type: 'text/html'  }),
+            'text/plain': new Blob([_draftEmailText], { type: 'text/plain' }),
+          })]).then(ok).catch(function() {
+            navigator.clipboard.writeText(_draftEmailText).then(ok);
+          });
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(_draftEmailText).then(ok);
+        } else {
+          var ta = document.createElement('textarea');
+          ta.value = _draftEmailText;
+          ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); ok(); } catch(e) {}
+          document.body.removeChild(ta);
+        }
       }
 
       function getOneToken() {
@@ -1427,8 +1660,8 @@
         var navBtn = document.getElementById('btn-next');
         if (navBtn) { navBtn.disabled = true; navBtn.textContent = 'Envoi…'; }
         showOverlay('En cours d\'envoi…');
-        var _capturedEntity = '';
-        var _capturedNom    = '';
+        _capturedEntity = '';
+        _capturedNom    = '';
 
         var collected = collectAllFiles();
         var uploads   = collected.uploads;
@@ -1507,8 +1740,7 @@
           };
 
           var managerVal     = _selectedOwner.name || fv('cb_manager');
-          var etoileMgrs     = ['Simbou DANFAKHA', 'Yann POINLOUP', 'Mateus SOUTELO', 'Julien DECLERCQ'];
-          var entityForDeal  = etoileMgrs.indexOf(managerVal) !== -1 ? 'cecca_etoile' : 'cecca';
+          var entityForDeal  = isEtoile(managerVal) ? 'cecca_etoile' : 'cecca';
           _capturedEntity = entityForDeal;
           _capturedNom    = (societe.nom || '').trim();
 
@@ -1557,32 +1789,100 @@
           hideOverlay();
           if (navBtn) { navBtn.disabled = false; navBtn.textContent = 'Envoyer le dossier'; }
           if (!d.ok && d.errors && d.errors.length) {
-            alert('Dossier envoyé avec avertissements :\n' + d.errors.join('\n'));
+            showErrToast('Dossier envoyé avec avertissements : ' + d.errors.join(' — '));
           }
           // Masquer le formulaire et afficher le RIB
           var montant = _capturedEntity === 'cecca_etoile' ? '2 160' : '900';
           ['form-stepper','form-nav','step-desc','hs-form-wrapper','mandataire-section','assoc-section','owner-panel','cb-btn-draft'].forEach(function(id) {
             var el = document.getElementById(id); if (el) el.style.display = 'none';
           });
+          clearCollabState();
           showNextSteps(_capturedEntity, montant, _capturedNom);
         })
         .catch(function(e) {
           hideOverlay();
           if (navBtn) { navBtn.disabled = false; navBtn.textContent = 'Envoyer le dossier'; }
-          alert('Erreur : ' + e.message);
+          showErrToast('Erreur : ' + e.message);
         });
       }
 
+      var _errToastEl = null;
+      var _errToastTimer = null;
+      function showErrToast(msg) {
+        if (_errToastEl) {
+          _errToastEl.querySelector('.cb-err-toast-msg').textContent = msg;
+          clearTimeout(_errToastTimer);
+        } else {
+          var el = document.createElement('div');
+          el.className = 'cb-err-toast';
+          el.innerHTML =
+            '<span class="cb-err-toast-icon">✕</span>' +
+            '<span class="cb-err-toast-msg">' + msg + '</span>' +
+            '<button class="cb-err-toast-close" aria-label="Fermer">✕</button>';
+          document.body.appendChild(el);
+          _errToastEl = el;
+          el.querySelector('.cb-err-toast-close').addEventListener('click', dismissErrToast);
+        }
+        _errToastTimer = setTimeout(dismissErrToast, 5000);
+      }
+      function dismissErrToast(instant) {
+        if (!_errToastEl) return;
+        clearTimeout(_errToastTimer);
+        if (instant) { _errToastEl.remove(); _errToastEl = null; return; }
+        _errToastEl.classList.add('hiding');
+        var el = _errToastEl;
+        _errToastEl = null;
+        setTimeout(function() { el.remove(); }, 180);
+      }
+
+      var _forceToastEl = null;
+      function showForceToast(onConfirm) {
+        if (_forceToastEl) return;
+        var el = document.createElement('div');
+        el.className = 'cb-force-toast';
+        el.innerHTML =
+          '<div class="cb-force-toast-msg">Cette étape n\'est pas entièrement complète. Voulez-vous tout de même passer à l\'étape suivante ?</div>' +
+          '<div class="cb-force-toast-actions">' +
+            '<button class="cb-force-toast-btn cancel">Compléter l\'étape</button>' +
+            '<button class="cb-force-toast-btn confirm">Passer quand même</button>' +
+          '</div>';
+        document.body.appendChild(el);
+        _forceToastEl = el;
+        function dismiss() {
+          if (!_forceToastEl) return;
+          var toRemove = _forceToastEl;
+          _forceToastEl = null; // libéré immédiatement pour que le prochain clic puisse ré-ouvrir
+          toRemove.classList.add('hiding');
+          setTimeout(function() { toRemove.remove(); }, 180);
+        }
+        el.querySelector('.cancel').addEventListener('click', dismiss);
+        el.querySelector('.confirm').addEventListener('click', function() { dismiss(); onConfirm(); });
+      }
+
       function formNextStep() {
-        if (!validateCurrentStep()) return;
-        if (_step === -1) {
-          var sel = document.getElementById('owner-select');
-          _selectedOwner = { name: sel.value, id: sel.options[sel.selectedIndex].dataset.id || '' };
-          _step = 0;
-          applyStepVisibility(); updateStepUI();
+        // En mode collab, on supprime le toast d'erreur — la force toast prend le relais
+        var isCollab = !_draftMode.active;
+        var valid = validateCurrentStep(/*silent=*/isCollab);
+        if (!valid) {
+          // Étape -1 (choix du manager) : toujours bloquant, toast déjà affiché par validateCurrentStep
+          if (_step === -1) return;
+          // Mode client : toujours bloquant, toast déjà affiché
+          if (_draftMode.active) return;
+          // Mode collab : force toast
+          dismissErrToast(); // sécurité : vider un éventuel toast résiduel
+          if (_forceToastEl) return; // déjà affiché
+          showForceToast(function() {
+            if (_step < TOTAL_STEPS - 1) { _step++; applyStepVisibility(); updateStepUI(); saveCollabState(); }
+            else { uploadAllAndSubmit(); }
+          });
           return;
         }
-        if (_step < TOTAL_STEPS - 1) { _step++; applyStepVisibility(); updateStepUI(); }
+        if (_step === -1) {
+          _step = 0;
+          applyStepVisibility(); updateStepUI(); saveCollabState();
+          return;
+        }
+        if (_step < TOTAL_STEPS - 1) { _step++; applyStepVisibility(); updateStepUI(); saveCollabState(); }
         else { uploadAllAndSubmit(); }
       }
 
@@ -1696,26 +1996,31 @@
 
       // ── Inject CSS into form doc (works whether form is inline or in iframe) ──
       function injectFormCSS(doc) {
-        // Charger Epilogue dans l'iframe
+        // Charger Inter + Plus Jakarta Sans dans l'iframe
         var link = doc.createElement('link');
         link.rel = 'stylesheet';
-        link.href = 'https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&display=swap';
+        link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap';
         (doc.head || doc.documentElement).appendChild(link);
 
         var style = doc.createElement('style');
         style.textContent = [
-          'body, input, select, textarea, button { font-family: Epilogue, sans-serif !important; }',
-          '.hs-form label { font-family: Epilogue, sans-serif !important; font-size: 1.05rem !important; font-weight: 500 !important; color: #0A0A0A !important; margin-bottom: 0.5rem !important; display: block !important; }',
-          '.hs-form select, .hs-form .hs-input { color: #0A0A0A !important; background: #FAFAF7 !important; }',
-          '.hs-form option { color: #0A0A0A !important; background: #FAFAF7 !important; }',
+          'body, input, select, textarea, button { font-family: Inter, sans-serif !important; }',
+          '.hs-form label { font-family: Inter, sans-serif !important; font-size: 0.72rem !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.09em !important; color: #6A645B !important; margin-bottom: 0.4rem !important; display: block !important; }',
+          '.hs-form select, .hs-form .hs-input { color: #0A0A0A !important; background: white !important; }',
+          '.hs-form option { color: #0A0A0A !important; background: white !important; }',
           '.hs-form select { -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%230A0A0A\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e") !important; background-repeat: no-repeat !important; background-position: right 1rem center !important; background-size: 1em !important; padding: 0 2.5rem 0 0.9rem !important; height: 46px !important; line-height: 44px !important; }',
           '.hs-form .chosen-container { width: 100% !important; }',
-          '.hs-form .chosen-container-single .chosen-single { color: #0A0A0A !important; background: #FAFAF7 !important; border: 1px solid #d1d5db !important; border-radius: 2px !important; }',
+          '.hs-form .chosen-container-single .chosen-single { color: #0A0A0A !important; background: white !important; border: 1px solid #E8E3DD !important; border-radius: 4px !important; }',
           '.hs-form .chosen-container-single .chosen-single span { color: #0A0A0A !important; display: block !important; }',
-          '.hs-form .chosen-drop { background: #FAFAF7 !important; border: 1px solid #d1d5db !important; z-index: 9999 !important; }',
+          '.hs-form .chosen-drop { background: white !important; border: 1px solid #E8E3DD !important; z-index: 9999 !important; border-radius: 4px !important; }',
           '.hs-form .chosen-results li { color: #0A0A0A !important; }',
-          '.hs-form .chosen-results li.highlighted { background: #0A1338 !important; color: #FAFAF7 !important; }',
-          '.hs-form .hs-suggestion, .hs-form .email-suggestion, .hs-form [class*="suggestion"] { display: none !important; }'
+          '.hs-form .chosen-results li.highlighted { background: #7A1F30 !important; color: white !important; }',
+          '.hs-form .hs-suggestion, .hs-form .email-suggestion, .hs-form [class*="suggestion"] { display: none !important; }',
+          /* Champs verrouillés en mode client (remplis par le collab) */
+          '.cb-draft-locked { opacity: 0.5 !important; cursor: not-allowed !important; background: #F0F0EE !important; pointer-events: none !important; user-select: none !important; }',
+          '.cb-draft-locked-field { pointer-events: none !important; position: relative; opacity: 0.55 !important; }',
+          '.cb-draft-locked-field::after { content: ""; position: absolute; inset: 0; cursor: not-allowed; z-index: 10; }',
+          '.chosen-container.cb-draft-locked, .cb-draft-locked .chosen-container { pointer-events: none !important; opacity: 0.55 !important; }'
         ].join('\n');
         (doc.head || doc.documentElement).appendChild(style);
       }
@@ -1763,7 +2068,7 @@
               var star = doc.createElement('span');
               star.className = 'hs-form-required';
               star.textContent = ' *';
-              star.style.color = '#C0184A';
+              star.style.color = '#7A1F30';
               lbl.appendChild(star);
             }
           }
@@ -1780,11 +2085,11 @@
         var style = doc.createElement('style');
         style.textContent = [
           '.hbg-lbl{display:block;font-size:0.82rem;font-weight:600;color:#333;margin-bottom:0.25rem;}',
-          '.hbg-inp{width:100%;padding:0.45rem 0.7rem;border:1px solid #ccc;border-radius:4px;font-size:0.88rem;box-sizing:border-box;font-family:Epilogue,sans-serif;}',
-          '.hbg-inp:focus{outline:none;border-color:#1E4E7A;box-shadow:0 0 0 2px rgba(30,78,122,0.15);}',
-          '.hbg-inp.hbg-err-field{border-color:#C0184A;}',
+          '.hbg-inp{width:100%;padding:0.45rem 0.7rem;border:1px solid #ccc;border-radius:4px;font-size:0.88rem;box-sizing:border-box;font-family:Inter,sans-serif;}',
+          '.hbg-inp:focus{outline:none;border-color:#1A2E4F;}',
+          '.hbg-inp.hbg-err-field{border-color:#7A1F30;}',
           '.hbg-type-row{display:flex;gap:1.5rem;margin-bottom:1rem;}',
-          '.hbg-type-row label{display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.9rem;font-family:Epilogue,sans-serif;}',
+          '.hbg-type-row label{display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.9rem;font-family:Inter,sans-serif;}',
           '.hbg-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;}',
           '.hbg-grid-addr{display:grid;grid-template-columns:120px 1fr;gap:0.75rem;}',
           '.hbg-block{margin-bottom:0.75rem;}',
@@ -1800,22 +2105,22 @@
         sec.style.cssText = 'display:none;margin-top:0.75rem;padding:1rem;background:#f8f8f5;border:1px solid #e0ddd5;border-radius:6px;';
         sec.innerHTML = [
           '<div>',
-          '  <label class="hbg-lbl" style="margin-bottom:0.5rem;">Type d\'hébergeur <span style="color:#C0184A">*</span></label>',
+          '  <label class="hbg-lbl" style="margin-bottom:0.5rem;">Type d\'hébergeur <span style="color:#7A1F30">*</span></label>',
           '  <div class="hbg-type-row">',
           '    <label><input type="radio" name="hbg_type" value="physique"> Personne physique</label>',
           '    <label><input type="radio" name="hbg_type" value="morale"> Personne morale</label>',
           '  </div>',
           '  <div id="hbg-physique" style="display:none;">',
           '    <div class="hbg-grid-2">',
-          '      <div><label class="hbg-lbl">Nom <span style="color:#C0184A">*</span></label><input class="hbg-inp" data-hbg="nom" type="text" placeholder="Nom de famille"></div>',
-          '      <div><label class="hbg-lbl">Prénom <span style="color:#C0184A">*</span></label><input class="hbg-inp" data-hbg="prenom" type="text" placeholder="Prénom"></div>',
+          '      <div><label class="hbg-lbl">Nom <span style="color:#7A1F30">*</span></label><input class="hbg-inp" data-hbg="nom" type="text" placeholder="Nom de famille"></div>',
+          '      <div><label class="hbg-lbl">Prénom <span style="color:#7A1F30">*</span></label><input class="hbg-inp" data-hbg="prenom" type="text" placeholder="Prénom"></div>',
           '    </div>',
           '  </div>',
           '  <div id="hbg-morale" style="display:none;">',
-          '    <div class="hbg-block"><label class="hbg-lbl">Nom de la société de domiciliation <span style="color:#C0184A">*</span></label><input class="hbg-inp" data-hbg="societe" type="text" placeholder="Raison sociale"></div>',
-          '    <div class="hbg-block"><label class="hbg-lbl">N° SIREN <span style="color:#C0184A">*</span></label><input class="hbg-inp" data-hbg="siren" type="text" placeholder="123456789" maxlength="9" pattern="[0-9]{9}" inputmode="numeric"></div>',
+          '    <div class="hbg-block"><label class="hbg-lbl">Nom de la société de domiciliation <span style="color:#7A1F30">*</span></label><input class="hbg-inp" data-hbg="societe" type="text" placeholder="Raison sociale"></div>',
+          '    <div class="hbg-block"><label class="hbg-lbl">N° SIREN <span style="color:#7A1F30">*</span></label><input class="hbg-inp" data-hbg="siren" type="text" placeholder="123456789" maxlength="9" pattern="[0-9]{9}" inputmode="numeric"></div>',
           '  </div>',
-          '  <div id="hbg-err" style="display:none;color:#C0184A;font-size:0.8rem;margin-top:0.5rem;font-family:Epilogue,sans-serif;"></div>',
+          '  <div id="hbg-err" style="display:none;color:#7A1F30;font-size:0.8rem;margin-top:0.5rem;font-family:Inter,sans-serif;"></div>',
           '</div>',
         ].join('');
         hebergeWrapper.parentNode.insertBefore(sec, hebergeWrapper.nextSibling);
@@ -1958,6 +2263,22 @@
         applyStepVisibility();
         updateStepUI(true);
         if (_pendingDraft) { var _pd = _pendingDraft; _pendingDraft = null; initFromDraft(_pd); }
+        // Restaurer les champs HubSpot depuis la session collab
+        if (_pendingCollabRestore && !_draftMode.active) {
+          var _pcr = _pendingCollabRestore;
+          _pendingCollabRestore = null;
+          Object.keys(_pcr).forEach(function(name) {
+            var el = doc.querySelector('[name="' + name + '"]');
+            if (!el || el.type === 'hidden') return;
+            el.value = _pcr[name];
+            if (el.tagName === 'SELECT') el.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+        }
+        // Auto-save sur toute modification dans le formulaire HubSpot
+        if (!_draftMode.active) {
+          doc.addEventListener('input',  saveCollabDebounced);
+          doc.addEventListener('change', saveCollabDebounced);
+        }
       }
 
       /* ── Mandataire custom section ──────────────────────────────── */
@@ -1976,7 +2297,7 @@
         return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '';
       }
       function mdtFg(label, field, value, type, required) {
-        var star    = required ? ' <span style="color:#C0184A">*</span>' : '';
+        var star    = required ? ' <span style="color:#7A1F30">*</span>' : '';
         var isDate  = type === 'datef';
         var isNum   = type === 'number';
         var t       = isNum ? 'number' : 'text';
@@ -1987,14 +2308,14 @@
           '<input type="' + t + '"' + extra + datAttr + ' class="mdt-inp" data-f="' + field + '" value="' + mdtEsc(value) + '" placeholder="' + ph + '"></div>';
       }
       function mdtSel(label, field, value, opts, required) {
-        var star = required ? ' <span style="color:#C0184A">*</span>' : '';
+        var star = required ? ' <span style="color:#7A1F30">*</span>' : '';
         var html = '<option value="">— Choisir —</option>';
         opts.forEach(function(o) { html += '<option value="' + mdtEsc(o) + '"' + (value === o ? ' selected' : '') + '>' + o + '</option>'; });
         return '<div class="mdt-fg"><label class="mdt-lbl">' + label + star + '</label>' +
           '<select class="mdt-inp" data-f="' + field + '">' + html + '</select></div>';
       }
       function mdtDocRow(key, doc, label, required) {
-        var star = required ? ' <span style="color:#C0184A">*</span>' : '';
+        var star = required ? ' <span style="color:#7A1F30">*</span>' : '';
         return '<div class="mdt-doc-row">' +
           '<span class="mdt-doc-lbl">' + label + star + '</span>' +
           '<label class="mdt-doc-btn">Choisir<input type="file" data-doc="' + doc + '" accept=".pdf,.jpg,.jpeg,.png,.webp"></label>' +
@@ -2021,7 +2342,7 @@
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Dénomination sociale','pm_denom',d.pm_denom,'text',true) + '</div>';
         html += '<div class="mdt-row">' + mdtSel('Forme juridique','pm_forme',d.pm_forme,PM_FORMES,true) + mdtFg('Capital social (€)','pm_capital',d.pm_capital,'number',true) + '</div>';
         html += '<div class="mdt-row">' +
-          '<div class="mdt-fg"><label class="mdt-lbl">N° SIREN <span style="color:#C0184A">*</span></label><input type="text" class="mdt-inp" data-f="pm_siren" value="' + mdtEsc(d.pm_siren) + '" placeholder="9 chiffres" maxlength="9" pattern="[0-9]{9}"></div>' +
+          '<div class="mdt-fg"><label class="mdt-lbl">N° SIREN <span style="color:#7A1F30">*</span></label><input type="text" class="mdt-inp" data-f="pm_siren" value="' + mdtEsc(d.pm_siren) + '" placeholder="9 chiffres" maxlength="9" pattern="[0-9]{9}"></div>' +
           mdtFg('RCS de (ville)','pm_rcs',d.pm_rcs,'text',true) + '</div>';
         html += '<p class="pm-section-sep">Siège social</p>';
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse','pm_adresse',d.pm_adresse,'text',true) + '</div>';
@@ -2114,7 +2435,7 @@
         });
       }
       function mdtFgCp(label, field, value, type, isCp) {
-        var star = '<span class="mdt-cp-star" style="color:#C0184A' + (isCp ? '' : ';display:none') + '"> *</span>';
+        var star = '<span class="mdt-cp-star" style="color:#7A1F30' + (isCp ? '' : ';display:none') + '"> *</span>';
         return '<div class="mdt-fg mdt-cp-req-field"><label class="mdt-lbl">' + label + star + '</label>' +
           '<input type="' + type + '" class="mdt-inp" data-f="' + field + '" value="' + mdtEsc(value || '') + '" placeholder="' + label + '"></div>';
       }
@@ -2153,13 +2474,13 @@
         var hbgTypeName = 'mdt-hbg-type-' + key;
         var hbgType = data.hbg_type || 'physique';
         html += '<div class="mdt-hbg-block">';
-        html += '<label class="mdt-lbl">Hébergé ? <span style="color:#C0184A">*</span></label>';
+        html += '<label class="mdt-lbl">Hébergé ? <span style="color:#7A1F30">*</span></label>';
         html += '<div class="mdt-radio-row">';
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="non"' + (heberge !== 'oui' ? ' checked' : '') + '> Non</label>';
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="oui"' + (heberge === 'oui' ? ' checked' : '') + '> Oui</label>';
         html += '</div>';
         html += '<div class="mdt-hbg-details"' + (heberge === 'oui' ? '' : ' style="display:none"') + '>';
-        html += '<label class="mdt-lbl" style="margin-top:0.6rem;">Type d\'hébergeur <span style="color:#C0184A">*</span></label>';
+        html += '<label class="mdt-lbl" style="margin-top:0.6rem;">Type d\'hébergeur <span style="color:#7A1F30">*</span></label>';
         html += '<div class="mdt-radio-row">';
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgTypeName + '" value="physique"' + (hbgType !== 'morale' ? ' checked' : '') + '> Personne physique</label>';
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgTypeName + '" value="morale"' + (hbgType === 'morale' ? ' checked' : '') + '> Personne morale</label>';
@@ -2498,13 +2819,13 @@
         var hbgTypeName = 'assoc-hbg-type-' + key;
         var hbgType = data.hbg_type || 'physique';
         html += '<div class="mdt-hbg-block">';
-        html += '<label class="mdt-lbl">Hébergé ? <span style="color:#C0184A">*</span></label>';
+        html += '<label class="mdt-lbl">Hébergé ? <span style="color:#7A1F30">*</span></label>';
         html += '<div class="mdt-radio-row">';
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="non"' + (heberge !== 'oui' ? ' checked' : '') + '> Non</label>';
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgName + '" value="oui"' + (heberge === 'oui' ? ' checked' : '') + '> Oui</label>';
         html += '</div>';
         html += '<div class="mdt-hbg-details"' + (heberge === 'oui' ? '' : ' style="display:none"') + '>';
-        html += '<label class="mdt-lbl" style="margin-top:0.6rem;">Type d\'hébergeur <span style="color:#C0184A">*</span></label>';
+        html += '<label class="mdt-lbl" style="margin-top:0.6rem;">Type d\'hébergeur <span style="color:#7A1F30">*</span></label>';
         html += '<div class="mdt-radio-row">';
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgTypeName + '" value="physique"' + (hbgType !== 'morale' ? ' checked' : '') + '> Personne physique</label>';
         html += '<label class="mdt-radio-lbl"><input type="radio" name="' + hbgTypeName + '" value="morale"' + (hbgType === 'morale' ? ' checked' : '') + '> Personne morale</label>';
@@ -2749,6 +3070,13 @@
       }
       initAssocSection();
 
+      // Auto-save sur les sections mandataires et associés (dans le document principal)
+      document.addEventListener('input',  saveCollabDebounced);
+      document.addEventListener('change', saveCollabDebounced);
+
+      // Restauration de la session collab au chargement
+      restoreCollabState();
+
       (function() {
         var stored = sessionStorage.getItem('creabook_submitted');
         if (stored) {
@@ -2771,8 +3099,8 @@
         if (!draftToken) return;
         fetch('/draft/' + encodeURIComponent(draftToken))
           .then(function(r) {
-            if (r.status === 410) { alert('Ce lien de formulaire a expiré (30 jours).\nDemandez un nouveau lien à votre conseiller Cecca.'); return null; }
-            if (!r.ok) { alert('Lien de formulaire invalide ou corrompu.'); return null; }
+            if (r.status === 410) { showErrToast('Ce lien de formulaire a expiré (30 jours). Demandez un nouveau lien à votre conseiller Cecca.'); return null; }
+            if (!r.ok) { showErrToast('Lien de formulaire invalide ou corrompu.'); return null; }
             return r.json();
           })
           .then(function(data) {
@@ -2783,25 +3111,95 @@
           .catch(function(e) { console.error('[creabook] draft load error:', e); });
       })();
 
-      // Charger la liste des propriétaires depuis l'API
-      fetch('/owners')
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          var sel = document.getElementById('owner-select');
-          if (!sel || sel.disabled) return; // déjà verrouillé en mode draft
-          sel.innerHTML = '<option value="">— Sélectionner un collaborateur —</option>';
-          (d.owners || []).forEach(function(o) {
-            var opt = document.createElement('option');
-            opt.value = o.name;
-            opt.dataset.id = o.id;
-            opt.textContent = o.name;
-            sel.appendChild(opt);
+      // Charger la liste des propriétaires et initialiser l'autocomplete
+      var _ownersList = [];
+      (function initOwnerAutocomplete() {
+        var inp  = document.getElementById('owner-input');
+        var dd   = document.getElementById('owner-dropdown');
+        var ddIdx = -1;
+
+        function showDropdown(items) {
+          dd.innerHTML = '';
+          ddIdx = -1;
+          if (!items.length) { dd.style.display = 'none'; return; }
+          items.forEach(function(o, i) {
+            var li = document.createElement('li');
+            li.textContent = o.name;
+            li.setAttribute('role', 'option');
+            li.addEventListener('mousedown', function(e) {
+              e.preventDefault();
+              selectOwner(o);
+            });
+            dd.appendChild(li);
           });
-        })
-        .catch(function() {
-          var sel = document.getElementById('owner-select');
-          if (sel && !sel.disabled) sel.innerHTML = '<option value="">— Erreur chargement —</option>';
-        });
+          dd.style.display = 'block';
+        }
+
+        function selectOwner(o) {
+          _selectedOwner = { name: o.name, id: o.id };
+          inp.value = o.name;
+          dd.style.display = 'none';
+          ddIdx = -1;
+          var err = document.getElementById('owner-err');
+          if (err) err.style.display = 'none';
+          saveCollabDebounced();
+        }
+
+        function filterOwners(q) {
+          if (!q || q.length < 2) return [];
+          var ql = q.toLowerCase();
+          return _ownersList.filter(function(o) {
+            var parts = o.name.toLowerCase().split(' ');
+            return parts.some(function(p) { return p.startsWith(ql); }) || o.name.toLowerCase().includes(ql);
+          }).slice(0, 12);
+        }
+
+        if (inp) {
+          inp.addEventListener('input', function() {
+            if (inp.disabled) return;
+            // Si l'utilisateur modifie, on réinitialise la sélection
+            if (_selectedOwner.name && inp.value !== _selectedOwner.name) {
+              _selectedOwner = { name: '', id: '' };
+            }
+            showDropdown(filterOwners(inp.value));
+          });
+
+          inp.addEventListener('keydown', function(e) {
+            var items = dd.querySelectorAll('li');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              ddIdx = Math.min(ddIdx + 1, items.length - 1);
+              items.forEach(function(li, i) { li.classList.toggle('owner-dd-active', i === ddIdx); });
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              ddIdx = Math.max(ddIdx - 1, 0);
+              items.forEach(function(li, i) { li.classList.toggle('owner-dd-active', i === ddIdx); });
+            } else if (e.key === 'Enter' && ddIdx >= 0) {
+              e.preventDefault();
+              var o = filterOwners(inp.value)[ddIdx];
+              if (o) selectOwner(o);
+            } else if (e.key === 'Escape') {
+              dd.style.display = 'none';
+            }
+          });
+
+          inp.addEventListener('blur', function() {
+            setTimeout(function() { dd.style.display = 'none'; }, 150);
+          });
+        }
+
+        fetch('/owners')
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            _ownersList = d.owners || [];
+            if (inp && inp.disabled) return; // verrouillé en mode draft
+            if (inp) inp.placeholder = 'Recherchez un propriétaire Cecca…';
+          })
+          .catch(function() {
+            if (inp && !inp.disabled) inp.placeholder = '— Erreur de chargement —';
+          });
+      })();
 
       // Affichage initial : étape propriétaire
       applyStepVisibility();
@@ -2818,29 +3216,21 @@
           if (diag) diag.remove();
           wireForm($form[0].ownerDocument);
         },
-        onFormSubmitted: function(form, data) {
+        onFormSubmitted: function() {
+          // L'entité et le nom ont été capturés par uploadAllAndSubmit() avant le click HubSpot.
+          // On ne lit pas sv.cb_manager (champ HubSpot jamais rempli côté collab) — on utilise
+          // _capturedEntity/_capturedNom qui sont corrects quelle que soit l'entité.
           try {
-            var entite = 'cecca';
-            var montant = '900';
-            var sv = (data && data.submissionValues) || {};
-            var etoileManagers = ['Simbou DANFAKHA', 'Yann POINLOUP', 'Mateus SOUTELO', 'Julien DECLERCQ'];
-            entite = etoileManagers.indexOf(sv.cb_manager) !== -1 ? 'cecca_etoile' : 'cecca';
-            if (entite === 'cecca_etoile') montant = '2 160';
-            var societe = [(sv.cb_forme_juridique || ''), (sv.cb_denomination_sociale || '')].filter(Boolean).join(' ');
-            sessionStorage.setItem('creabook_submitted', JSON.stringify({ entite: entite, montant: montant, societe: societe }));
+            var montant = _capturedEntity === 'cecca_etoile' ? '2 160' : '900';
+            sessionStorage.setItem('creabook_submitted', JSON.stringify({ entite: _capturedEntity, montant: montant, societe: _capturedNom }));
             ['form-stepper','form-nav','step-desc','hs-form-wrapper','mandataire-section','assoc-section'].forEach(function(id) {
               var el = document.getElementById(id);
               if (el) el.style.display = 'none';
             });
-            showNextSteps(entite, montant, societe);
+            showNextSteps(_capturedEntity, montant, _capturedNom);
           } catch(e) {
             var msg = 'Erreur après soumission — veuillez recharger la page. (' + (e.message || e) + ')';
-            var banner = document.getElementById('cb-step-err') || document.createElement('div');
-            banner.id = 'cb-step-err';
-            banner.style.cssText = 'background:#FEE2E2;border:1px solid #B04545;border-radius:2px;padding:0.6rem 1rem;margin:1rem 0;font-size:0.85rem;color:#B04545;font-family:Epilogue,sans-serif;';
-            banner.textContent = msg;
-            var nav = document.getElementById('form-nav');
-            if (nav) nav.parentNode.insertBefore(banner, nav);
+            showErrToast(msg);
             console.error('[creabook] onFormSubmitted error:', e);
           }
         }
@@ -2855,11 +3245,12 @@
 </div>
 <div id="cb-draft-modal">
   <div class="cb-draft-modal-box">
-    <h3>Lien généré</h3>
-    <p>Copiez ce lien et envoyez-le à votre client. Il est valide pendant <strong>30 jours</strong>.</p>
-    <div class="cb-draft-url-row">
-      <input type="text" id="cb-draft-url-inp" readonly>
-      <button class="cb-draft-copy-btn" onclick="copyDraftUrl()">Copier</button>
+    <h3>Mail prêt à envoyer</h3>
+    <p>Copiez le contenu ci-dessous et envoyez-le à votre client, ou ouvrez directement votre messagerie.</p>
+    <div class="cb-draft-email-preview" id="cb-draft-email-preview"></div>
+    <div class="cb-draft-actions">
+      <button class="cb-draft-copy-btn" onclick="copyDraftEmail()">Copier le mail</button>
+      <a class="cb-draft-open-btn" id="cb-draft-open-btn" href="#">Ouvrir la messagerie</a>
     </div>
     <button class="cb-draft-close-btn" onclick="hideDraftModal()">Fermer</button>
   </div>
