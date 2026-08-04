@@ -29,8 +29,6 @@ let DEAL_PIPELINE_ID      = null;
 let DEAL_STAGE_ID         = null;
 let OWNERS_BY_NAME        = {};
 let OWNERS_LIST           = [];
-let MANAGER_SYNCHRO_VALID = new Set();
-let CHEF_SYNCHRO_VALID    = new Set();
 
 async function initHubSpotCache() {
   try {
@@ -71,22 +69,6 @@ async function initHubSpotCache() {
     console.error('initHubSpotCache owners :', e.message);
   }
 
-  try {
-    const pRes  = await fetch('https://api.hubapi.com/crm/v3/properties/deals/manager_synchro', {
-      headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}` },
-    });
-    const pData = await pRes.json();
-    (pData.options || []).forEach(o => MANAGER_SYNCHRO_VALID.add(o.value));
-
-    const cRes  = await fetch('https://api.hubapi.com/crm/v3/properties/deals/chef_de_mission_synchro', {
-      headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}` },
-    });
-    const cData = await cRes.json();
-    (cData.options || []).forEach(o => CHEF_SYNCHRO_VALID.add(o.value));
-    console.log(`manager_synchro options : ${MANAGER_SYNCHRO_VALID.size}`);
-  } catch (e) {
-    console.error('initHubSpotCache synchro options :', e.message);
-  }
 }
 
 initHubSpotCache();
@@ -179,6 +161,80 @@ app.get('/token', (_req, res) => {
   res.json({ token: makeToken() });
 });
 
+// ── GET /company-lookup — lookup PM company by SIREN in HubSpot ──────────────
+
+app.get('/company-lookup', async (req, res) => {
+  const siren = (req.query.siren || '').trim();
+  if (!/^[0-9]{9}$/.test(siren)) return res.status(400).json({ error: 'SIREN invalide' });
+
+  const search = await hs('POST', '/crm/v3/objects/companies/search', {
+    filterGroups: [{ filters: [{ propertyName: 'siren_pappers', operator: 'EQ', value: siren }] }],
+    properties: [
+      'name',
+      'forme_juridique_pappers', 'capital_pappers', 'cb_rcs_pappers',
+      'adresse_pappers', 'code_postal_pappers', 'ville_pappers',
+      'address', 'zip', 'city', 'country',
+      'phone',
+    ],
+    limit: 1,
+  });
+
+  if (search.code !== 200 || !(search.data.results || []).length) {
+    return res.json({ found: false });
+  }
+
+  const company   = search.data.results[0];
+  const companyId = company.id;
+  const p         = company.properties || {};
+  const name      = (p.name || '').replace(/\s*\(En création\)\s*$/i, '').trim();
+
+  // Pappers stores full form name ("EURL, entreprise unipersonnelle…") — extract known abbreviation
+  const PM_ABBREVS  = ['SASU','SAS','SARL','EURL','SA','SCI','SNC','SCP','SC'];
+  const formeRaw    = p.forme_juridique_pappers || '';
+  const upperFirst  = formeRaw.split(',')[0].trim().toUpperCase();
+  const formeCode   = PM_ABBREVS.includes(upperFirst) ? upperFirst : '';
+
+  // Pappers formats capital as "1 000 €" — strip to digits only
+  const capitalRaw = p.capital_pappers || '';
+  const capital    = capitalRaw.replace(/[^0-9]/g, '');
+
+  // Prefer Pappers custom props for address, fall back to standard HubSpot fields
+  const adresse = p.adresse_pappers || p.address   || '';
+  const cp      = p.code_postal_pappers || p.zip   || '';
+  const ville   = p.ville_pappers || p.city        || '';
+  const pays    = p.country                        || '';
+
+  // Fetch primary contact email + phone via search (avoids GET body issue)
+  let email = '';
+  let contactPhone = '';
+  const contactSearch = await hs('POST', '/crm/v3/objects/contacts/search', {
+    filterGroups: [{ filters: [{ propertyName: 'associations.company', operator: 'EQ', value: String(companyId) }] }],
+    properties: ['email', 'phone', 'mobilephone'],
+    limit: 1,
+  });
+  if (contactSearch.code === 200 && (contactSearch.data.results || []).length) {
+    const cp2 = contactSearch.data.results[0].properties || {};
+    email        = cp2.email       || '';
+    contactPhone = cp2.phone       || cp2.mobilephone || '';
+  }
+
+  res.json({
+    found: true,
+    data: {
+      pm_denom:   name,
+      pm_forme:   formeCode,
+      pm_capital: capital,
+      pm_rcs:     p.cb_rcs_pappers || '',
+      pm_adresse: adresse,
+      pm_cp:      cp,
+      pm_ville:   ville,
+      pm_pays:    pays,
+      pm_tel:     p.phone || contactPhone,
+      pm_email:   email,
+    },
+  });
+});
+
 // ── POST /draft — collab saves partial state ──────────────────────────────────
 
 app.post('/draft', async (req, res) => {
@@ -190,7 +246,6 @@ app.post('/draft', async (req, res) => {
 
   const draftManagerName = s(hsF.cb_manager);
   const draftEtoile      = isEtoile(draftManagerName);
-  const draftEntite      = draftEtoile ? 'Cecca Étoile' : 'Cecca';
 
   const companyProps = { name: (s(hsF.cb_denomination_sociale) || 'Brouillon') + ' (En création)', siren_pappers: '999999999' };
   if (s(hsF.cb_forme_juridique))       companyProps.forme_juridique_pappers = s(hsF.cb_forme_juridique);
@@ -204,8 +259,8 @@ app.post('/draft', async (req, res) => {
   if (s(hsF.cb_montant_nominal_part))  companyProps.cb_montant_nominal_part = s(hsF.cb_montant_nominal_part);
   if (s(hsF.cb_banque_nom))            companyProps.cb_banque_nom           = s(hsF.cb_banque_nom);
   if (s(hsF.cb_banque_adresse))        companyProps.cb_banque_adresse       = s(hsF.cb_banque_adresse);
-  if (draftManagerName)                companyProps.cb_manager              = draftManagerName;
-  companyProps.cb_entite      = draftEntite;
+  if (draftManagerName)                companyProps.manager                 = draftManagerName;
+  companyProps.entite         = draftEtoile ? 'CECCA Étoile' : 'CECCA';
   companyProps.cb_source      = 'Créabook';
   companyProps.lifecyclestage = 'lead';
 
@@ -342,7 +397,6 @@ app.post('/submit', async (req, res) => {
     lifecyclestage:       'customer',      // valeur interne HubSpot ('Client' est le label affiché)
     cb_source:            'Créabook',
     // Manager / entité
-    cb_entite:            entiteLabel,
     entite:               entiteEnum,
   };
 
@@ -353,8 +407,34 @@ app.post('/submit', async (req, res) => {
     if (v) companyProps[hsField] = v;
   }
 
-  if (managerName) companyProps.cb_manager = managerName;
-  if (managerName && MANAGER_SYNCHRO_VALID.has(managerName)) companyProps.manager = managerName;
+  if (managerName) companyProps.manager = managerName;
+
+  // ── CNI des associés → fiche entreprise ─────────────────────────────────
+  const allPersons = [
+    ...(body.mandatairesAssoc    || []),
+    ...(body.mandatairesNonAssoc || []),
+    ...(body.associesNonMdt      || []),
+  ];
+  const cniUrls = allPersons
+    .map(d => ((d.pm_type || 'pp') === 'pm' ? (d.fileDocs || {}).pm_cni_rl : (d.fileDocs || {}).cni))
+    .filter(Boolean);
+  if (cniUrls.length) companyProps.cartes_didentite_des_associes = cniUrls.join('\n');
+
+  const diplomeUrls = allPersons
+    .map(d => (d.fileDocs || {}).diplome)
+    .filter(Boolean);
+  if (diplomeUrls.length) companyProps.diplomes_des_associes = diplomeUrls.join('\n');
+
+  const cniPmUrls = allPersons
+    .filter(d => (d.pm_type || 'pp') === 'pm')
+    .flatMap(d => [(d.fileDocs || {}).pm_cni_rl, (d.fileDocs || {}).pm_cni_rp].filter(Boolean));
+  if (cniPmUrls.length) companyProps.cni_representants_pm = cniPmUrls.join('\n');
+
+  const domicilePmUrls = allPersons
+    .filter(d => (d.pm_type || 'pp') === 'pm')
+    .map(d => (d.fileDocs || {}).pm_domicile_rp)
+    .filter(Boolean);
+  if (domicilePmUrls.length) companyProps.domicile_du_representant_permanent = domicilePmUrls.join('\n');
 
   // ── Transaction (objet "deals") ───────────────────────────────────────────
   const dealMapping = {
@@ -381,14 +461,11 @@ app.post('/submit', async (req, res) => {
     // Manager / entité / source
     cb_source:          'Créabook',
     source:             'Créabook',
-    cb_entite:          body.entity || 'cecca',
     transaction_irpp:   'false',
     creation_a_faire:   'true',
   };
 
-  if (ownerId)                                          dealProps.hubspot_owner_id = ownerId;
-  if (managerName)                                      dealProps.cb_manager       = managerName;
-  if (managerName && MANAGER_SYNCHRO_VALID.has(managerName)) dealProps.manager    = managerName;
+  if (ownerId)    dealProps.hubspot_owner_id = ownerId;
 
   for (const [crField, hsField] of Object.entries(dealMapping)) {
     const v = s(soc[crField]);
@@ -621,7 +698,23 @@ async function createCompanyPM(d) {
   if (s(d.pm_pays))    p.country        = s(d.pm_pays);
   p.cb_source      = 'Créabook';
   p.lifecyclestage = 'customer';
-  applyDocUrls(p, d.fileDocs,DOC_MAPPING_PM_COMPANY);
+  applyDocUrls(p, d.fileDocs, DOC_MAPPING_PM_COMPANY);
+
+  // Si SIREN fourni, chercher une fiche existante pour éviter les doublons
+  if (s(d.pm_siren)) {
+    const search = await hs('POST', '/crm/v3/objects/companies/search', {
+      filterGroups: [{ filters: [{ propertyName: 'siren_pappers', operator: 'EQ', value: s(d.pm_siren) }] }],
+      properties: ['hs_object_id'],
+      limit: 1,
+    });
+    if (search.code === 200 && (search.data.results || []).length > 0) {
+      const existingId = search.data.results[0].id;
+      console.log('[createCompanyPM] SIREN trouvé, PATCH sur', existingId);
+      const pr = await hs('PATCH', `/crm/v3/objects/companies/${existingId}`, { properties: p });
+      return pr.code < 300 ? existingId : null;
+    }
+  }
+
   const r = await hs('POST', '/crm/v3/objects/companies', { properties: p });
   return r.code < 300 ? (r.data.id || null) : null;
 }

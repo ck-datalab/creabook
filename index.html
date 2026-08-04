@@ -599,6 +599,16 @@
   /* ── PP/PM toggle & PM sections ── */
   .mdt-type-row { display:flex; gap:1.5rem; margin-bottom:1rem; padding:0.65rem 1rem; background:var(--blue-mist); border:1px solid var(--grey-200); border-radius:4px; }
   .pm-section-sep { font-size:0.72rem; font-weight:700; letter-spacing:0.08em; color:var(--blue); text-transform:uppercase; margin:1.25rem 0 0.5rem; padding-bottom:0.3rem; border-bottom:1px solid var(--grey-200); }
+  .pm-siren-row { display:flex; gap:0.6rem; align-items:flex-end; }
+  .pm-siren-row .mdt-fg { flex:1; }
+  .pm-siren-btn { flex-shrink:0; padding:0 1.1rem; height:2.5rem; background:var(--blue); color:#fff; border:none; border-radius:6px; font-size:0.82rem; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .pm-siren-btn:hover { background:#163d60; }
+  .pm-siren-btn:disabled { opacity:0.6; cursor:not-allowed; }
+  .pm-siren-msg { font-size:0.82rem; padding:0.5rem 0.75rem; border-radius:6px; margin-top:0.5rem; }
+  .pm-siren-msg-ok   { background:#e6f4ea; color:#1a7340; }
+  .pm-siren-msg-warn { background:#fff8e1; color:#7a5c00; }
+  .pm-siren-msg-err  { background:#fce8e8; color:#7a1f30; }
+  .pm-siren-locked { background:var(--grey-100,#f4f4f2) !important; color:var(--grey-500,#888) !important; cursor:not-allowed; }
   .pm-be-item { border:1px solid var(--grey-200); border-radius:4px; padding:0.85rem 1rem; margin-bottom:0.75rem; background:var(--paper-2); }
   .pm-be-hd { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; font-weight:600; font-size:0.85rem; color:var(--blue); }
   .pm-be-del { font-size:0.75rem; padding:0.2rem 0.5rem; border:1px solid var(--grey-300); border-radius:4px; background:var(--gold-soft); color:var(--gold); cursor:pointer; }
@@ -1135,8 +1145,8 @@
         }
         setHidden('cb_mdt_assoc_count',    _mdt.assocCount    || 0);
         setHidden('cb_mdt_nonassoc_count', _mdt.nonAssocCount || 0);
-        var AKEYS = ['nom','prenom','email','phone','regime','role','nationalite','ddn','num_secu','profession','nb_parts','apport_num','apport_nat','apport_ind','acre','adresse','cp','ville','heberge','hbg_type','hbg_nom','hbg_prenom','hbg_societe','hbg_siren','pm_type','pm_denom','pm_forme','pm_capital','pm_siren','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays','pm_email','pm_tel','pm_rl_nom','pm_rl_prenom','pm_rl_qualite','pm_rl_email','pm_rl_tel','pm_nb_parts','pm_apport_num','pm_apport_nat','pm_fonction','pm_rp_nom','pm_rp_prenom','pm_rp_ddn','pm_rp_lieu','pm_rp_nationalite','pm_rp_adresse','pm_rp_email','pm_rp_tel','pm_rp_num_secu','pm_rp_regime'];
-        var NKEYS = ['nom','prenom','email','phone','regime','role','nationalite','ddn','num_secu','profession','adresse','cp','ville','heberge','hbg_type','hbg_nom','hbg_prenom','hbg_societe','hbg_siren','pm_type','pm_denom','pm_forme','pm_capital','pm_siren','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays','pm_email','pm_tel','pm_rl_nom','pm_rl_prenom','pm_rl_qualite','pm_rl_email','pm_rl_tel','pm_nb_parts','pm_apport_num','pm_apport_nat','pm_fonction','pm_rp_nom','pm_rp_prenom','pm_rp_ddn','pm_rp_lieu','pm_rp_nationalite','pm_rp_adresse','pm_rp_email','pm_rp_tel','pm_rp_num_secu','pm_rp_regime'];
+        var AKEYS = ['nom','prenom','email','phone','regime','role','nationalite','ddn','num_secu','profession','nb_parts','apport_num','apport_nat','apport_nat_desc','apport_ind','acre','adresse','cp','ville','heberge','hbg_type','hbg_nom','hbg_prenom','hbg_societe','hbg_siren','pm_type','pm_denom','pm_forme','pm_capital','pm_siren','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays','pm_email','pm_tel','pm_rl_nom','pm_rl_prenom','pm_rl_qualite','pm_rl_email','pm_rl_tel','pm_nb_parts','pm_apport_num','pm_apport_nat','pm_apport_nat_desc','pm_fonction','pm_rp_nom','pm_rp_prenom','pm_rp_ddn','pm_rp_lieu','pm_rp_nationalite','pm_rp_adresse','pm_rp_email','pm_rp_tel','pm_rp_num_secu','pm_rp_regime'];
+        var NKEYS = ['nom','prenom','email','phone','regime','role','nationalite','ddn','num_secu','profession','adresse','cp','ville','heberge','hbg_type','hbg_nom','hbg_prenom','hbg_societe','hbg_siren','pm_type','pm_denom','pm_forme','pm_capital','pm_siren','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays','pm_email','pm_tel','pm_rl_nom','pm_rl_prenom','pm_rl_qualite','pm_rl_email','pm_rl_tel','pm_nb_parts','pm_apport_num','pm_apport_nat','pm_apport_nat_desc','pm_fonction','pm_rp_nom','pm_rp_prenom','pm_rp_ddn','pm_rp_lieu','pm_rp_nationalite','pm_rp_adresse','pm_rp_email','pm_rp_tel','pm_rp_num_secu','pm_rp_regime'];
         for (var i = 0; i < 4; i++) {
           var a = _mdt.assoc[i] || {};
           AKEYS.forEach(function(k) {
@@ -1204,11 +1214,11 @@
           if (state.hsFields[name] && String(state.hsFields[name]).trim()) filled['hs:' + name] = true;
         });
         var FIELDS = ['nom','prenom','email','phone','regime','role','nationalite','ddn','num_secu','profession',
-          'nb_parts','apport_num','apport_nat','apport_ind','acre','adresse','cp','ville',
+          'nb_parts','apport_num','apport_nat','apport_nat_desc','apport_ind','acre','adresse','cp','ville',
           'heberge','hbg_type','hbg_nom','hbg_prenom','hbg_societe','hbg_siren','pm_type',
           'pm_denom','pm_forme','pm_capital','pm_siren','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays',
           'pm_email','pm_tel','pm_rl_nom','pm_rl_prenom','pm_rl_qualite','pm_rl_email','pm_rl_tel',
-          'pm_nb_parts','pm_apport_num','pm_apport_nat','pm_fonction'];
+          'pm_nb_parts','pm_apport_num','pm_apport_nat','pm_apport_nat_desc','pm_fonction'];
         for (var i = 0; i < 4; i++) {
           var a = (state.mdt.assoc || [])[i] || {};
           FIELDS.forEach(function(k) { var v = a[k]; if (v !== undefined && v !== null && v !== '' && v !== false) filled['mdt:a:' + i + ':' + k] = true; });
@@ -1232,7 +1242,8 @@
           snap.step = _step;
           snap.hbg  = _hbg;
           localStorage.setItem(COLLAB_STORAGE_KEY, JSON.stringify(snap));
-        } catch (e) { /* quota ou mode privé */ }
+          console.log('[creabook] Save OK — étape', _step, '| owner:', snap.owner.name, '| HS fields:', Object.keys(snap.hsFields).length);
+        } catch (e) { console.error('[creabook] Erreur sauvegarde:', e); }
       }
 
       function saveCollabDebounced() {
@@ -1257,11 +1268,13 @@
 
       function restoreCollabState() {
         if (new URLSearchParams(window.location.search).get('draft')) return;
+        console.log('[creabook] Tentative restore...');
         try {
           var raw = localStorage.getItem(COLLAB_STORAGE_KEY);
-          if (!raw) return;
+          if (!raw) { console.log('[creabook] Aucune donnée cache.'); return; }
           var data = JSON.parse(raw);
-          if (!data) return;
+          if (!data) { console.log('[creabook] Données invalides.'); return; }
+          console.log('[creabook] Données trouvées — étape', data.step, '| owner:', data.owner && data.owner.name, '| HS fields:', data.hsFields ? Object.keys(data.hsFields).length : 0);
 
           // Owner
           if (data.owner && data.owner.name) {
@@ -1309,7 +1322,8 @@
           }
 
           showInfoToast('Formulaire restauré depuis votre dernière session.');
-        } catch (e) {}
+          console.log('[creabook] Restore terminé — étape active:', _step);
+        } catch (e) { console.error('[creabook] Erreur restore:', e); }
       }
 
       function applyHsLocks() {
@@ -1617,9 +1631,10 @@
           cp:           d.cp           || '',
           ville:        d.ville        || '',
           nb_parts:     d.nb_parts     || '',
-          apport_num:   d.apport_num   || '',
-          apport_nat:   d.apport_nat   || '',
-          apport_ind:   d.apport_ind   || '',
+          apport_num:      d.apport_num      || '',
+          apport_nat:      d.apport_nat      || '',
+          apport_nat_desc: d.apport_nat_desc || '',
+          apport_ind:      d.apport_ind      || '',
           acre:         !!d.acre,
           regime:       d.regime       || '',
           profession:   d.profession   || '',
@@ -1638,8 +1653,12 @@
           pm_rl_nom:     d.pm_rl_nom     || '',
           pm_rl_prenom:  d.pm_rl_prenom  || '',
           pm_rl_qualite: d.pm_rl_qualite || '',
-          pm_rl_email:   d.pm_rl_email   || '',
-          pm_rl_tel:     d.pm_rl_tel     || '',
+          pm_rl_email:       d.pm_rl_email       || '',
+          pm_rl_tel:         d.pm_rl_tel         || '',
+          pm_nb_parts:       d.pm_nb_parts       || '',
+          pm_apport_num:     d.pm_apport_num     || '',
+          pm_apport_nat:     d.pm_apport_nat     || '',
+          pm_apport_nat_desc:d.pm_apport_nat_desc|| '',
           fileIds:       fileIdsByPerson[key]  || [],
           fileDocs:      fileDocsByPerson[key] || {},
         };
@@ -1743,6 +1762,7 @@
           var entityForDeal  = isEtoile(managerVal) ? 'cecca_etoile' : 'cecca';
           _capturedEntity = entityForDeal;
           _capturedNom    = (societe.nom || '').trim();
+          console.log('[creabook] Entity — managerVal:', managerVal, '| isEtoile:', isEtoile(managerVal), '| entityForDeal:', entityForDeal);
 
           // ── Soumettre le formulaire HubSpot (workflow CRM) ──────────────────
           // Fait APRÈS avoir capturé toutes les valeurs pour éviter le remplacement du DOM
@@ -2150,14 +2170,17 @@
         }
         _syncHebergeur = syncToHubspot;
 
-        // Changement physique / morale
-        sec.addEventListener('change', function(e) {
-          if (e.target.name === 'hbg_type') {
-            _hbg.type = e.target.value;
-            doc.getElementById('hbg-physique').style.display = _hbg.type === 'physique' ? '' : 'none';
-            doc.getElementById('hbg-morale').style.display   = _hbg.type === 'morale'   ? '' : 'none';
-            syncToHubspot();
-          }
+        // Changement physique / morale — listeners directs sur chaque radio (pas de délégation)
+        var phDiv = sec.querySelector('#hbg-physique');
+        var moDiv = sec.querySelector('#hbg-morale');
+        function applyHbgType(type) {
+          _hbg.type = type;
+          if (phDiv) phDiv.style.display = type === 'physique' ? '' : 'none';
+          if (moDiv) moDiv.style.display = type === 'morale'   ? '' : 'none';
+          syncToHubspot();
+        }
+        sec.querySelectorAll('input[type="radio"][name="hbg_type"]').forEach(function(radio) {
+          radio.addEventListener('change', function() { applyHbgType(radio.value); });
         });
 
         // Saisie dans les champs custom
@@ -2180,8 +2203,8 @@
               _hbg.type = null; _hbg.nom = ''; _hbg.prenom = ''; _hbg.societe = ''; _hbg.siren = '';
               sec.querySelectorAll('.hbg-inp').forEach(function(i) { i.value = ''; });
               sec.querySelectorAll('input[type="radio"]').forEach(function(i) { i.checked = false; });
-              doc.getElementById('hbg-physique').style.display = 'none';
-              doc.getElementById('hbg-morale').style.display   = 'none';
+              if (phDiv) phDiv.style.display = 'none';
+              if (moDiv) moDiv.style.display = 'none';
               syncToHubspot();
             }
           }
@@ -2339,11 +2362,11 @@
         var d = data || {};
         var html = '';
         html += '<p class="pm-section-sep">Identification de la société</p>';
+        html += '<div class="pm-siren-row"><div class="mdt-fg"><label class="mdt-lbl">N° SIREN <span style="color:#7A1F30">*</span></label><input type="text" class="mdt-inp" data-f="pm_siren" value="' + mdtEsc(d.pm_siren) + '" placeholder="9 chiffres" maxlength="9" pattern="[0-9]{9}"></div><button type="button" class="pm-siren-btn">Vérifier</button></div>';
+        html += '<div class="pm-siren-msg" style="display:none"></div>';
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Dénomination sociale','pm_denom',d.pm_denom,'text',true) + '</div>';
         html += '<div class="mdt-row">' + mdtSel('Forme juridique','pm_forme',d.pm_forme,PM_FORMES,true) + mdtFg('Capital social (€)','pm_capital',d.pm_capital,'number',true) + '</div>';
-        html += '<div class="mdt-row">' +
-          '<div class="mdt-fg"><label class="mdt-lbl">N° SIREN <span style="color:#7A1F30">*</span></label><input type="text" class="mdt-inp" data-f="pm_siren" value="' + mdtEsc(d.pm_siren) + '" placeholder="9 chiffres" maxlength="9" pattern="[0-9]{9}"></div>' +
-          mdtFg('RCS de (ville)','pm_rcs',d.pm_rcs,'text',true) + '</div>';
+        html += '<div class="mdt-row mdt-row-1">' + mdtFg('RCS de (ville)','pm_rcs',d.pm_rcs,'text',true) + '</div>';
         html += '<p class="pm-section-sep">Siège social</p>';
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse','pm_adresse',d.pm_adresse,'text',true) + '</div>';
         html += '<div class="mdt-row">' + mdtFg('Code postal','pm_cp',d.pm_cp,'text',true) + mdtFg('Ville','pm_ville',d.pm_ville,'text',true) + '</div>';
@@ -2358,6 +2381,8 @@
           html += '<p class="pm-section-sep">Participation au capital</p>';
           html += '<div class="mdt-row mdt-row-1">' + mdtFg('Nombre de parts / actions','pm_nb_parts',d.pm_nb_parts,'number',true) + '</div>';
           html += '<div class="mdt-row">' + mdtFg('Apport en numéraire (€)','pm_apport_num',d.pm_apport_num,'number',false) + mdtFg('Apport en nature (€)','pm_apport_nat',d.pm_apport_nat,'number',false) + '</div>';
+          html += '<div class="mdt-row mdt-row-1" id="pm-nat-row-' + key + '"' + (parseFloat(d.pm_apport_nat) > 0 ? '' : ' style="display:none"') + '>' +
+            mdtFg('Nature de l\'apport','pm_apport_nat_desc',d.pm_apport_nat_desc,'text',false) + '</div>';
         }
         if (isMandataire) {
           html += '<p class="pm-section-sep">Mandat exercé</p>';
@@ -2434,6 +2459,69 @@
           beList.appendChild(newEl);
         });
       }
+      function wirePmSirenLookup(card, arr, idx) {
+        var sirenInp  = card.querySelector('[data-f="pm_siren"]');
+        var verifyBtn = card.querySelector('.pm-siren-btn');
+        var msgEl     = card.querySelector('.pm-siren-msg');
+        if (!sirenInp || !verifyBtn || !msgEl) return;
+
+        var LOCK_FIELDS = ['pm_denom','pm_forme','pm_capital','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays','pm_tel','pm_email'];
+
+        function setLocked(locked, data) {
+          LOCK_FIELDS.forEach(function(f) {
+            var inp = card.querySelector('[data-f="' + f + '"]');
+            if (!inp) return;
+            var val = data && data[f] ? data[f] : null;
+            if (locked && val) {
+              inp.value = val;
+              if (!arr[idx]) arr[idx] = {};
+              arr[idx][f] = val;
+              inp.disabled = true;
+              inp.classList.add('pm-siren-locked');
+            } else {
+              inp.disabled = false;
+              inp.classList.remove('pm-siren-locked');
+            }
+          });
+        }
+
+        verifyBtn.addEventListener('click', function() {
+          var siren = sirenInp.value.trim();
+          if (!/^[0-9]{9}$/.test(siren)) {
+            msgEl.textContent = 'Veuillez saisir un SIREN valide (9 chiffres).';
+            msgEl.className = 'pm-siren-msg pm-siren-msg-err';
+            msgEl.style.display = '';
+            return;
+          }
+          verifyBtn.disabled = true;
+          verifyBtn.textContent = 'Vérification…';
+          msgEl.style.display = 'none';
+          fetch('/company-lookup?siren=' + encodeURIComponent(siren))
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+              verifyBtn.disabled = false;
+              verifyBtn.textContent = 'Vérifier';
+              if (res.found) {
+                setLocked(true, res.data);
+                msgEl.textContent = 'Société trouvée dans HubSpot — informations pré-remplies.';
+                msgEl.className = 'pm-siren-msg pm-siren-msg-ok';
+                msgEl.style.display = '';
+              } else {
+                setLocked(false, null);
+                msgEl.textContent = 'SIREN non trouvé dans HubSpot — remplissez les champs manuellement.';
+                msgEl.className = 'pm-siren-msg pm-siren-msg-warn';
+                msgEl.style.display = '';
+              }
+            })
+            .catch(function() {
+              verifyBtn.disabled = false;
+              verifyBtn.textContent = 'Vérifier';
+              msgEl.textContent = 'Erreur lors de la vérification. Réessayez.';
+              msgEl.className = 'pm-siren-msg pm-siren-msg-err';
+              msgEl.style.display = '';
+            });
+        });
+      }
       function mdtFgCp(label, field, value, type, isCp) {
         var star = '<span class="mdt-cp-star" style="color:#7A1F30' + (isCp ? '' : ';display:none') + '"> *</span>';
         return '<div class="mdt-fg mdt-cp-req-field"><label class="mdt-lbl">' + label + star + '</label>' +
@@ -2500,6 +2588,8 @@
             mdtFg('Apport en numéraire (€)','apport_num',data.apport_num,'number',false) +
             mdtFg('Apport en nature (€)','apport_nat',data.apport_nat,'number',false) +
             mdtFg('Apport en industrie (€)','apport_ind',data.apport_ind,'number',false) + '</div>';
+          html += '<div class="mdt-row mdt-row-1" id="nat-row-' + key + '"' + (parseFloat(data.apport_nat) > 0 ? '' : ' style="display:none"') + '>' +
+            mdtFg('Nature de l\'apport','apport_nat_desc',data.apport_nat_desc,'text',false) + '</div>';
         }
         // ACRE (mandataires associés uniquement)
         if (isAssoc) {
@@ -2627,6 +2717,15 @@
           inp.addEventListener('input', saveField);
           inp.addEventListener('change', saveField);
         });
+        // Show/hide "nature de l'apport" quand apport_nat > 0
+        (function() {
+          var natInp   = card.querySelector('[data-f="apport_nat"]');
+          var natRow   = document.getElementById('nat-row-' + key);
+          if (natInp && natRow) natInp.addEventListener('input', function() { natRow.style.display = parseFloat(natInp.value) > 0 ? '' : 'none'; });
+          var pmNatInp = card.querySelector('[data-f="pm_apport_nat"]');
+          var pmNatRow = document.getElementById('pm-nat-row-' + key);
+          if (pmNatInp && pmNatRow) pmNatInp.addEventListener('input', function() { pmNatRow.style.display = parseFloat(pmNatInp.value) > 0 ? '' : 'none'; });
+        })();
         // Wire file inputs
         card.querySelectorAll('input[type="file"]').forEach(function(inp) {
           inp.addEventListener('change', function() {
@@ -2641,6 +2740,7 @@
             if (delBtn) delBtn.style.display = this.files[0] ? 'inline-flex' : 'none';
           });
         });
+        wirePmSirenLookup(card, isAssoc ? _mdt.assoc : _mdt.nonAssoc, idx);
         // Wire delete buttons
         card.querySelectorAll('.mdt-doc-del').forEach(function(btn) {
           btn.addEventListener('click', function() {
@@ -2814,6 +2914,8 @@
           mdtFg('Apport en numéraire (€)','apport_num',data.apport_num,'number',false) +
           mdtFg('Apport en nature (€)','apport_nat',data.apport_nat,'number',false) +
           mdtFg('Apport en industrie (€)','apport_ind',data.apport_ind,'number',false) + '</div>';
+        html += '<div class="mdt-row mdt-row-1" id="assoc-nat-row-' + key + '"' + (parseFloat(data.apport_nat) > 0 ? '' : ' style="display:none"') + '>' +
+          mdtFg('Nature de l\'apport','apport_nat_desc',data.apport_nat_desc,'text',false) + '</div>';
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse (domicile)','adresse',data.adresse,'text',true) + '</div>';
         html += '<div class="mdt-row">' + mdtFg('Code postal','cp',data.cp,'text',true) + mdtFg('Ville','ville',data.ville,'text',true) + '</div>';
         var hbgTypeName = 'assoc-hbg-type-' + key;
@@ -2911,6 +3013,12 @@
           inp.addEventListener('input', save);
           inp.addEventListener('change', save);
         });
+        // Show/hide "nature de l'apport" quand apport_nat > 0
+        (function() {
+          var natInp = card.querySelector('[data-f="apport_nat"]');
+          var natRow = document.getElementById('assoc-nat-row-' + key);
+          if (natInp && natRow) natInp.addEventListener('input', function() { natRow.style.display = parseFloat(natInp.value) > 0 ? '' : 'none'; });
+        })();
         // Wire file inputs
         card.querySelectorAll('input[type="file"]').forEach(function(inp) {
           inp.addEventListener('change', function() {
@@ -2924,6 +3032,7 @@
             if (delBtn) delBtn.style.display = this.files[0] ? 'inline-flex' : 'none';
           });
         });
+        wirePmSirenLookup(card, _assoc.items, idx);
         // Wire delete buttons
         card.querySelectorAll('.mdt-doc-del').forEach(function(btn) {
           btn.addEventListener('click', function() {
@@ -3220,6 +3329,7 @@
           // L'entité et le nom ont été capturés par uploadAllAndSubmit() avant le click HubSpot.
           // On ne lit pas sv.cb_manager (champ HubSpot jamais rempli côté collab) — on utilise
           // _capturedEntity/_capturedNom qui sont corrects quelle que soit l'entité.
+          console.log('[creabook] onFormSubmitted — _capturedEntity:', _capturedEntity, '| _capturedNom:', _capturedNom);
           try {
             var montant = _capturedEntity === 'cecca_etoile' ? '2 160' : '900';
             sessionStorage.setItem('creabook_submitted', JSON.stringify({ entite: _capturedEntity, montant: montant, societe: _capturedNom }));
