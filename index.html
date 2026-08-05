@@ -2127,8 +2127,8 @@
           '<div>',
           '  <label class="hbg-lbl" style="margin-bottom:0.5rem;">Type d\'hébergeur <span style="color:#7A1F30">*</span></label>',
           '  <div class="hbg-type-row">',
-          '    <label><input type="radio" name="hbg_type" value="physique"> Personne physique</label>',
-          '    <label><input type="radio" name="hbg_type" value="morale"> Personne morale</label>',
+          '    <label data-hbg-toggle="physique"><input type="radio" name="hbg_type" value="physique"> Personne physique</label>',
+          '    <label data-hbg-toggle="morale"><input type="radio" name="hbg_type" value="morale"> Personne morale</label>',
           '  </div>',
           '  <div id="hbg-physique" style="display:none;">',
           '    <div class="hbg-grid-2">',
@@ -2137,8 +2137,9 @@
           '    </div>',
           '  </div>',
           '  <div id="hbg-morale" style="display:none;">',
+          '    <div class="hbg-block"><label class="hbg-lbl">N° SIREN <span style="color:#7A1F30">*</span></label><div style="display:flex;gap:0.5rem;align-items:center"><input class="hbg-inp" data-hbg="siren" type="text" placeholder="123456789" maxlength="9" pattern="[0-9]{9}" inputmode="numeric" style="flex:1"><button type="button" class="hbg-siren-btn" style="flex-shrink:0;padding:0 0.9rem;height:2.2rem;background:#1E4E7A;color:#fff;border:none;border-radius:4px;font-size:0.8rem;font-weight:600;cursor:pointer;white-space:nowrap">Vérifier</button></div></div>',
+          '    <div class="hbg-siren-msg" style="display:none;font-size:0.8rem;padding:0.4rem 0.6rem;border-radius:4px;margin-top:0.25rem"></div>',
           '    <div class="hbg-block"><label class="hbg-lbl">Nom de la société de domiciliation <span style="color:#7A1F30">*</span></label><input class="hbg-inp" data-hbg="societe" type="text" placeholder="Raison sociale"></div>',
-          '    <div class="hbg-block"><label class="hbg-lbl">N° SIREN <span style="color:#7A1F30">*</span></label><input class="hbg-inp" data-hbg="siren" type="text" placeholder="123456789" maxlength="9" pattern="[0-9]{9}" inputmode="numeric"></div>',
           '  </div>',
           '  <div id="hbg-err" style="display:none;color:#7A1F30;font-size:0.8rem;margin-top:0.5rem;font-family:Inter,sans-serif;"></div>',
           '</div>',
@@ -2179,9 +2180,51 @@
           if (moDiv) moDiv.style.display = type === 'morale'   ? '' : 'none';
           syncToHubspot();
         }
-        sec.querySelectorAll('input[type="radio"][name="hbg_type"]').forEach(function(radio) {
-          radio.addEventListener('change', function() { applyHbgType(radio.value); });
+        sec.querySelectorAll('label[data-hbg-toggle]').forEach(function(lbl) {
+          lbl.addEventListener('click', function() {
+            applyHbgType(lbl.getAttribute('data-hbg-toggle'));
+          });
         });
+
+        // Lookup SIREN hébergeur morale
+        var hbgSirenBtn = sec.querySelector('.hbg-siren-btn');
+        var hbgSirenMsg = sec.querySelector('.hbg-siren-msg');
+        if (hbgSirenBtn && hbgSirenMsg) {
+          hbgSirenBtn.addEventListener('click', function() {
+            var sirenInp = sec.querySelector('[data-hbg="siren"]');
+            var societeInp = sec.querySelector('[data-hbg="societe"]');
+            if (!sirenInp) return;
+            var siren = sirenInp.value.replace(/\D/g,'');
+            if (!/^[0-9]{9}$/.test(siren)) {
+              hbgSirenMsg.textContent = 'SIREN invalide (9 chiffres requis).';
+              hbgSirenMsg.style.cssText = 'display:block;font-size:0.8rem;padding:0.4rem 0.6rem;border-radius:4px;margin-top:0.25rem;background:#fce8e8;color:#7a1f30';
+              return;
+            }
+            hbgSirenBtn.disabled = true;
+            hbgSirenBtn.textContent = '…';
+            hbgSirenMsg.style.display = 'none';
+            fetch('/company-lookup?siren=' + encodeURIComponent(siren))
+              .then(function(r) { return r.json(); })
+              .then(function(res) {
+                hbgSirenBtn.disabled = false;
+                hbgSirenBtn.textContent = 'Vérifier';
+                if (res.found && res.data.pm_denom) {
+                  if (societeInp) { societeInp.value = res.data.pm_denom; _hbg.societe = res.data.pm_denom; syncToHubspot(); }
+                  hbgSirenMsg.textContent = 'Société trouvée : ' + res.data.pm_denom;
+                  hbgSirenMsg.style.cssText = 'display:block;font-size:0.8rem;padding:0.4rem 0.6rem;border-radius:4px;margin-top:0.25rem;background:#e6f4ea;color:#1a7340';
+                } else {
+                  hbgSirenMsg.textContent = 'SIREN non trouvé dans HubSpot.';
+                  hbgSirenMsg.style.cssText = 'display:block;font-size:0.8rem;padding:0.4rem 0.6rem;border-radius:4px;margin-top:0.25rem;background:#fff8e1;color:#7a5c00';
+                }
+              })
+              .catch(function() {
+                hbgSirenBtn.disabled = false;
+                hbgSirenBtn.textContent = 'Vérifier';
+                hbgSirenMsg.textContent = 'Erreur lors de la vérification.';
+                hbgSirenMsg.style.cssText = 'display:block;font-size:0.8rem;padding:0.4rem 0.6rem;border-radius:4px;margin-top:0.25rem;background:#fce8e8;color:#7a1f30';
+              });
+          });
+        }
 
         // Saisie dans les champs custom
         sec.addEventListener('input', function(e) {
@@ -2194,21 +2237,40 @@
           syncToHubspot();
         });
 
-        // Afficher / masquer selon cb_est_heberge
-        doc.addEventListener('change', function(e) {
-          if (e.target && e.target.name === 'cb_est_heberge') {
-            var show = e.target.value === 'oui';
-            sec.style.display = show ? '' : 'none';
-            if (!show) {
-              _hbg.type = null; _hbg.nom = ''; _hbg.prenom = ''; _hbg.societe = ''; _hbg.siren = '';
-              sec.querySelectorAll('.hbg-inp').forEach(function(i) { i.value = ''; });
-              sec.querySelectorAll('input[type="radio"]').forEach(function(i) { i.checked = false; });
-              if (phDiv) phDiv.style.display = 'none';
-              if (moDiv) moDiv.style.display = 'none';
-              syncToHubspot();
-            }
+        // Afficher / masquer selon cb_est_heberge — click + setTimeout pour lire l'état réel
+        function syncEstHeberge() {
+          var oui = doc.querySelector('input[name="cb_est_heberge"][value="oui"]:checked');
+          var show = !!oui;
+          sec.style.display = show ? '' : 'none';
+          if (!show) {
+            _hbg.type = null; _hbg.nom = ''; _hbg.prenom = ''; _hbg.societe = ''; _hbg.siren = '';
+            sec.querySelectorAll('.hbg-inp').forEach(function(i) { i.value = ''; });
+            sec.querySelectorAll('[name="hbg_type"]').forEach(function(i) { i.checked = false; });
+            if (phDiv) phDiv.style.display = 'none';
+            if (moDiv) moDiv.style.display = 'none';
+            syncToHubspot();
           }
+        }
+        hebergeWrapper.addEventListener('click', function() {
+          setTimeout(syncEstHeberge, 50);
         });
+        // Forcer "Non" par défaut — override HubSpot qui pré-sélectionne "Oui"
+        // S'exécute synchrone ici (avant la restauration collab qui suit dans wireForm)
+        // puis un 2ème passage à 600ms pour prendre en compte la restauration collab éventuelle
+        (function() {
+          var ouiR = doc.querySelector('input[name="cb_est_heberge"][value="oui"]');
+          var nonR = doc.querySelector('input[name="cb_est_heberge"][value="non"]');
+          if (ouiR) ouiR.checked = false;
+          if (nonR) { nonR.checked = true; }
+          // Réinitialiser aussi l'état hbg_type (le navigateur peut restaurer l'état des radios)
+          sec.querySelectorAll('input[type="radio"][name="hbg_type"]').forEach(function(r) { r.checked = false; });
+          if (phDiv) phDiv.style.display = 'none';
+          if (moDiv) moDiv.style.display = 'none';
+          _hbg.type = null;
+        })();
+        syncEstHeberge();
+        // Passage différé pour prendre en compte la restauration collab (si session sauvegardée)
+        setTimeout(syncEstHeberge, 600);
       }
 
       var POLE_SECTORIEL_OPTIONS = [
@@ -2291,6 +2353,17 @@
           var _pcr = _pendingCollabRestore;
           _pendingCollabRestore = null;
           Object.keys(_pcr).forEach(function(name) {
+            // Radios : chercher par valeur et setter checked (ne pas écraser .value)
+            var radios = doc.querySelectorAll('input[type="radio"][name="' + name + '"]');
+            if (radios.length) {
+              radios.forEach(function(r) {
+                if (r.value === _pcr[name]) {
+                  r.checked = true;
+                  r.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+              });
+              return;
+            }
             var el = doc.querySelector('[name="' + name + '"]');
             if (!el || el.type === 'hidden') return;
             el.value = _pcr[name];
@@ -2422,7 +2495,7 @@
           var delBtn = beEl.querySelector('.pm-be-del');
           if (delBtn) delBtn.addEventListener('click', function() {
             if (!arr[idx] || !arr[idx].pm_beneficiaires) return;
-            var beList = document.getElementById('pm-be-list-' + key);
+            var beList = card.querySelector('#pm-be-list-' + key);
             if (!beList) return;
             var items = beList.querySelectorAll('.pm-be-item');
             var beIdx = Array.from(items).indexOf(beEl);
@@ -2436,7 +2509,7 @@
             });
           });
         }
-        var beList = document.getElementById('pm-be-list-' + key);
+        var beList = card.querySelector('#pm-be-list-' + key);
         if (!beList) return;
         if (!arr[idx]) arr[idx] = {};
         if (!arr[idx].pm_beneficiaires) arr[idx].pm_beneficiaires = [{}];
