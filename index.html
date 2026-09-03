@@ -763,11 +763,11 @@
       <div id="mdt-err" style="display:none;background:#FEE2E2;border:1px solid #B04545;border-radius:4px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:#B04545;font-family:Inter,sans-serif;"></div>
       <div class="mdt-counts">
         <div class="mdt-count-block">
-          <label class="mdt-lbl">Nombre de mandataires associés en plus <span style="color:#7A1F30">*</span></label>
+          <label class="mdt-lbl">Nombre de mandataires associés <span style="color:#7A1F30">*</span></label>
           <input type="number" id="mdt-assoc-in" class="mdt-count-inp" min="0" max="4" value="0">
         </div>
         <div class="mdt-count-block">
-          <label class="mdt-lbl">Nombre de mandataires non associés en plus <span style="color:#7A1F30">*</span></label>
+          <label class="mdt-lbl">Nombre de mandataires non associés</label>
           <input type="number" id="mdt-nonassoc-in" class="mdt-count-inp" min="0" max="4" value="0">
         </div>
       </div>
@@ -792,7 +792,7 @@
       <span class="form-step-counter" id="form-step-counter">Étape 1 / 5</span>
       <button class="form-nav-btn primary" id="btn-next" onclick="formNextStep()">Suivant →</button>
     </div>
-    <button id="cb-btn-draft" onclick="generateDraftLink()">Formulaire non terminé — Générer un mail client</button>
+    <button id="cb-btn-draft" onclick="generateDraftLink()">Envoyer le formulaire au client pour complétion →</button>
 
     <!-- Post-submission: virement section -->
     <div id="next-steps" class="next-steps">
@@ -939,7 +939,7 @@
       var STEP_FS = [ [0], [1, 2], [], [] ];
       var STEP_DESCS = {
         '-1': '<strong>Propriétaire de la transaction</strong> — Sélectionnez le collaborateur Cecca responsable de ce dossier',
-        0:    '<strong>Vos coordonnées</strong> — Identité, choix de l\'entité Cecca et type de parcours',
+        0:    '<strong>Type de parcours</strong> — Choix de l\'entité Cecca et du type de création',
         1:    '<strong>Votre société</strong> — Dénomination, forme juridique, capital social, siège, banque et justificatif de domicile',
         2:    '<strong>Dirigeant(s)</strong> — Informations personnelles, apports et situation matrimoniale',
         3:    '<strong>Associés non mandataires</strong> — Associés non dirigeants, apports et domicile',
@@ -1242,7 +1242,7 @@
           snap.step = _step;
           snap.hbg  = _hbg;
           localStorage.setItem(COLLAB_STORAGE_KEY, JSON.stringify(snap));
-          console.log('[creabook] Save OK — étape', _step, '| owner:', snap.owner.name, '| HS fields:', Object.keys(snap.hsFields).length);
+          if (_step >= 0) console.log('[creabook] Save OK — étape', _step, '| owner:', snap.owner.name, '| HS fields:', Object.keys(snap.hsFields).length);
         } catch (e) { console.error('[creabook] Erreur sauvegarde:', e); }
       }
 
@@ -1253,6 +1253,26 @@
 
       function clearCollabState() {
         try { localStorage.removeItem(COLLAB_STORAGE_KEY); } catch (e) {}
+      }
+
+      function clearAndRestart() {
+        clearCollabState();
+        location.reload();
+      }
+
+      function showRestoreBanner() {
+        // Bannière persistante signalant la restauration de session avec bouton reset
+        var existing = document.getElementById('cb-restore-banner');
+        if (existing) existing.remove();
+        var el = document.createElement('div');
+        el.id = 'cb-restore-banner';
+        el.style.cssText = 'display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.6rem;background:#EFF6FF;border:1px solid #93C5FD;border-radius:6px;padding:0.7rem 1rem;margin-bottom:1rem;font-family:Inter,sans-serif;font-size:0.87rem;color:#1E40AF;';
+        el.innerHTML = '<span>✓ Formulaire restauré depuis votre dernière session.</span>' +
+          '<button onclick="clearAndRestart()" style="flex-shrink:0;padding:0.3rem 0.75rem;border:1px solid #93C5FD;border-radius:4px;background:white;color:#1E40AF;cursor:pointer;font-family:Inter,sans-serif;font-size:0.82rem;font-weight:600;">Recommencer à zéro</button>';
+        var ownerPanel = document.getElementById('owner-panel');
+        if (ownerPanel && ownerPanel.parentNode) {
+          ownerPanel.parentNode.insertBefore(el, ownerPanel);
+        }
       }
 
       function showInfoToast(msg) {
@@ -1321,7 +1341,7 @@
             updateStepUI(true);
           }
 
-          showInfoToast('Formulaire restauré depuis votre dernière session.');
+          showRestoreBanner();
           console.log('[creabook] Restore terminé — étape active:', _step);
         } catch (e) { console.error('[creabook] Erreur restore:', e); }
       }
@@ -1758,7 +1778,7 @@
             fileIds:           fileIdsByPerson['societe'] || [],
           };
 
-          var managerVal     = _selectedOwner.name || fv('cb_manager');
+          var managerVal     = fv('cb_manager') || _selectedOwner.name;
           var entityForDeal  = isEtoile(managerVal) ? 'cecca_etoile' : 'cecca';
           _capturedEntity = entityForDeal;
           _capturedNom    = (societe.nom || '').trim();
@@ -1796,6 +1816,9 @@
                 draftCompanyId:      _draftMode.companyId || undefined,
                 entity:              entityForDeal,
                 manager:             managerVal,
+                ownerId:             _selectedOwner.id   || undefined,
+                ownerName:           _selectedOwner.name || undefined,
+                contactPrincipalKey: _mdt.contactPrincipal || undefined,
                 societe:             societe,
                 mandatairesAssoc:    mdtAssocArr,
                 mandatairesNonAssoc: mdtNonAssocArr,
@@ -1812,10 +1835,13 @@
             showErrToast('Dossier envoyé avec avertissements : ' + d.errors.join(' — '));
           }
           // Masquer le formulaire et afficher le RIB
-          var montant = _capturedEntity === 'cecca_etoile' ? '2 160' : '900';
+          var montant = fv('cb_type_parcours') === 'sci_scpi' ? '2 160' : '900';
           ['form-stepper','form-nav','step-desc','hs-form-wrapper','mandataire-section','assoc-section','owner-panel','cb-btn-draft'].forEach(function(id) {
             var el = document.getElementById(id); if (el) el.style.display = 'none';
           });
+          // Persister en sessionStorage AVANT de vider le localStorage
+          // → un refresh sur la page RIB restaure l'écran de virement
+          try { sessionStorage.setItem('creabook_submitted', JSON.stringify({ entite: _capturedEntity, montant: montant, societe: _capturedNom })); } catch(e) {}
           clearCollabState();
           showNextSteps(_capturedEntity, montant, _capturedNom);
         })
@@ -1880,23 +1906,9 @@
       }
 
       function formNextStep() {
-        // En mode collab, on supprime le toast d'erreur — la force toast prend le relais
-        var isCollab = !_draftMode.active;
-        var valid = validateCurrentStep(/*silent=*/isCollab);
-        if (!valid) {
-          // Étape -1 (choix du manager) : toujours bloquant, toast déjà affiché par validateCurrentStep
-          if (_step === -1) return;
-          // Mode client : toujours bloquant, toast déjà affiché
-          if (_draftMode.active) return;
-          // Mode collab : force toast
-          dismissErrToast(); // sécurité : vider un éventuel toast résiduel
-          if (_forceToastEl) return; // déjà affiché
-          showForceToast(function() {
-            if (_step < TOTAL_STEPS - 1) { _step++; applyStepVisibility(); updateStepUI(); saveCollabState(); }
-            else { uploadAllAndSubmit(); }
-          });
-          return;
-        }
+        // Validation toujours bloquante (pas de bypass "passer quand même")
+        var valid = validateCurrentStep(/*silent=*/false);
+        if (!valid) return;
         if (_step === -1) {
           _step = 0;
           applyStepVisibility(); updateStepUI(); saveCollabState();
@@ -2029,10 +2041,12 @@
           '.hs-form select, .hs-form .hs-input { color: #0A0A0A !important; background: white !important; }',
           '.hs-form option { color: #0A0A0A !important; background: white !important; }',
           '.hs-form select { -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%230A0A0A\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e") !important; background-repeat: no-repeat !important; background-position: right 1rem center !important; background-size: 1em !important; padding: 0 2.5rem 0 0.9rem !important; height: 46px !important; line-height: 44px !important; }',
-          '.hs-form .chosen-container { width: 100% !important; }',
-          '.hs-form .chosen-container-single .chosen-single { color: #0A0A0A !important; background: white !important; border: 1px solid #E8E3DD !important; border-radius: 4px !important; }',
-          '.hs-form .chosen-container-single .chosen-single span { color: #0A0A0A !important; display: block !important; }',
-          '.hs-form .chosen-drop { background: white !important; border: 1px solid #E8E3DD !important; z-index: 9999 !important; border-radius: 4px !important; }',
+          '.hs-form .chosen-container { width: 100% !important; overflow: visible !important; }',
+          '.hs-form .chosen-container-single .chosen-single { color: #0A0A0A !important; background: white !important; border: 1px solid #E8E3DD !important; border-radius: 4px !important; height: 46px !important; line-height: 46px !important; padding: 0 1.5rem 0 0.9rem !important; }',
+          '.hs-form .chosen-container-single .chosen-single span { color: #0A0A0A !important; display: block !important; line-height: 46px !important; }',
+          '.hs-form .chosen-container-single .chosen-single div { top: 10px !important; }',
+          '.hs-form .chosen-container { position: relative !important; }',
+          '.hs-form .chosen-drop { background: white !important; border: 1px solid #E8E3DD !important; z-index: 9999 !important; border-radius: 4px !important; position: absolute !important; }',
           '.hs-form .chosen-results li { color: #0A0A0A !important; }',
           '.hs-form .chosen-results li.highlighted { background: #7A1F30 !important; color: white !important; }',
           '.hs-form .hs-suggestion, .hs-form .email-suggestion, .hs-form [class*="suggestion"] { display: none !important; }',
@@ -2257,6 +2271,8 @@
         // Forcer "Non" par défaut — override HubSpot qui pré-sélectionne "Oui"
         // S'exécute synchrone ici (avant la restauration collab qui suit dans wireForm)
         // puis un 2ème passage à 600ms pour prendre en compte la restauration collab éventuelle
+        // Capturer le type hébergeur restauré depuis localStorage AVANT que l'IIFE le remette à null
+        var _savedHbgType = _hbg.type;
         (function() {
           var ouiR = doc.querySelector('input[name="cb_est_heberge"][value="oui"]');
           var nonR = doc.querySelector('input[name="cb_est_heberge"][value="non"]');
@@ -2270,7 +2286,27 @@
         })();
         syncEstHeberge();
         // Passage différé pour prendre en compte la restauration collab (si session sauvegardée)
-        setTimeout(syncEstHeberge, 600);
+        setTimeout(function() {
+          syncEstHeberge();
+          // Si une session avec hébergement OUI + type (physique/morale) a été restaurée,
+          // ré-appliquer l'affichage des sections et les valeurs des champs.
+          if (_savedHbgType) {
+            var ouiR2 = doc.querySelector('input[name="cb_est_heberge"][value="oui"]');
+            if (ouiR2) ouiR2.checked = true;
+            sec.style.display = '';
+            _hbg.type = _savedHbgType;
+            sec.querySelectorAll('input[type="radio"][name="hbg_type"]').forEach(function(r) {
+              r.checked = (r.value === _savedHbgType);
+            });
+            applyHbgType(_savedHbgType);
+            // Restaurer les valeurs saisies
+            var nomI  = sec.querySelector('[data-hbg="nom"]');   if (nomI  && _hbg.nom)    nomI.value  = _hbg.nom;
+            var prenI = sec.querySelector('[data-hbg="prenom"]');if (prenI && _hbg.prenom) prenI.value = _hbg.prenom;
+            var socI  = sec.querySelector('[data-hbg="societe"]');if (socI && _hbg.societe) socI.value = _hbg.societe;
+            var sirI  = sec.querySelector('[data-hbg="siren"]'); if (sirI  && _hbg.siren)  sirI.value  = _hbg.siren;
+            syncToHubspot();
+          }
+        }, 600);
       }
 
       var POLE_SECTORIEL_OPTIONS = [
@@ -2320,6 +2356,54 @@
         });
       }
 
+      var FORME_JURIDIQUE_OPTIONS = [
+        'EURL','SARL','SAS','SASU','SA','SCI','SCEA','SNC','SELARL','SELAS',
+        'SCPI','GAEC','EARL','GIE','SEP','SCS','SCA','EIRL','Micro-entreprise','Holding',
+      ];
+
+      function wireFormeJuridique(doc) {
+        var wrapper = doc.querySelector('.hs_cb_forme_juridique');
+        if (!wrapper) return;
+        // Supprimer le conteneur Chosen.js existant si présent
+        var chz = wrapper.querySelector('.chosen-container');
+        if (chz) chz.remove();
+        var existSel = wrapper.querySelector('select[name="cb_forme_juridique"]');
+        if (!existSel) return;
+        // Remplacer par un select natif styled
+        var sel = doc.createElement('select');
+        sel.name = 'cb_forme_juridique';
+        sel.className = existSel.className;
+        sel.setAttribute('required', 'required');
+        sel.setAttribute('aria-required', 'true');
+        var blank = doc.createElement('option');
+        blank.value = ''; blank.textContent = '— Sélectionner —';
+        sel.appendChild(blank);
+        FORME_JURIDIQUE_OPTIONS.forEach(function(opt) {
+          var o = doc.createElement('option');
+          o.value = opt; o.textContent = opt;
+          sel.appendChild(o);
+        });
+        existSel.parentNode.replaceChild(sel, existSel);
+      }
+
+      function wireManager(doc) {
+        var wrapper = doc.querySelector('.hs_cb_manager');
+        if (!wrapper) return;
+        // Supprimer uniquement le conteneur Chosen.js — le select natif HubSpot
+        // contient déjà les options de managers définies dans le portail.
+        var chz = wrapper.querySelector('.chosen-container');
+        if (chz) chz.remove();
+        var sel = wrapper.querySelector('select[name="cb_manager"]');
+        if (!sel) return;
+        // Chosen.js masque le select natif via position/opacity — on le restaure
+        sel.style.cssText = '';
+        sel.style.display = '';
+        sel.setAttribute('required', 'required');
+        sel.setAttribute('aria-required', 'true');
+        // Ajouter à la liste des champs obligatoires côté client
+        if (REQUIRED_FIELDS.indexOf('cb_manager') < 0) REQUIRED_FIELDS.push('cb_manager');
+      }
+
       function wireForm(doc) {
         _fDoc = doc;
         injectFormCSS(doc);
@@ -2327,6 +2411,8 @@
         wireSSNFormatters(doc);
         markRequiredFields(doc);
         wireActivite(doc);
+        wireFormeJuridique(doc);
+        wireManager(doc);
         wireDateFields(doc);
         wireHebergement(doc);
         var emailField = doc.querySelector('[name="email"]');
@@ -2337,13 +2423,15 @@
         var submitArea = doc.querySelector('.hs_submit');
         if (submitArea) submitArea.style.display = 'none';
         // Ajouter un hint sous le label du justificatif de domicile société
-        var domSocWrapper = doc.querySelector('.hs_cb_doc_domicile_societe label');
-        if (domSocWrapper && !domSocWrapper.querySelector('.hs-field-desc')) {
+        // Inséré comme frère APRÈS le label (pas à l'intérieur) pour éviter la concaténation visuelle
+        var domSocLbl = doc.querySelector('.hs_cb_doc_domicile_societe label');
+        var domSocNext = domSocLbl && domSocLbl.nextElementSibling;
+        if (domSocLbl && !(domSocNext && domSocNext.classList && domSocNext.classList.contains('hs-field-desc')) && !domSocLbl.querySelector('.hs-field-desc')) {
           var hint = doc.createElement('span');
           hint.className = 'hs-field-desc';
-          hint.style.cssText = 'display:block;font-size:0.78rem;color:#666;margin-top:2px;font-weight:400;';
+          hint.style.cssText = 'display:block;font-size:0.78rem;color:#888;margin-top:2px;font-weight:400;text-transform:none;letter-spacing:0;';
           hint.textContent = 'Facture d\'électricité, d\'eau ou de gaz';
-          domSocWrapper.appendChild(hint);
+          domSocLbl.parentNode.insertBefore(hint, domSocLbl.nextSibling);
         }
         applyStepVisibility();
         updateStepUI(true);
@@ -2375,6 +2463,21 @@
           doc.addEventListener('input',  saveCollabDebounced);
           doc.addEventListener('change', saveCollabDebounced);
         }
+        // Effacement en temps réel des bordures d'erreur sur les champs obligatoires
+        doc.addEventListener('input', function(e) {
+          var inp = e.target;
+          if (!inp || !inp.value || !inp.value.trim()) return;
+          var wrapper = inp.closest('.hs-form-field');
+          if (wrapper && wrapper.style.outline) wrapper.style.outline = '';
+        });
+        doc.addEventListener('change', function(e) {
+          var inp = e.target;
+          if (!inp || !inp.value || !inp.value.trim()) return;
+          var wrapper = inp.closest('.hs-form-field');
+          if (wrapper && wrapper.style.outline) wrapper.style.outline = '';
+        });
+        // Remplacer le select Chosen.js cb_manager par un select natif peuplé depuis /owners
+        wireManager(doc);
       }
 
       /* ── Mandataire custom section ──────────────────────────────── */
@@ -2439,7 +2542,7 @@
         html += '<div class="pm-siren-msg" style="display:none"></div>';
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Dénomination sociale','pm_denom',d.pm_denom,'text',true) + '</div>';
         html += '<div class="mdt-row">' + mdtSel('Forme juridique','pm_forme',d.pm_forme,PM_FORMES,true) + mdtFg('Capital social (€)','pm_capital',d.pm_capital,'number',true) + '</div>';
-        html += '<div class="mdt-row mdt-row-1">' + mdtFg('RCS de (ville)','pm_rcs',d.pm_rcs,'text',true) + '</div>';
+        html += '<div class="mdt-row mdt-row-1">' + mdtFg('RCS (de ville)','pm_rcs',d.pm_rcs,'text',true) + '</div>';
         html += '<p class="pm-section-sep">Siège social</p>';
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Adresse','pm_adresse',d.pm_adresse,'text',true) + '</div>';
         html += '<div class="mdt-row">' + mdtFg('Code postal','pm_cp',d.pm_cp,'text',true) + mdtFg('Ville','pm_ville',d.pm_ville,'text',true) + '</div>';
@@ -2532,10 +2635,54 @@
           beList.appendChild(newEl);
         });
       }
+      function wireHbgSirenLookup(card, arr, idx) {
+        var sirenInp = card.querySelector('.mdt-hbg-morale .mdt-hbg-siren-inp');
+        var verifyBtn = card.querySelector('.mdt-hbg-siren-btn');
+        var msgEl = card.querySelector('.mdt-hbg-siren-msg');
+        if (!sirenInp || !verifyBtn || !msgEl) return;
+        verifyBtn.addEventListener('click', function() {
+          var siren = sirenInp.value.trim();
+          if (!/^[0-9]{9}$/.test(siren)) {
+            msgEl.textContent = 'Veuillez saisir un SIREN valide (9 chiffres).';
+            msgEl.className = 'pm-siren-msg mdt-hbg-siren-msg pm-siren-msg-err';
+            msgEl.style.display = '';
+            return;
+          }
+          verifyBtn.disabled = true;
+          verifyBtn.textContent = 'Vérification…';
+          msgEl.style.display = 'none';
+          fetch('/company-lookup?siren=' + encodeURIComponent(siren))
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+              verifyBtn.disabled = false;
+              verifyBtn.textContent = 'Vérifier';
+              if (!arr[idx]) arr[idx] = {};
+              arr[idx].hbg_siren = siren;
+              if (res.found && res.data && res.data.pm_denom) {
+                var socInp = card.querySelector('.mdt-hbg-morale [data-f="hbg_societe"]');
+                if (socInp) { socInp.value = res.data.pm_denom; arr[idx].hbg_societe = res.data.pm_denom; }
+                msgEl.textContent = 'Société trouvée dans HubSpot — raison sociale pré-remplie.';
+                msgEl.className = 'pm-siren-msg mdt-hbg-siren-msg pm-siren-msg-ok';
+              } else {
+                msgEl.textContent = 'SIREN non trouvé dans HubSpot — remplissez la raison sociale manuellement.';
+                msgEl.className = 'pm-siren-msg mdt-hbg-siren-msg pm-siren-msg-warn';
+              }
+              msgEl.style.display = '';
+            })
+            .catch(function() {
+              verifyBtn.disabled = false;
+              verifyBtn.textContent = 'Vérifier';
+              msgEl.textContent = 'Erreur lors de la vérification. Réessayez.';
+              msgEl.className = 'pm-siren-msg mdt-hbg-siren-msg pm-siren-msg-err';
+              msgEl.style.display = '';
+            });
+        });
+      }
       function wirePmSirenLookup(card, arr, idx) {
-        var sirenInp  = card.querySelector('[data-f="pm_siren"]');
-        var verifyBtn = card.querySelector('.pm-siren-btn');
-        var msgEl     = card.querySelector('.pm-siren-msg');
+        var scope     = card.querySelector('.mdt-pm-content') || card;
+        var sirenInp  = scope.querySelector('[data-f="pm_siren"]');
+        var verifyBtn = scope.querySelector('.pm-siren-btn');
+        var msgEl     = scope.querySelector('.pm-siren-msg');
         if (!sirenInp || !verifyBtn || !msgEl) return;
 
         var LOCK_FIELDS = ['pm_denom','pm_forme','pm_capital','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays','pm_tel','pm_email'];
@@ -2650,8 +2797,9 @@
         html += '<div class="mdt-row">' + mdtFg('Nom de l\'hébergeur','hbg_nom',data.hbg_nom,'text',true) + mdtFg('Prénom de l\'hébergeur','hbg_prenom',data.hbg_prenom,'text',true) + '</div>';
         html += '</div>';
         html += '<div class="mdt-hbg-morale"' + (hbgType !== 'morale' ? ' style="display:none"' : '') + '>';
+        html += '<div class="pm-siren-row"><div class="mdt-fg"><label class="mdt-lbl">N° SIREN de l\'hébergeur <span style="color:#7A1F30">*</span></label><input type="text" class="mdt-inp mdt-hbg-siren-inp" data-f="hbg_siren" value="' + mdtEsc(data.hbg_siren || '') + '" placeholder="9 chiffres" maxlength="9" pattern="[0-9]{9}" inputmode="numeric"></div><button type="button" class="pm-siren-btn mdt-hbg-siren-btn">Vérifier</button></div>';
+        html += '<div class="pm-siren-msg mdt-hbg-siren-msg" style="display:none"></div>';
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Raison sociale de l\'hébergeur','hbg_societe',data.hbg_societe,'text',true) + '</div>';
-        html += '<div class="mdt-row mdt-row-1">' + mdtFg('SIREN de l\'hébergeur','hbg_siren',data.hbg_siren,'text',true,'[0-9]{9}','123456789') + '</div>';
         html += '</div>';
         html += '</div>';
         html += '</div>';
@@ -2814,6 +2962,7 @@
           });
         });
         wirePmSirenLookup(card, isAssoc ? _mdt.assoc : _mdt.nonAssoc, idx);
+        wireHbgSirenLookup(card, isAssoc ? _mdt.assoc : _mdt.nonAssoc, idx);
         // Wire delete buttons
         card.querySelectorAll('.mdt-doc-del').forEach(function(btn) {
           btn.addEventListener('click', function() {
@@ -2832,8 +2981,11 @@
       function mdtRenderAll() {
         var container = document.getElementById('mdt-cards');
         if (!container) return;
-        _mdt.assoc.length    = _mdt.assocCount;
-        _mdt.nonAssoc.length = _mdt.nonAssocCount;
+        // Ne jamais tronquer les tableaux : on préserve les données si le compteur redescend
+        // puis remonte (évite la perte de saisie lors d'une faute de frappe sur le compteur).
+        // On s'assure juste que les slots nécessaires existent.
+        while (_mdt.assoc.length < _mdt.assocCount)       _mdt.assoc.push({});
+        while (_mdt.nonAssoc.length < _mdt.nonAssocCount) _mdt.nonAssoc.push({});
         container.innerHTML  = '';
         if (_mdt.assocCount > 0) {
           var h = document.createElement('h3'); h.className = 'mdt-section-ttl'; h.textContent = 'Mandataires associés'; container.appendChild(h);
@@ -2944,7 +3096,15 @@
         }
         mdtHideErr(); return true;
       }
-      function mdtShowErr(msg) { var el = document.getElementById('mdt-err'); if (el) { el.textContent = msg; el.style.display = ''; } }
+      function mdtShowErr(msg) {
+        var el = document.getElementById('mdt-err');
+        if (el) {
+          el.textContent = msg;
+          el.style.display = '';
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        showErrToast(msg);
+      }
       function mdtHideErr() { var el = document.getElementById('mdt-err'); if (el) el.style.display = 'none'; }
       function initMandataireSection() {
         var ai = document.getElementById('mdt-assoc-in');
@@ -3009,8 +3169,9 @@
         html += '<div class="mdt-row">' + mdtFg('Nom de l\'hébergeur','hbg_nom',data.hbg_nom,'text',true) + mdtFg('Prénom de l\'hébergeur','hbg_prenom',data.hbg_prenom,'text',true) + '</div>';
         html += '</div>';
         html += '<div class="mdt-hbg-morale"' + (hbgType !== 'morale' ? ' style="display:none"' : '') + '>';
+        html += '<div class="pm-siren-row"><div class="mdt-fg"><label class="mdt-lbl">N° SIREN de l\'hébergeur <span style="color:#7A1F30">*</span></label><input type="text" class="mdt-inp mdt-hbg-siren-inp" data-f="hbg_siren" value="' + mdtEsc(data.hbg_siren || '') + '" placeholder="9 chiffres" maxlength="9" pattern="[0-9]{9}" inputmode="numeric"></div><button type="button" class="pm-siren-btn mdt-hbg-siren-btn">Vérifier</button></div>';
+        html += '<div class="pm-siren-msg mdt-hbg-siren-msg" style="display:none"></div>';
         html += '<div class="mdt-row mdt-row-1">' + mdtFg('Raison sociale de l\'hébergeur','hbg_societe',data.hbg_societe,'text',true) + '</div>';
-        html += '<div class="mdt-row mdt-row-1">' + mdtFg('SIREN de l\'hébergeur','hbg_siren',data.hbg_siren,'text',true,'[0-9]{9}','123456789') + '</div>';
         html += '</div>';
         html += '</div>';
         html += '</div>';
@@ -3106,6 +3267,7 @@
           });
         });
         wirePmSirenLookup(card, _assoc.items, idx);
+        wireHbgSirenLookup(card, _assoc.items, idx);
         // Wire delete buttons
         card.querySelectorAll('.mdt-doc-del').forEach(function(btn) {
           btn.addEventListener('click', function() {
@@ -3163,7 +3325,15 @@
         assocHideErr(); return true;
       }
 
-      function assocShowErr(msg) { var el = document.getElementById('assoc-err'); if (el) { el.textContent = msg; el.style.display = ''; } }
+      function assocShowErr(msg) {
+        var el = document.getElementById('assoc-err');
+        if (el) {
+          el.textContent = msg;
+          el.style.display = '';
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        showErrToast(msg);
+      }
       function assocHideErr()    { var el = document.getElementById('assoc-err'); if (el) el.style.display = 'none'; }
 
       function renderPersonalAttestations() {
@@ -3264,7 +3434,8 @@
         if (stored) {
           try {
             var s = JSON.parse(stored);
-            ['form-stepper','form-nav','step-desc','hs-diag','hs-form-wrapper'].forEach(function(id) {
+            ['form-stepper','form-nav','step-desc','hs-diag','hs-form-wrapper',
+             'mandataire-section','assoc-section','owner-panel','cb-btn-draft'].forEach(function(id) {
               var el = document.getElementById(id);
               if (el) el.style.display = 'none';
             });
@@ -3328,7 +3499,7 @@
         }
 
         function filterOwners(q) {
-          if (!q || q.length < 2) return [];
+          if (!q || q.length < 1) return [];
           var ql = q.toLowerCase();
           return _ownersList.filter(function(o) {
             var parts = o.name.toLowerCase().split(' ');
@@ -3347,6 +3518,17 @@
           });
 
           inp.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+              // Toujours bloquer Enter sur ce champ pour éviter l'avancée involontaire
+              e.preventDefault();
+              e.stopPropagation();
+              var items = dd.querySelectorAll('li');
+              if (ddIdx >= 0 && items.length) {
+                var o = filterOwners(inp.value)[ddIdx];
+                if (o) selectOwner(o);
+              }
+              return;
+            }
             var items = dd.querySelectorAll('li');
             if (!items.length) return;
             if (e.key === 'ArrowDown') {
@@ -3357,10 +3539,6 @@
               e.preventDefault();
               ddIdx = Math.max(ddIdx - 1, 0);
               items.forEach(function(li, i) { li.classList.toggle('owner-dd-active', i === ddIdx); });
-            } else if (e.key === 'Enter' && ddIdx >= 0) {
-              e.preventDefault();
-              var o = filterOwners(inp.value)[ddIdx];
-              if (o) selectOwner(o);
             } else if (e.key === 'Escape') {
               dd.style.display = 'none';
             }
@@ -3371,15 +3549,21 @@
           });
         }
 
+        if (inp) inp.placeholder = 'Chargement en cours…';
         fetch('/owners')
           .then(function(r) { return r.json(); })
           .then(function(d) {
             _ownersList = d.owners || [];
             if (inp && inp.disabled) return; // verrouillé en mode draft
-            if (inp) inp.placeholder = 'Recherchez un propriétaire Cecca…';
+            if (inp) inp.placeholder = _ownersList.length
+              ? 'Tapez une lettre pour rechercher un propriétaire…'
+              : '— Aucun propriétaire disponible —';
           })
           .catch(function() {
-            if (inp && !inp.disabled) inp.placeholder = '— Erreur de chargement —';
+            if (inp && !inp.disabled) {
+              inp.placeholder = 'Erreur de chargement — rechargez la page';
+              inp.style.borderColor = '#B04545';
+            }
           });
       })();
 
@@ -3404,7 +3588,7 @@
           // _capturedEntity/_capturedNom qui sont corrects quelle que soit l'entité.
           console.log('[creabook] onFormSubmitted — _capturedEntity:', _capturedEntity, '| _capturedNom:', _capturedNom);
           try {
-            var montant = _capturedEntity === 'cecca_etoile' ? '2 160' : '900';
+            var montant = fv('cb_type_parcours') === 'sci_scpi' ? '2 160' : '900';
             sessionStorage.setItem('creabook_submitted', JSON.stringify({ entite: _capturedEntity, montant: montant, societe: _capturedNom }));
             ['form-stepper','form-nav','step-desc','hs-form-wrapper','mandataire-section','assoc-section'].forEach(function(id) {
               var el = document.getElementById(id);

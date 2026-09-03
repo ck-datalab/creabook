@@ -9,15 +9,23 @@ const multer   = require('multer');
 const crypto   = require('crypto');
 const path     = require('path');
 const FormData = require('form-data');
+const { Resend } = require('resend');
 
 const app  = express();
 const PORT = 8080;
 
 const HUBSPOT_TOKEN  = process.env.HUBSPOT_TOKEN;
 const TOKEN_SECRET   = process.env.TOKEN_SECRET;
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const RESEND_FROM          = process.env.RESEND_FROM          || 'Créa\'Book <creabook@cecca.fr>';
+const RESEND_JURIDIQUE_CECCA  = process.env.RESEND_JURIDIQUE_CECCA  || '';
+const RESEND_JURIDIQUE_ETOILE = process.env.RESEND_JURIDIQUE_ETOILE || '';
 
 if (!HUBSPOT_TOKEN) throw new Error('HUBSPOT_TOKEN manquant');
 if (!TOKEN_SECRET)  throw new Error('TOKEN_SECRET manquant');
+if (!RESEND_API_KEY) console.warn('[resend] RESEND_API_KEY absent — emails désactivés');
+
+const resendClient = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 // ── Managers Cecca Étoile (source unique — modifier ici uniquement) ───────────
 const ETOILE_MANAGERS = new Set(['SIMBOU DANFAKHA', 'YANN POINLOUP', 'MATEUS SOUTELO', 'JULIEN DECLERCQ']);
@@ -29,6 +37,7 @@ let DEAL_PIPELINE_ID      = null;
 let DEAL_STAGE_ID         = null;
 let OWNERS_BY_NAME        = {};
 let OWNERS_LIST           = [];
+let OWNERS_EMAIL_BY_ID    = {};   // ownerId → email (pour rapport Resend)
 
 async function initHubSpotCache() {
   try {
@@ -60,6 +69,7 @@ async function initHubSpotCache() {
           OWNERS_BY_NAME[full.toUpperCase()] = o.id;
           if (!OWNERS_LIST.find(x => x.id === o.id)) OWNERS_LIST.push({ name: full, id: o.id });
         }
+        if (o.id && o.email) OWNERS_EMAIL_BY_ID[String(o.id)] = o.email;
       });
       after = oData.paging?.next?.after || null;
     } while (after);
@@ -162,19 +172,28 @@ app.get('/token', (_req, res) => {
 });
 
 // ── GET /company-lookup — lookup PM company by SIREN in HubSpot ──────────────
+// SÉCURITÉ : ne retourne que la dénomination + données non personnelles.
+// Les champs téléphone, email et coordonnées de contact ne sont jamais exposés.
 
 app.get('/company-lookup', async (req, res) => {
   const siren = (req.query.siren || '').trim();
   if (!/^[0-9]{9}$/.test(siren)) return res.status(400).json({ error: 'SIREN invalide' });
 
+  // Exclure les fiches brouillon (créées par /draft avec siren_pappers fictif)
+  const DRAFT_SIRENS = new Set(['000000000']);
+  if (DRAFT_SIRENS.has(siren)) return res.json({ found: false });
+
   const search = await hs('POST', '/crm/v3/objects/companies/search', {
-    filterGroups: [{ filters: [{ propertyName: 'siren_pappers', operator: 'EQ', value: siren }] }],
+    filterGroups: [{
+      filters: [
+        { propertyName: 'siren_pappers', operator: 'EQ', value: siren },
+      ]
+    }],
     properties: [
       'name',
       'forme_juridique_pappers', 'capital_pappers', 'cb_rcs_pappers',
       'adresse_pappers', 'code_postal_pappers', 'ville_pappers',
       'address', 'zip', 'city', 'country',
-      'phone',
     ],
     limit: 1,
   });
@@ -183,10 +202,9 @@ app.get('/company-lookup', async (req, res) => {
     return res.json({ found: false });
   }
 
-  const company   = search.data.results[0];
-  const companyId = company.id;
-  const p         = company.properties || {};
-  const name      = (p.name || '').replace(/\s*\(En création\)\s*$/i, '').trim();
+  const company = search.data.results[0];
+  const p       = company.properties || {};
+  const name    = (p.name || '').replace(/\s*\(En création\)\s*$/i, '').trim();
 
   // Pappers stores full form name ("EURL, entreprise unipersonnelle…") — extract known abbreviation
   const PM_ABBREVS  = ['SASU','SAS','SARL','EURL','SA','SCI','SNC','SCP','SC'];
@@ -199,24 +217,34 @@ app.get('/company-lookup', async (req, res) => {
   const capital    = capitalRaw.replace(/[^0-9]/g, '');
 
   // Prefer Pappers custom props for address, fall back to standard HubSpot fields
-  const adresse = p.adresse_pappers || p.address   || '';
-  const cp      = p.code_postal_pappers || p.zip   || '';
-  const ville   = p.ville_pappers || p.city        || '';
-  const pays    = p.country                        || '';
+  const adresse = p.adresse_pappers || p.address || '';
+  const cp      = p.code_postal_pappers || p.zip || '';
+  const ville   = p.ville_pappers || p.city      || '';
+  const pays    = p.country                      || '';
 
-  // Fetch primary contact email + phone via search (avoids GET body issue)
-  let email = '';
-  let contactPhone = '';
-  const contactSearch = await hs('POST', '/crm/v3/objects/contacts/search', {
-    filterGroups: [{ filters: [{ propertyName: 'associations.company', operator: 'EQ', value: String(companyId) }] }],
-    properties: ['email', 'phone', 'mobilephone'],
-    limit: 1,
-  });
-  if (contactSearch.code === 200 && (contactSearch.data.results || []).length) {
-    const cp2 = contactSearch.data.results[0].properties || {};
-    email        = cp2.email       || '';
-    contactPhone = cp2.phone       || cp2.mobilephone || '';
-  }
+  // Fetch contact principal de la société → email + phone
+  // L'API v4 expose le label "Primary" qui identifie le contact principal HubSpot
+  let pm_email = '';
+  let pm_tel   = '';
+  try {
+    const assocRes = await hs('GET', `/crm/v4/objects/companies/${company.id}/associations/contacts`, null);
+    const assocList = (assocRes.code === 200 && assocRes.data.results) || [];
+    if (assocList.length) {
+      // Préférer le contact avec label "Primary", sinon prendre le premier de la liste
+      const primary = assocList.find(r =>
+        (r.associationTypes || []).some(t => t.label === 'Primary')
+      ) || assocList[0];
+      const contactId = primary.toObjectId;
+      if (contactId) {
+        const ctRes = await hs('GET', `/crm/v3/objects/contacts/${contactId}?properties=email,mobilephone,phone`, null);
+        if (ctRes.code === 200) {
+          const ctp = ctRes.data.properties || {};
+          pm_email = ctp.email       || '';
+          pm_tel   = ctp.mobilephone || ctp.phone || '';
+        }
+      }
+    }
+  } catch (_) { /* non-bloquant — on continue sans les coordonnées */ }
 
   res.json({
     found: true,
@@ -229,8 +257,8 @@ app.get('/company-lookup', async (req, res) => {
       pm_cp:      cp,
       pm_ville:   ville,
       pm_pays:    pays,
-      pm_tel:     p.phone || contactPhone,
-      pm_email:   email,
+      pm_email,
+      pm_tel,
     },
   });
 });
@@ -244,10 +272,12 @@ app.post('/draft', async (req, res) => {
   const state  = body.state || {};
   const hsF    = state.hsFields || {};
 
-  const draftManagerName = s(hsF.cb_manager);
+  // cb_manager détermine l'entité (Étoile ou CECCA) ; owner est le propriétaire du deal
+  const draftManagerName = s(hsF.cb_manager || (state.owner && state.owner.name));
   const draftEtoile      = isEtoile(draftManagerName);
 
-  const companyProps = { name: (s(hsF.cb_denomination_sociale) || 'Brouillon') + ' (En création)', siren_pappers: '999999999' };
+  // siren_pappers : '000000000' = marqueur brouillon, exclu par /company-lookup
+  const companyProps = { name: (s(hsF.cb_denomination_sociale) || 'Brouillon') + ' (En création)', siren_pappers: '000000000' };
   if (s(hsF.cb_forme_juridique))       companyProps.forme_juridique_pappers = s(hsF.cb_forme_juridique);
   if (s(hsF.cb_capital_social))        companyProps.capital_pappers         = s(hsF.cb_capital_social);
   if (s(hsF.cb_objet_social))          companyProps.objet_social_pappers    = s(hsF.cb_objet_social);
@@ -357,11 +387,13 @@ app.post('/submit', async (req, res) => {
 
   const soc         = body.societe || {};
   const managerName = s(body.manager);
-  const ownerId     = managerName ? (OWNERS_BY_NAME[managerName.toUpperCase()] || null) : null;
+  // Priorité : ownerId envoyé directement par le frontend (= _selectedOwner.id, choix étape 1)
+  // Fallback  : résolution par nom via OWNERS_BY_NAME (ancien comportement)
+  const ownerId     = s(body.ownerId) || (managerName ? (OWNERS_BY_NAME[managerName.toUpperCase()] || null) : null);
   const entiteLabel = body.entity === 'cecca_etoile' ? 'Cecca Étoile' : 'Cecca';
   const entiteEnum  = body.entity === 'cecca_etoile' ? 'CECCA Étoile' : 'CECCA';
 
-  console.log('[submit] ownerId pour', managerName, ':', ownerId);
+  console.log('[submit] ownerId pour', managerName, ':', ownerId, '| direct:', s(body.ownerId));
 
   // ════════════════════════════════════════════════════════════════════════════
   //  MAPPING : champ Créabook  →  propriété HubSpot
@@ -540,11 +572,484 @@ app.post('/submit', async (req, res) => {
   console.log('[submit] terminé — companyId:', companyId, '| dealId:', dealId, '| contacts:', ids.length, '| erreurs:', errors.length);
   res.json({ ok: errors.length === 0, companyId, contactIds: ids, dealId, errors });
 
+  // Envoi du rapport par email (non-bloquant — après la réponse HTTP)
+  sendRapport(body, dealId);
+
   } catch(e) {
     console.error('[submit] exception non gérée :', e);
     res.status(500).json({ ok: false, error: e.message, errors: [e.message] });
   }
 });
+
+// ── Rapport email (Resend) ────────────────────────────────────────────────────
+
+function esc(v) {
+  return String(v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
+}
+
+/* ── Styles inline réutilisés ── */
+const S = {
+  wrap:    'font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#0A0A0A;background:#CFCBC4;padding:32px 16px;',
+  shell:   'max-width:680px;margin:0 auto;background:#FAFAF7;',
+  hdr:     'background-color:#5B1421;background:linear-gradient(135deg,#5B1421 0%,#3D1B3F 35%,#1A2E4F 70%,#0F1F38 100%);padding:28px 32px 22px;',
+  hdrLogo: 'font-family:Arial,sans-serif;font-size:20px;font-weight:800;color:#fff;letter-spacing:.03em;margin-bottom:2px;',
+  hdrSub:  'font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.14em;margin-bottom:18px;',
+  hdrLbl:  'font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.09em;',
+  hdrVal:  'font-size:12.5px;color:#fff;font-weight:600;',
+  chip:    'display:inline-block;background:#7A1F30;color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:4px 12px;border-radius:2px;margin-top:14px;',
+  body:    'padding:0 32px 32px;',
+  secWrap: 'margin-top:26px;',
+  secTtl:  'display:table;margin-bottom:10px;',
+  secSq:   'display:table-cell;width:8px;height:14px;background:#7A1F30;border-radius:1px;vertical-align:middle;',
+  secLbl:  'display:table-cell;vertical-align:middle;padding-left:8px;font-family:Arial,sans-serif;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#0A0A0A;',
+  tbl:     'width:100%;border:1px solid #E8E3DD;border-radius:4px;border-collapse:collapse;',
+  tdLbl:   'padding:7px 13px;font-size:12px;color:#6A645B;font-weight:500;width:38%;border-bottom:1px solid #E8E3DD;background:#F5F2EE;vertical-align:top;',
+  tdVal:   'padding:7px 13px;font-size:12px;color:#0A0A0A;font-weight:500;border-bottom:1px solid #E8E3DD;vertical-align:top;',
+  tdLblW:  'padding:7px 13px;font-size:12px;color:#6A645B;font-weight:500;width:38%;border-bottom:1px solid #E8E3DD;vertical-align:top;',
+  tdValW:  'padding:7px 13px;font-size:12px;color:#0A0A0A;font-weight:500;border-bottom:1px solid #E8E3DD;vertical-align:top;',
+  pCard:   'border:1px solid #E8E3DD;border-radius:4px;overflow:hidden;margin-bottom:14px;',
+  pHdr:    'background-color:#5B1421;background:linear-gradient(135deg,#5B1421 0%,#3D1B3F 35%,#1A2E4F 70%,#0F1F38 100%);padding:11px 16px;',
+  pRole:   'font-size:9px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.12em;margin-bottom:3px;',
+  pName:   'font-size:15px;font-weight:700;color:#fff;',
+  pNamePM: 'font-size:15px;font-weight:700;color:#F5C2C8;',
+  pSub:    'font-size:9.5px;font-weight:700;color:#7A1F30;text-transform:uppercase;letter-spacing:.1em;padding:8px 13px 5px;background:#FAFAF7;border-bottom:1px solid #E8E3DD;',
+  tagOui:  'display:inline-block;background:#E8F2EC;color:#1A6A4F;font-size:10px;font-weight:700;padding:2px 8px;border-radius:2px;text-transform:uppercase;',
+  tagNon:  'display:inline-block;background:#FAF0F2;color:#7A1F30;font-size:10px;font-weight:700;padding:2px 8px;border-radius:2px;text-transform:uppercase;',
+  tagMor:  'display:inline-block;background:#EEF1F6;color:#1A2E4F;font-size:10px;font-weight:700;padding:2px 8px;border-radius:2px;text-transform:uppercase;',
+  tagPhy:  'display:inline-block;background:#F5F2EE;color:#4A4540;font-size:10px;font-weight:700;padding:2px 8px;border-radius:2px;text-transform:uppercase;',
+  docChip: 'display:inline-block;background:#EEF1F6;color:#1A2E4F;border:1px solid #C8D4E6;font-size:10.5px;font-weight:500;padding:3px 9px;border-radius:2px;margin:2px 4px 2px 0;',
+  montBar: 'background-color:#5B1421;background:linear-gradient(135deg,#5B1421 0%,#3D1B3F 35%,#1A2E4F 70%,#0F1F38 100%);padding:20px 32px;',
+  foot:    'background:#F5F2EE;border-top:2px solid #E8E3DD;padding:13px 32px;text-align:center;font-size:10.5px;color:#6A645B;',
+};
+
+// Échappe les valeurs texte ; laisse passer le HTML pré-construit (commence par '<')
+function safeVal(v) {
+  if (v === undefined || v === null || v === '') return '';
+  const s = String(v);
+  return /^<[a-zA-Z]/.test(s.trimStart()) ? s : esc(s);
+}
+
+function row(label, value, even) {
+  const bg = even ? '#F5F2EE' : '#FAFAF7';
+  return `<tr>
+    <td style="${S.tdLbl}background:${bg}">${esc(label)}</td>
+    <td style="${S.tdVal}">${value || '<span style="color:#9A938A;font-style:italic">—</span>'}</td>
+  </tr>`;
+}
+
+function infoTable(rows) {
+  const html = rows.map((r, i) => row(r[0], r[1] !== undefined ? safeVal(r[1]) : '', i % 2 === 1)).join('');
+  return `<table style="${S.tbl}" cellpadding="0" cellspacing="0">${html}</table>`;
+}
+
+function sectionTitle(label) {
+  return `<div style="${S.secWrap}">
+    <div style="${S.secTtl}">
+      <div style="${S.secSq}"></div>
+      <span style="${S.secLbl}">${esc(label)}</span>
+    </div>`;
+}
+
+function tagBool(val) {
+  return val === 'oui' ? `<span style="${S.tagOui}">Oui</span>` : `<span style="${S.tagNon}">Non</span>`;
+}
+
+function personCard(roleLabel, name, isPM, subsections) {
+  const nameStyle = isPM ? S.pNamePM : S.pName;
+  return `<div style="${S.pCard}">
+    <div style="${S.pHdr}">
+      <div style="${S.pRole}">${esc(roleLabel)}</div>
+      <div style="${nameStyle}">${esc(name)}</div>
+    </div>
+    ${subsections}
+  </div>`;
+}
+
+function sub(label, tableHtml) {
+  return `<div style="${S.pSub}">${esc(label)}</div>${tableHtml}`;
+}
+
+function subTable(rows) {
+  const html = rows.map((r, i) => row(r[0], r[1] !== undefined ? safeVal(r[1]) : '', i % 2 === 1)).join('');
+  return `<table style="width:100%;border-collapse:collapse;" cellpadding="0" cellspacing="0">${html}</table>`;
+}
+
+function docChips(docs) {
+  if (!docs || !docs.length) return '<span style="color:#9A938A;font-style:italic;font-size:12px;padding:10px 13px;display:block;">Aucun document</span>';
+  return '<div style="padding:10px 13px;">' + docs.map(d => `<span style="${S.docChip}">${esc(d)}</span>`).join('') + '</div>';
+}
+
+const DOC_LABELS = {
+  cni:                       'CNI / Passeport',
+  domicile:                  'Justificatif de domicile',
+  vitale:                    'Carte vitale',
+  livret:                    'Livret de famille',
+  diplome:                   'Diplôme',
+  attestation_hbg:           'Attestation hébergement',
+  cni_hbg:                   'CNI hébergeur',
+  domicile_hbg:              'Justif. domicile hébergeur',
+  attestation_domiciliation: 'Attestation domiciliation',
+  pm_cni_rl:                 'CNI représentant légal',
+  pm_cni_rp:                 'CNI représentant permanent',
+  pm_domicile_rp:            'Justif. domicile représentant permanent',
+  pm_kbis:                   'Kbis',
+  pm_rbe:                    'RBE',
+  domicile_societe:          'Domicile société',
+  bail:                      'Contrat de bail',
+};
+
+function buildFileLinksSection(body) {
+  const soc     = body.societe || {};
+  const persons = [
+    ...(body.mandatairesAssoc    || []).map((p, i) => ({ p, label: `Mandataire associé ${i + 1} — ${((p.pm_type === 'pm' ? p.pm_denom : (p.prenom || '') + ' ' + (p.nom || '')) || '').trim()}` })),
+    ...(body.mandatairesNonAssoc || []).map((p, i) => ({ p, label: `Mandataire non associé ${i + 1} — ${((p.pm_type === 'pm' ? p.pm_denom : (p.prenom || '') + ' ' + (p.nom || '')) || '').trim()}` })),
+    ...(body.associesNonMdt      || []).map((p, i) => ({ p, label: `Associé ${i + 1} — ${((p.pm_type === 'pm' ? p.pm_denom : (p.prenom || '') + ' ' + (p.nom || '')) || '').trim()}` })),
+  ];
+
+  const linkStyle = 'color:#7A1F30;text-decoration:none;font-weight:600;';
+  const chipStyle = 'display:inline-block;background:#FAF0F2;color:#7A1F30;border:1px solid #E8C8CE;font-size:11px;padding:3px 10px;border-radius:2px;margin:2px 4px 2px 0;text-decoration:none;font-weight:600;';
+
+  let sections = '';
+
+  // Pièces par personne
+  for (const { p, label } of persons) {
+    const docs = p.fileDocs || {};
+    const links = Object.entries(docs)
+      .filter(([, url]) => url && url.startsWith('http'))
+      .map(([key, url]) => `<a href="${url}" style="${chipStyle}">${esc(DOC_LABELS[key] || key)}</a>`);
+    if (!links.length) continue;
+    sections += `
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;color:#1A2E4F;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">${esc(label)}</div>
+        <div>${links.join('')}</div>
+      </div>`;
+  }
+
+  // Pièces société
+  const socDocs = soc.fileDocs || {};
+  const socLinks = Object.entries(socDocs)
+    .filter(([, url]) => url && url.startsWith('http'))
+    .map(([key, url]) => `<a href="${url}" style="${chipStyle}">${esc(DOC_LABELS[key] || key)}</a>`);
+  if (socLinks.length) {
+    sections += `
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;color:#1A2E4F;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Documents société</div>
+        <div>${socLinks.join('')}</div>
+      </div>`;
+  }
+
+  if (!sections) return '';
+
+  return `
+    ${sectionTitle('Pièces jointes — Liens HubSpot')}
+      <div style="padding:12px 14px;background:#F5F2EE;border:1px solid #E8E3DD;border-radius:4px;">
+        ${sections}
+      </div>
+    </div>`;
+}
+
+function buildPersonSection(p, roleLabel, showParts) {
+  if (!p) return '';
+  const isPM = p.pm_type === 'pm';
+
+  if (isPM) {
+    const name = p.pm_denom || 'Société';
+    const partsRows = showParts ? [
+      ['Nombre de parts', p.pm_nb_parts],
+      ['Apport numéraire', p.pm_apport_num ? p.pm_apport_num + ' €' : '—'],
+      ['Apport en nature', p.pm_apport_nat ? p.pm_apport_nat + ' €' : '—'],
+    ] : [];
+    const subs = [
+      sub('Identification', subTable([
+        ['SIREN', p.pm_siren], ['Forme', p.pm_forme], ['Capital', p.pm_capital ? p.pm_capital + ' €' : ''],
+        ['RCS', p.pm_rcs], ['Siège social', [p.pm_adresse, p.pm_cp, p.pm_ville].filter(Boolean).join(', ')],
+        ['Email', p.pm_email], ['Téléphone', p.pm_tel],
+      ])),
+      sub('Représentant légal', subTable([
+        ['Nom', (p.pm_rl_nom || '') + ' ' + (p.pm_rl_prenom || '')],
+        ['Qualité', p.pm_rl_qualite], ['Email', p.pm_rl_email], ['Téléphone', p.pm_rl_tel],
+      ])),
+      ...(partsRows.length ? [sub('Participation', subTable(partsRows))] : []),
+    ].join('');
+    return personCard(roleLabel + ' · Personne morale', name, true, subs);
+  }
+
+  const name = ((p.prenom || '') + ' ' + (p.nom || '')).trim() || 'Personne physique';
+  const hbgType = p.hbg_type || 'physique';
+  const hbgRows = p.heberge === 'oui'
+    ? hbgType === 'morale'
+      ? [['Hébergé ?', tagBool('oui')], ['Type', `<span style="${S.tagMor}">Personne morale</span>`], ['Raison sociale', p.hbg_societe], ['SIREN', p.hbg_siren]]
+      : [['Hébergé ?', tagBool('oui')], ['Type', `<span style="${S.tagPhy}">Personne physique</span>`], ['Nom', (p.hbg_nom || '') + ' ' + (p.hbg_prenom || '')]]
+    : [['Hébergé ?', tagBool('non')]];
+
+  const partsRows = showParts ? [
+    ['Nombre de parts', p.nb_parts],
+    ['Apport numéraire', p.apport_num ? p.apport_num + ' €' : '—'],
+    ['Apport en nature', p.apport_nat ? p.apport_nat + ' €' : '—'],
+    ['ACRE', p.acre ? `<span style="${S.tagOui}">Oui</span>` : `<span style="${S.tagNon}">Non</span>`],
+  ] : [];
+
+  const docsMap = p.fileDocs || {};
+  const docNames = {
+    cni:'CNI / Passeport', domicile:'Justificatif de domicile', vitale:'Carte vitale',
+    livret:'Livret de famille', diplome:'Diplôme', cni_hbg:'CNI hébergeur',
+    domicile_hbg:'Justif. domicile hébergeur', attestation_hbg:'Attestation hébergement',
+    attestation_domiciliation:'Attestation domiciliation',
+  };
+  const docList = Object.entries(docNames).filter(([k]) => docsMap[k]).map(([,v]) => v);
+
+  const subs = [
+    sub('Identité', subTable([
+      ['Date de naissance', p.ddn], ['Nationalité', p.nationalite],
+      ['N° sécurité sociale', p.num_secu], ['Régime matrimonial', p.regime],
+      ['Profession', p.profession],
+    ])),
+    sub('Coordonnées', subTable([
+      ['Adresse', [p.adresse, p.cp, p.ville].filter(Boolean).join(', ')],
+      ['Email', p.email], ['Téléphone', p.phone],
+    ])),
+    ...(partsRows.length ? [sub('Participation', subTable(partsRows))] : []),
+    sub('Hébergement', subTable(hbgRows)),
+    sub('Documents fournis', docChips(docList)),
+  ].join('');
+
+  const roleDisplay = p.role ? `${roleLabel} · ${p.role}` : roleLabel;
+  return personCard(roleDisplay, name, false, subs);
+}
+
+function buildRapportHTML(body, dateStr, isInternal = false) {
+  const soc     = body.societe || {};
+  const entity  = body.entity  || 'cecca';
+  const entite  = entity === 'cecca_etoile' ? 'Cecca Étoile' : 'Cecca';
+  const montant = (soc.type_parcours || '') === 'sci_scpi' ? '2 160 €' : '900 €';
+  const iban    = entity === 'cecca_etoile' ? 'FR03 3000 2062 3500 0007 4330 P33' : 'FR76 3000 2062 3500 0007 3467 Z97';
+  const benef   = entity === 'cecca_etoile' ? 'CECCA ÉTOILE' : 'CECCA';
+
+  const mdtAssoc    = body.mandatairesAssoc    || [];
+  const mdtNonAssoc = body.mandatairesNonAssoc || [];
+  const assocNonMdt = body.associesNonMdt      || [];
+
+  const nomSociete = esc(soc.nom || 'Nouvelle société');
+  const siege      = [soc.siege_adresse, soc.siege_cp, soc.siege_ville].filter(Boolean).join(', ');
+
+  // Hébergement société
+  const hbgOui = soc.est_heberge === 'oui';
+  const hbgRows = hbgOui
+    ? soc.hebergeur_type === 'morale'
+      ? [
+          ['Hébergée ?', tagBool('oui')],
+          ['Type d\'hébergeur', `<span style="${S.tagMor}">Personne morale</span>`],
+          ['Raison sociale', soc.hebergeur_societe],
+          ['SIREN hébergeur', soc.hebergeur_siren],
+        ]
+      : [
+          ['Hébergée ?', tagBool('oui')],
+          ['Type d\'hébergeur', `<span style="${S.tagPhy}">Personne physique</span>`],
+          ['Hébergeur', (soc.hebergeur_prenom || '') + ' ' + (soc.hebergeur_nom || '')],
+        ]
+    : [['Hébergée ?', tagBool('non')]];
+
+  // Docs société
+  const socDocNames = { domicile_societe:'Domicile société', bail:'Contrat de bail' };
+  const socFileDocs = (soc.fileDocs || {});
+  const socDocList  = Object.entries(socDocNames).filter(([k]) => socFileDocs[k]).map(([,v]) => v);
+
+  const personsHtml = [
+    ...(mdtAssoc.length
+      ? [`${sectionTitle(`Mandataires associés — ${mdtAssoc.length} personne${mdtAssoc.length > 1 ? 's' : ''}`)}
+          ${mdtAssoc.map(p => buildPersonSection(p, 'Mandataire associé', true)).join('')}
+         </div>`]
+      : []),
+    ...(mdtNonAssoc.length
+      ? [`${sectionTitle(`Mandataires non associés — ${mdtNonAssoc.length} personne${mdtNonAssoc.length > 1 ? 's' : ''}`)}
+          ${mdtNonAssoc.map(p => buildPersonSection(p, 'Mandataire non associé', false)).join('')}
+         </div>`]
+      : []),
+    ...(assocNonMdt.length
+      ? [`${sectionTitle(`Associés non mandataires — ${assocNonMdt.length} personne${assocNonMdt.length > 1 ? 's' : ''}`)}
+          ${assocNonMdt.map(p => buildPersonSection(p, 'Associé non mandataire', true)).join('')}
+         </div>`]
+      : []),
+  ].join('');
+
+  return `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rapport Créa'Book — ${nomSociete}</title></head>
+<body style="margin:0;padding:0;">
+<div style="${S.wrap}">
+<div style="${S.shell}">
+
+  <!-- HEADER -->
+  <div style="${S.hdr}">
+    <div style="${S.hdrLogo}">CECCA.</div>
+    <div style="${S.hdrSub}">Rapport de dossier · Création d'entreprise</div>
+    <hr style="border:none;border-top:1px solid rgba(255,255,255,.15);margin:0 0 16px;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding:3px 0;width:50%;">
+          <div style="${S.hdrLbl}">Date du dossier</div>
+          <div style="${S.hdrVal}">${esc(dateStr)}</div>
+        </td>
+        <td style="padding:3px 0;">
+          <div style="${S.hdrLbl}">Conseiller</div>
+          <div style="${S.hdrVal}">${esc(body.ownerName || '—')}</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:3px 0;">
+          <div style="${S.hdrLbl}">Manager responsable</div>
+          <div style="${S.hdrVal}">${esc(body.manager || '—')}</div>
+        </td>
+        <td style="padding:3px 0;">
+          <div style="${S.hdrLbl}">Entité</div>
+          <div style="${S.hdrVal}">${esc(entite)}</div>
+        </td>
+      </tr>
+    </table>
+    <div style="${S.chip}">${esc(entite)} — ${esc(montant)}</div>
+  </div>
+
+  <!-- BODY -->
+  <div style="${S.body}">
+
+    ${sectionTitle('Société')}
+      ${infoTable([
+        ['Dénomination sociale', soc.nom],
+        ['Forme juridique',      soc.forme],
+        ['Capital social',       soc.capital ? soc.capital + ' €' : ''],
+        ['Montant nominal / part', soc.montant_nominal ? soc.montant_nominal + ' €' : ''],
+        ['Objet social',         soc.objet],
+        ['Activité',             soc.activite],
+        ['Date de début',        soc.date_debut],
+        ['Siège social',         siege],
+        ['Banque',               soc.banque_nom],
+        ['Type de parcours',     soc.type_parcours],
+      ])}
+    </div>
+
+    ${sectionTitle('Domiciliation de la société')}
+      ${infoTable(hbgRows.map(([l, v]) => [l, v]))}
+    </div>
+
+    ${personsHtml}
+
+    ${socDocList.length ? `
+    ${sectionTitle('Documents de la société')}
+      ${docChips(socDocList)}
+    </div>` : ''}
+
+    ${isInternal ? buildFileLinksSection(body) : ''}
+
+  </div>
+
+  <!-- MONTANT -->
+  <div style="${S.montBar}">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td>
+          <div style="${S.hdrLbl}">Honoraires ${esc(entite)}</div>
+          <div style="font-size:24px;font-weight:800;color:#fff;margin-top:4px;">${esc(montant)}</div>
+        </td>
+        <td style="text-align:right;border-left:1px solid rgba(255,255,255,.18);padding-left:24px;">
+          <div style="${S.hdrLbl}">Virement — LCL</div>
+          <div style="font-family:'Courier New',monospace;font-size:11.5px;color:rgba(255,255,255,.9);margin-top:4px;">${esc(iban)}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:3px;">BIC CRLYFRPPXXX · Bénéficiaire : ${esc(benef)}</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="${S.foot}">
+    Rapport généré automatiquement par <strong style="color:#7A1F30;">Créa'Book</strong> · <strong style="color:#7A1F30;">CECCA</strong> —
+    Document strictement confidentiel, à usage interne uniquement.
+  </div>
+
+</div>
+</div>
+</body></html>`;
+}
+
+async function sendRapport(body, dealId) {
+  if (!resendClient) return;
+  try {
+    const soc    = body.societe || {};
+    const entity = body.entity  || 'cecca';
+    const entite = entity === 'cecca_etoile' ? 'Cecca Étoile' : 'Cecca';
+    const montant = (soc.type_parcours || '') === 'sci_scpi' ? '2 160 €' : '900 €';
+    const nomSoc = soc.nom || 'Nouvelle société';
+    const now     = new Date();
+    const dateStr = now.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })
+                  + ' à ' + now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    const subject = `[Créa'Book] Nouveau dossier — ${nomSoc} — ${entite} ${montant}${dealId ? ' · Deal #' + dealId : ''}`;
+
+    // ── Email 1 : client ──────────────────────────────────────────────────────
+    const cpKey = body.contactPrincipalKey || '';
+    let clientEmail = '';
+    if (cpKey) {
+      const matchA = cpKey.match(/^a(\d+)$/);
+      const matchN = cpKey.match(/^n(\d+)$/);
+      if (matchA) clientEmail = ((body.mandatairesAssoc    || [])[parseInt(matchA[1])] || {}).email || '';
+      if (matchN) clientEmail = ((body.mandatairesNonAssoc || [])[parseInt(matchN[1])] || {}).email || '';
+    }
+    if (!clientEmail) {
+      for (const p of (body.mandatairesAssoc || [])) {
+        if (p.email) { clientEmail = p.email; break; }
+      }
+    }
+
+    if (clientEmail) {
+      const htmlClient = buildRapportHTML(body, dateStr, false);
+      const r1 = await resendClient.emails.send({
+        from: RESEND_FROM, to: [clientEmail], subject, html: htmlClient,
+      });
+      console.log('[resend] Email client envoyé à', clientEmail, '| id:', r1.data && r1.data.id);
+    } else {
+      console.warn('[resend] Email client : aucune adresse client trouvée');
+    }
+
+    // ── Email 2 : équipe interne (pôle juridique + owner/collaborateur) ────────
+    const internalSet = new Set();
+
+    // Pôle juridique
+    const juridique = entity === 'cecca_etoile' ? RESEND_JURIDIQUE_ETOILE : RESEND_JURIDIQUE_CECCA;
+    if (juridique) juridique.split(',').map(e => e.trim()).filter(Boolean).forEach(e => internalSet.add(e));
+
+    // Owner (collaborateur sélectionné à l'étape 1)
+    if (body.ownerId) {
+      const ownerEmail = OWNERS_EMAIL_BY_ID[String(body.ownerId)];
+      if (ownerEmail) internalSet.add(ownerEmail);
+    }
+
+    // Manager responsable
+    if (body.manager) {
+      const managerId = OWNERS_BY_NAME[(body.manager || '').trim().toUpperCase()];
+      if (managerId) {
+        const mgrEmail = OWNERS_EMAIL_BY_ID[String(managerId)];
+        if (mgrEmail) internalSet.add(mgrEmail);
+      }
+    }
+
+    const toInternal = [...internalSet].filter(Boolean);
+    if (toInternal.length) {
+      const htmlInternal = buildRapportHTML(body, dateStr, true);
+      const r2 = await resendClient.emails.send({
+        from: RESEND_FROM, to: toInternal, subject, html: htmlInternal,
+      });
+      console.log('[resend] Email interne envoyé à', toInternal.join(', '), '| id:', r2.data && r2.data.id);
+    } else {
+      console.warn('[resend] Email interne : aucun destinataire interne trouvé');
+    }
+
+  } catch (e) {
+    console.error('[resend] Erreur envoi rapport :', e.message);
+  }
+}
 
 // ── HubSpot helpers ───────────────────────────────────────────────────────────
 
