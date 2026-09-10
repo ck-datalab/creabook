@@ -89,8 +89,24 @@ const ALLOWED_ORIGINS = [
   'http://localhost',
 ];
 
-const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE      = 15 * 1024 * 1024;
+
+// Magic bytes — vérifie la signature réelle du fichier (ne peut pas être falsifiée)
+const MAGIC_BYTES = [
+  { mime: 'application/pdf', sigs: [[0x25, 0x50, 0x44, 0x46]] },                          // %PDF
+  { mime: 'image/jpeg',      sigs: [[0xFF, 0xD8, 0xFF]] },                                  // JPEG
+  { mime: 'image/png',       sigs: [[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]] }, // PNG
+  { mime: 'image/webp',      sigs: [[0x52, 0x49, 0x46, 0x46, null, null, null, null, 0x57, 0x45, 0x42, 0x50]] }, // RIFF....WEBP
+];
+function checkMagicBytes(buf) {
+  for (const { mime, sigs } of MAGIC_BYTES) {
+    for (const sig of sigs) {
+      if (sig.every((b, i) => b === null || buf[i] === b)) return mime;
+    }
+  }
+  return null;
+}
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_SIZE } });
 
@@ -324,8 +340,17 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
   const file = req.file;
   if (!file) return res.status(400).json({ error: 'Fichier manquant' });
+
+  // 1. Vérifier le MIME type déclaré
   if (!ALLOWED_TYPES.includes(file.mimetype))
     return res.status(415).json({ error: 'Type non autorisé : ' + file.mimetype });
+
+  // 2. Vérifier les magic bytes (signature réelle du fichier)
+  const detectedMime = checkMagicBytes(file.buffer);
+  if (!detectedMime)
+    return res.status(415).json({ error: 'Fichier invalide ou corrompu' });
+  if (detectedMime !== file.mimetype)
+    return res.status(415).json({ error: 'Type réel du fichier incohérent avec le type déclaré' });
 
   let folder = (req.body.folder || '/creabook/dossiers').replace(/[^a-zA-Z0-9_\-\/]/g, '_');
   if (!folder.startsWith('/creabook/')) folder = '/creabook/dossiers';
