@@ -1,0 +1,115 @@
+name: Deploy Créa'Book
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # déclenchement manuel depuis GitHub
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true  # annule un deploy en cours si un nouveau push arrive
+
+env:
+  REGION:       nl-ams
+  NAMESPACE:    creabook
+  IMAGE:        rg.nl-ams.scw.cloud/creabook/creabook-api
+  CONTAINER_ID: 0f2dfe3a-ef05-458e-9f7d-887d62799362
+
+  # Variables d'environnement non sensibles du container
+  # Les emails juridiques sont des GitHub Variables (pas secrets) :
+  # Settings > Secrets and variables > Actions > Variables
+  # Les secrets Scaleway (HUBSPOT_TOKEN, TOKEN_SECRET, RESEND_API_KEY) restent
+  # directement sur le container — ils ne transitent PAS par GitHub.
+
+jobs:
+  deploy:
+    name: Build → Push → Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ── 1. Checkout ───────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Login Scaleway Container Registry ──────────────────────────────────
+      - name: Login Scaleway Registry
+        run: |
+          echo "${{ secrets.SCW_SECRET_KEY }}" \
+            | docker login rg.${{ env.REGION }}.scw.cloud -u nologin --password-stdin
+
+      # ── 3. Build ──────────────────────────────────────────────────────────────
+      - name: Build image (linux/amd64)
+        run: |
+          docker build \
+            --platform linux/amd64 \
+            -f api/Dockerfile \
+            -t ${{ env.IMAGE }}:latest \
+            -t ${{ env.IMAGE }}:${{ github.sha }} \
+            .
+
+      # ── 4. Push ───────────────────────────────────────────────────────────────
+      - name: Push image
+        run: |
+          docker push ${{ env.IMAGE }}:latest
+          docker push ${{ env.IMAGE }}:${{ github.sha }}
+
+      # ── 5. Install Scaleway CLI ───────────────────────────────────────────────
+      - name: Install Scaleway CLI
+        run: |
+          curl -fsSL -o /tmp/scw.deb \
+            "https://github.com/scaleway/scaleway-cli/releases/latest/download/scaleway-cli_linux_amd64.deb"
+          sudo dpkg -i /tmp/scw.deb
+
+      # ── 6. Deploy container ───────────────────────────────────────────────────
+      # La commande "deploy" redéploie avec la config existante.
+      # Les variables d'env non sensibles sont synchronisées ici à chaque deploy.
+      # Les secrets Scaleway (HUBSPOT_TOKEN, TOKEN_SECRET, RESEND_API_KEY) sont
+      # déjà sur le container et ne sont PAS écrasés par cette commande.
+      - name: Update non-secret env vars
+        env:
+          SCW_ACCESS_KEY:                ${{ secrets.SCW_ACCESS_KEY }}
+          SCW_SECRET_KEY:                ${{ secrets.SCW_SECRET_KEY }}
+          SCW_DEFAULT_ORGANIZATION_ID:   ${{ secrets.SCW_ORG_ID }}
+          SCW_DEFAULT_REGION:            ${{ env.REGION }}
+        run: |
+          scw container container update ${{ env.CONTAINER_ID }} \
+            region=${{ env.REGION }} \
+            "environment-variables.RESEND_JURIDIQUE_CECCA=${{ vars.RESEND_JURIDIQUE_CECCA }}" \
+            "environment-variables.RESEND_JURIDIQUE_ETOILE=${{ vars.RESEND_JURIDIQUE_ETOILE }}"
+
+      - name: Deploy Scaleway container
+        env:
+          SCW_ACCESS_KEY:                ${{ secrets.SCW_ACCESS_KEY }}
+          SCW_SECRET_KEY:                ${{ secrets.SCW_SECRET_KEY }}
+          SCW_DEFAULT_ORGANIZATION_ID:   ${{ secrets.SCW_ORG_ID }}
+          SCW_DEFAULT_REGION:            ${{ env.REGION }}
+        run: |
+          scw container container deploy ${{ env.CONTAINER_ID }} region=${{ env.REGION }}
+
+      # ── 7. Résumé ─────────────────────────────────────────────────────────────
+      - name: Résumé du déploiement
+        run: |
+          echo ""
+          echo "✅ Déploiement terminé"
+          echo "   Image    : ${{ env.IMAGE }}:${{ github.sha }}"
+          echo "   Commit   : ${{ github.sha }}"
+          echo "   Domaine  : https://creabookf74b3ee3-creabook.functions.fnc.nl-ams.scw.cloud"
+
+# ── GitHub Secrets à configurer ────────────────────────────────────────────────
+# Settings > Secrets and variables > Actions > Secrets
+#
+#   SCW_ACCESS_KEY   → SCWCP3ZGB2Q4DGSCJ91S
+#   SCW_SECRET_KEY   → (Scaleway secret key)
+#   SCW_ORG_ID       → 4932150b-15f3-4313-8775-3b7ea42cdee4
+#
+# ── GitHub Variables à configurer ──────────────────────────────────────────────
+# Settings > Secrets and variables > Actions > Variables
+#
+#   RESEND_JURIDIQUE_CECCA   → lior.feiguelman@cecca.fr
+#   RESEND_JURIDIQUE_ETOILE  → ornella.khalfa@cecca.fr
+#
+# ── Secrets Scaleway (sur le container, PAS dans GitHub) ────────────────────────
+#   HUBSPOT_TOKEN          → pat-eu1-****  (déjà configuré sur le container)
+#   TOKEN_SECRET           → ****          (déjà configuré sur le container)
+#   RESEND_API_KEY         → re_****       (déjà configuré sur le container)
