@@ -88,7 +88,7 @@ jobs:
           SCW_DEFAULT_ORGANIZATION_ID:   ${{ secrets.SCW_ORG_ID }}
           SCW_DEFAULT_REGION:            ${{ env.REGION }}
         run: |
-          scw container container deploy ${{ env.CONTAINER_ID }} region=${{ env.REGION }}
+          scw container container redeploy ${{ env.CONTAINER_ID }} region=${{ env.REGION }}
 
       # ── 7. Résumé ─────────────────────────────────────────────────────────────
       - name: Résumé du déploiement

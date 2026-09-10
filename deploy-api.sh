@@ -38,7 +38,7 @@ scw container container update "${CONTAINER_ID}" \
   "environment-variables.RESEND_JURIDIQUE_CECCA=lior.feiguelman@cecca.fr" \
   "environment-variables.RESEND_JURIDIQUE_ETOILE=ornella.khalfa@cecca.fr"
 
-scw container container deploy "${CONTAINER_ID}" region="${REGION}"
+scw container container redeploy "${CONTAINER_ID}" region="${REGION}"
 
 echo ""
 echo "✅ Déployé : ${IMAGE}:latest"
