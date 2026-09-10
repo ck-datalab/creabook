@@ -57,9 +57,12 @@ jobs:
       # ── 5. Install Scaleway CLI ───────────────────────────────────────────────
       - name: Install Scaleway CLI
         run: |
-          curl -fsSL -o /tmp/scw.deb \
-            "https://github.com/scaleway/scaleway-cli/releases/latest/download/scaleway-cli_linux_amd64.deb"
-          sudo dpkg -i /tmp/scw.deb
+          SCW_VERSION=$(curl -s https://api.github.com/repos/scaleway/scaleway-cli/releases/latest \
+            | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+          curl -fsSL \
+            "https://github.com/scaleway/scaleway-cli/releases/download/v${SCW_VERSION}/scaleway-cli_${SCW_VERSION}_linux_amd64" \
+            -o /usr/local/bin/scw
+          chmod +x /usr/local/bin/scw
 
       # ── 6. Deploy container ───────────────────────────────────────────────────
       # La commande "deploy" redéploie avec la config existante.
