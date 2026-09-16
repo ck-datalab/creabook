@@ -300,7 +300,7 @@ app.post('/draft', async (req, res) => {
   if (s(hsF.cb_siege_adresse))         companyProps.address                 = s(hsF.cb_siege_adresse);
   if (s(hsF.cb_siege_cp))              companyProps.zip                     = s(hsF.cb_siege_cp);
   if (s(hsF.cb_siege_ville))           companyProps.city                    = s(hsF.cb_siege_ville);
-  if (s(hsF.cb_date_debut))            companyProps.cb_date_debut_activite  = s(hsF.cb_date_debut);
+  if (s(hsF.cb_date_debut))            companyProps.cb_date_debut_activite  = ddmmyyyyToTs(s(hsF.cb_date_debut)) ?? s(hsF.cb_date_debut);
   if (s(hsF.cb_type_parcours))         companyProps.cb_type_parcours        = s(hsF.cb_type_parcours);
   if (s(hsF.cb_montant_nominal_part))  companyProps.cb_montant_nominal_part = s(hsF.cb_montant_nominal_part);
   if (s(hsF.cb_banque_nom))            companyProps.cb_banque_nom           = s(hsF.cb_banque_nom);
@@ -391,8 +391,10 @@ app.post('/submit', async (req, res) => {
   async function processPerson(d, label) {
     if ((d.pm_type || 'pp') === 'pm') {
       const cid   = await createContactPM(d);
+      const rpCid = await createContactPMRP(d);
       const pmCid = await createCompanyPM(d);
       if (cid)   contactEntries.push({ id: cid,   label: label + ' (RL)', fileIds: d.fileIds || [], note: `Pièces jointes Créa'Book — ${label}` });
+      if (rpCid) contactEntries.push({ id: rpCid, label: label + ' (RP)', fileIds: [],              note: `Représentant permanent — ${label}` });
       if (pmCid) contactEntries.push({ pmCompanyId: pmCid, rlContactId: cid, label: label + ' (PM)' });
     } else {
       const cid = await createContactPP(d);
@@ -458,10 +460,12 @@ app.post('/submit', async (req, res) => {
   };
 
   // Champs optionnels issus du mapping
+  const DATE_FIELDS_SOC = new Set(['date_debut']);
   for (const [crField, hsField] of Object.entries(companyMapping)) {
     if (crField === 'nom') continue; // déjà traité ci-dessus
     const v = s(soc[crField]);
-    if (v) companyProps[hsField] = v;
+    if (!v) continue;
+    companyProps[hsField] = DATE_FIELDS_SOC.has(crField) ? (ddmmyyyyToTs(v) ?? v) : v;
   }
 
   if (managerName) companyProps.manager = managerName;
@@ -524,9 +528,11 @@ app.post('/submit', async (req, res) => {
 
   if (ownerId)    dealProps.hubspot_owner_id = ownerId;
 
+  const DATE_FIELDS_DEAL = new Set(['date_debut']);
   for (const [crField, hsField] of Object.entries(dealMapping)) {
     const v = s(soc[crField]);
-    if (v) dealProps[hsField] = v;
+    if (!v) continue;
+    dealProps[hsField] = DATE_FIELDS_DEAL.has(crField) ? (ddmmyyyyToTs(v) ?? v) : v;
   }
 
   // ── Création / mise à jour de la société ─────────────────────────────────
@@ -788,17 +794,30 @@ function buildPersonSection(p, roleLabel, showParts) {
       ['Nombre de parts', p.pm_nb_parts],
       ['Apport numéraire', p.pm_apport_num ? p.pm_apport_num + ' €' : '—'],
       ['Apport en nature', p.pm_apport_nat ? p.pm_apport_nat + ' €' : '—'],
+      ...(p.pm_apport_nat_desc ? [['Détail apport nature', p.pm_apport_nat_desc]] : []),
     ] : [];
     const subs = [
       sub('Identification', subTable([
         ['SIREN', p.pm_siren], ['Forme', p.pm_forme], ['Capital', p.pm_capital ? p.pm_capital + ' €' : ''],
         ['RCS', p.pm_rcs], ['Siège social', [p.pm_adresse, p.pm_cp, p.pm_ville].filter(Boolean).join(', ')],
         ['Email', p.pm_email], ['Téléphone', p.pm_tel],
+        ...(p.pm_fonction ? [['Fonction', p.pm_fonction]] : []),
       ])),
       sub('Représentant légal', subTable([
         ['Nom', (p.pm_rl_nom || '') + ' ' + (p.pm_rl_prenom || '')],
         ['Qualité', p.pm_rl_qualite], ['Email', p.pm_rl_email], ['Téléphone', p.pm_rl_tel],
       ])),
+      ...(p.pm_rp_nom || p.pm_rp_prenom ? [sub('Représentant permanent', subTable([
+        ['Nom', (p.pm_rp_prenom || '') + ' ' + (p.pm_rp_nom || '')],
+        ['Date de naissance', p.pm_rp_ddn],
+        ['Lieu de naissance', p.pm_rp_lieu],
+        ['Nationalité', p.pm_rp_nationalite],
+        ['Adresse', p.pm_rp_adresse],
+        ['Email', p.pm_rp_email],
+        ['Téléphone', p.pm_rp_tel],
+        ['N° sécurité sociale', p.pm_rp_num_secu],
+        ['Régime matrimonial', p.pm_rp_regime],
+      ]))] : []),
       ...(partsRows.length ? [sub('Participation', subTable(partsRows))] : []),
     ].join('');
     return personCard(roleLabel + ' · Personne morale', name, true, subs);
@@ -816,6 +835,8 @@ function buildPersonSection(p, roleLabel, showParts) {
     ['Nombre de parts', p.nb_parts],
     ['Apport numéraire', p.apport_num ? p.apport_num + ' €' : '—'],
     ['Apport en nature', p.apport_nat ? p.apport_nat + ' €' : '—'],
+    ...(p.apport_nat_desc ? [['Détail apport nature', p.apport_nat_desc]] : []),
+    ['Apport en industrie', p.apport_ind ? p.apport_ind + ' €' : '—'],
     ['ACRE', p.acre ? `<span style="${S.tagOui}">Oui</span>` : `<span style="${S.tagNon}">Non</span>`],
   ] : [];
 
@@ -852,7 +873,7 @@ function buildRapportHTML(body, dateStr, isInternal = false) {
   const entity  = body.entity  || 'cecca';
   const entite  = entity === 'cecca_etoile' ? 'Cecca Étoile' : 'Cecca';
   const montant = (soc.type_parcours || '') === 'sci_scpi' ? '2 160 €' : '900 €';
-  const iban    = entity === 'cecca_etoile' ? 'FR03 3000 2062 3500 0007 4330 P33' : 'FR76 3000 2062 3500 0007 3467 Z97';
+  const iban    = entity === 'cecca_etoile' ? 'FR03 3000 2062 3500 0007 4330 P33' : 'FR69 3000 2062 3500 0007 3487 Z97';
   const benef   = entity === 'cecca_etoile' ? 'CECCA ÉTOILE' : 'CECCA';
 
   const mdtAssoc    = body.mandatairesAssoc    || [];
@@ -953,6 +974,7 @@ function buildRapportHTML(body, dateStr, isInternal = false) {
         ['Date de début',        soc.date_debut],
         ['Siège social',         siege],
         ['Banque',               soc.banque_nom],
+        ['Adresse agence',       soc.banque_adresse],
         ['Type de parcours',     soc.type_parcours],
       ])}
     </div>
@@ -1211,6 +1233,38 @@ async function createContactPM(d) {
     }
   }
   console.error('[createContactPM] échec', r.code, JSON.stringify(r.data).slice(0, 300));
+  return null;
+}
+
+async function createContactPMRP(d) {
+  // Représentant permanent d'une personne morale
+  if (!s(d.pm_rp_nom) && !s(d.pm_rp_prenom)) return null;
+  const p = {};
+  if (s(d.pm_rp_prenom))    p.firstname              = s(d.pm_rp_prenom);
+  if (s(d.pm_rp_nom))       p.lastname               = s(d.pm_rp_nom);
+  if (s(d.pm_rp_email))     p.email                  = s(d.pm_rp_email);
+  if (s(d.pm_rp_tel))       p.mobilephone            = s(d.pm_rp_tel);
+  if (s(d.pm_rp_adresse))   p.address                = s(d.pm_rp_adresse);
+  if (s(d.pm_rp_nationalite)) p.cb_nationalite       = s(d.pm_rp_nationalite);
+  if (s(d.pm_rp_num_secu))  p.cb_num_secu            = s(d.pm_rp_num_secu);
+  const regVal = toRegimeVal(s(d.pm_rp_regime));
+  if (regVal)                p.cb_regime_matrimonial  = regVal;
+  const ddn = ddmmyyyyToTs(d.pm_rp_ddn);
+  if (ddn)                   p.date_of_birth          = ddn;
+  p.cb_type_personne = 'Personne Morale — Représentant Permanent';
+  p.cb_source        = 'Créabook';
+  p.lifecyclestage   = 'customer';
+  applyDocUrls(p, d.fileDocs, DOC_MAPPING_PM_RL); // partage les docs du RL
+  const r = await hs('POST', '/crm/v3/objects/contacts', { properties: p });
+  if (r.code < 300) return r.data.id || null;
+  if (r.code === 409) {
+    const existingId = (r.data.message || '').match(/Existing ID:\s*(\d+)/)?.[1];
+    if (existingId) {
+      const pr = await hs('PATCH', `/crm/v3/objects/contacts/${existingId}`, { properties: p });
+      if (pr.code < 300) return existingId;
+    }
+  }
+  console.error('[createContactPMRP] échec', r.code, JSON.stringify(r.data).slice(0, 300));
   return null;
 }
 
