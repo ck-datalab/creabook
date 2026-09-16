@@ -305,6 +305,7 @@ app.post('/draft', async (req, res) => {
   if (s(hsF.cb_montant_nominal_part))  companyProps.cb_montant_nominal_part = s(hsF.cb_montant_nominal_part);
   if (s(hsF.cb_banque_nom))            companyProps.cb_banque_nom           = s(hsF.cb_banque_nom);
   if (s(hsF.cb_banque_adresse))        companyProps.cb_banque_adresse       = s(hsF.cb_banque_adresse);
+  if (s(hsF.cb_banque_contact))        companyProps.cb_banque_contact       = s(hsF.cb_banque_contact);
   if (draftManagerName)                companyProps.manager                 = draftManagerName;
   companyProps.entite         = draftEtoile ? 'CECCA Étoile' : 'CECCA';
   companyProps.cb_source      = 'Créabook';
@@ -445,6 +446,7 @@ app.post('/submit', async (req, res) => {
     montant_nominal: 'cb_montant_nominal_part',
     banque_nom:      'cb_banque_nom',
     banque_adresse:  'cb_banque_adresse',
+    banque_contact:  'cb_banque_contact',
     activite:        'pole_sectoriel',
   };
 
@@ -506,6 +508,7 @@ app.post('/submit', async (req, res) => {
     siege_ville:     'cb_siege_ville',
     banque_nom:      'cb_banque_nom',
     banque_adresse:  'cb_banque_adresse',
+    banque_contact:  'cb_banque_contact',
     type_parcours:   'cb_type_parcours',
     montant_nominal: 'cb_montant_nominal_part',
     date_debut:      'cb_date_debut_activite',
@@ -975,6 +978,7 @@ function buildRapportHTML(body, dateStr, isInternal = false) {
         ['Siège social',         siege],
         ['Banque',               soc.banque_nom],
         ['Adresse agence',       soc.banque_adresse],
+        ['Contact conseiller',   soc.banque_contact],
         ['Type de parcours',     soc.type_parcours],
       ])}
     </div>
