@@ -1441,7 +1441,10 @@
 
         if (state.hsFields && _fDoc) {
           Object.keys(state.hsFields).forEach(function(name) {
-            var el = _fDoc.querySelector('[name="' + name + '"]');
+            // Pour les champs date, wireDateFields a créé un input data-datef="1" qui masque
+            // les inputs originaux HubSpot — cibler cet input visible en priorité
+            var el = _fDoc.querySelector('input[data-datef="1"][name="' + name + '"]')
+                  || _fDoc.querySelector('[name="' + name + '"]');
             if (!el) return;
             el.value = state.hsFields[name];
             if (el.tagName === 'SELECT') {
@@ -2999,6 +3002,7 @@
         }
       }
       function validatePM(d, label, showErr, isMandataire, hasParts) {
+        var requireFiles = _draftMode.active; // fichiers requis uniquement en mode client
         var PM_REQ = ['pm_denom','pm_forme','pm_capital','pm_siren','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays','pm_rl_nom','pm_rl_prenom','pm_rl_qualite','pm_rl_email','pm_rl_tel'];
         if (hasParts) PM_REQ.push('pm_nb_parts');
         var PM_LABELS = {pm_denom:'Dénomination sociale',pm_forme:'Forme juridique',pm_capital:'Capital social',pm_siren:'SIREN',pm_rcs:'RCS (ville)',pm_adresse:'Adresse du siège',pm_cp:'Code postal',pm_ville:'Ville',pm_pays:'Pays',pm_rl_nom:'Nom du représentant légal',pm_rl_prenom:'Prénom du représentant légal',pm_rl_qualite:'Qualité du représentant légal',pm_rl_email:'Email du représentant légal',pm_rl_tel:'Téléphone du représentant légal',pm_nb_parts:'Nombre de parts'};
@@ -3014,8 +3018,8 @@
             var rk = RP_REQ[ri];
             if (!d[rk] || !String(d[rk]).trim()) { showErr(label + ' : champ obligatoire manquant (' + (RP_LABELS[rk] || rk) + ').'); return false; }
           }
-          if (!d.files || !d.files.pm_cni_rp) { showErr(label + " : pièce d'identité du représentant permanent requise."); return false; }
-          if (!d.files.pm_domicile_rp) { showErr(label + ' : justificatif de domicile du représentant permanent requis.'); return false; }
+          if (requireFiles && (!d.files || !d.files.pm_cni_rp)) { showErr(label + " : pièce d'identité du représentant permanent requise."); return false; }
+          if (requireFiles && (!d.files || !d.files.pm_domicile_rp)) { showErr(label + ' : justificatif de domicile du représentant permanent requis.'); return false; }
         }
         var bes = d.pm_beneficiaires || [];
         if (!bes.length) { showErr(label + ' : au moins un bénéficiaire effectif requis.'); return false; }
@@ -3025,11 +3029,12 @@
             showErr(label + ' : bénéficiaire effectif ' + (bi+1) + ' incomplet.'); return false;
           }
         }
-        if (!d.files || !d.files.pm_kbis) { showErr(label + ' : Kbis requis.'); return false; }
-        if (!d.files.pm_cni_rl) { showErr(label + " : pièce d'identité du représentant légal requise."); return false; }
+        if (requireFiles && (!d.files || !d.files.pm_kbis)) { showErr(label + ' : Kbis requis.'); return false; }
+        if (requireFiles && (!d.files || !d.files.pm_cni_rl)) { showErr(label + " : pièce d'identité du représentant légal requise."); return false; }
         return true;
       }
       function validateMandataireStep() {
+        var requireFiles = _draftMode.active; // fichiers requis uniquement en mode client
         if (_mdt.assocCount + _mdt.nonAssocCount === 0) { mdtShowErr('Veuillez indiquer au moins un mandataire.'); return false; }
         if (!_mdt.contactPrincipal) { mdtShowErr('Veuillez désigner un contact principal parmi les mandataires.'); return false; }
         var cpKey = _mdt.contactPrincipal;
@@ -3054,19 +3059,19 @@
             if (ht === 'physique') {
               if (!d.hbg_nom || !d.hbg_nom.trim())       { mdtShowErr('Indiquez le nom de l\'hébergeur du dirigeant associé ' + (i+1) + '.'); return false; }
               if (!d.hbg_prenom || !d.hbg_prenom.trim()) { mdtShowErr('Indiquez le prénom de l\'hébergeur du dirigeant associé ' + (i+1) + '.'); return false; }
-              if (!d.files || !d.files.cni_hbg)           { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir la pièce d\'identité de l\'hébergeur.'); return false; }
-              if (!d.files.domicile_hbg)                  { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir le justificatif de domicile de l\'hébergeur.'); return false; }
-              if (!d.files.attestation_hbg)               { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
+              if (requireFiles && (!d.files || !d.files.cni_hbg))  { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir la pièce d\'identité de l\'hébergeur.'); return false; }
+              if (requireFiles && (!d.files || !d.files.domicile_hbg))  { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir le justificatif de domicile de l\'hébergeur.'); return false; }
+              if (requireFiles && (!d.files || !d.files.attestation_hbg)) { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
             } else {
               if (!d.hbg_societe || !d.hbg_societe.trim())       { mdtShowErr('Indiquez la raison sociale de l\'hébergeur du dirigeant associé ' + (i+1) + '.'); return false; }
               if (!d.hbg_siren   || !d.hbg_siren.trim())         { mdtShowErr('Indiquez le SIREN de l\'hébergeur du dirigeant associé ' + (i+1) + '.'); return false; }
-              if (!d.files || !d.files.attestation_domiciliation) { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une attestation de domiciliation.'); return false; }
+              if (requireFiles && (!d.files || !d.files.attestation_domiciliation)) { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une attestation de domiciliation.'); return false; }
             }
           }
-          if (!d.files || !d.files.cni)     { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une CNI / Passeport.'); return false; }
-          if ((d.heberge || 'non') !== 'oui' && !d.files.domicile) { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir un justificatif de domicile.'); return false; }
-          if (!d.files.vitale)               { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une carte vitale.'); return false; }
-          if (!d.files.livret)               { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir un livret de famille.'); return false; }
+          if (requireFiles && (!d.files || !d.files.cni))     { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une CNI / Passeport.'); return false; }
+          if (requireFiles && (d.heberge || 'non') !== 'oui' && (!d.files || !d.files.domicile)) { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir un justificatif de domicile.'); return false; }
+          if (requireFiles && (!d.files || !d.files.vitale))   { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir une carte vitale.'); return false; }
+          if (requireFiles && (!d.files || !d.files.livret))   { mdtShowErr('Le dirigeant associé ' + (i+1) + ' doit fournir un livret de famille.'); return false; }
         }
         for (var j = 0; j < _mdt.nonAssocCount; j++) {
           var d2 = _mdt.nonAssoc[j] || {};
@@ -3082,19 +3087,19 @@
             if (ht2 === 'physique') {
               if (!d2.hbg_nom || !d2.hbg_nom.trim())       { mdtShowErr('Indiquez le nom de l\'hébergeur du dirigeant non associé ' + (j+1) + '.'); return false; }
               if (!d2.hbg_prenom || !d2.hbg_prenom.trim()) { mdtShowErr('Indiquez le prénom de l\'hébergeur du dirigeant non associé ' + (j+1) + '.'); return false; }
-              if (!d2.files || !d2.files.cni_hbg)           { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir la pièce d\'identité de l\'hébergeur.'); return false; }
-              if (!d2.files.domicile_hbg)                   { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir le justificatif de domicile de l\'hébergeur.'); return false; }
-              if (!d2.files.attestation_hbg)                { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
+              if (requireFiles && (!d2.files || !d2.files.cni_hbg))  { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir la pièce d\'identité de l\'hébergeur.'); return false; }
+              if (requireFiles && (!d2.files || !d2.files.domicile_hbg))  { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir le justificatif de domicile de l\'hébergeur.'); return false; }
+              if (requireFiles && (!d2.files || !d2.files.attestation_hbg)) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
             } else {
               if (!d2.hbg_societe || !d2.hbg_societe.trim())       { mdtShowErr('Indiquez la raison sociale de l\'hébergeur du dirigeant non associé ' + (j+1) + '.'); return false; }
               if (!d2.hbg_siren   || !d2.hbg_siren.trim())         { mdtShowErr('Indiquez le SIREN de l\'hébergeur du dirigeant non associé ' + (j+1) + '.'); return false; }
-              if (!d2.files || !d2.files.attestation_domiciliation) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une attestation de domiciliation.'); return false; }
+              if (requireFiles && (!d2.files || !d2.files.attestation_domiciliation)) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une attestation de domiciliation.'); return false; }
             }
           }
-          if (!d2.files || !d2.files.cni) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une CNI / Passeport.'); return false; }
-          if ((d2.heberge || 'non') !== 'oui' && !d2.files.domicile) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir un justificatif de domicile.'); return false; }
-          if (!d2.files.vitale)            { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une carte vitale.'); return false; }
-          if (!d2.files.livret)            { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir un livret de famille.'); return false; }
+          if (requireFiles && (!d2.files || !d2.files.cni)) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une CNI / Passeport.'); return false; }
+          if (requireFiles && (d2.heberge || 'non') !== 'oui' && (!d2.files || !d2.files.domicile)) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir un justificatif de domicile.'); return false; }
+          if (requireFiles && (!d2.files || !d2.files.vitale)) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir une carte vitale.'); return false; }
+          if (requireFiles && (!d2.files || !d2.files.livret)) { mdtShowErr('Le dirigeant non associé ' + (j+1) + ' doit fournir un livret de famille.'); return false; }
         }
         mdtHideErr(); return true;
       }
@@ -3297,6 +3302,7 @@
       }
 
       function validateAssocStep() {
+        var requireFiles = _draftMode.active; // fichiers requis uniquement en mode client
         var AREQ = ['nom','prenom','regime','nb_parts','adresse','cp','ville'];
         for (var i = 0; i < _assoc.count; i++) {
           var d = _assoc.items[i] || {};
@@ -3312,17 +3318,17 @@
             if (ht3 === 'physique') {
               if (!d.hbg_nom || !d.hbg_nom.trim())       { assocShowErr('Indiquez le nom de l\'hébergeur de l\'associé ' + (i+1) + '.'); return false; }
               if (!d.hbg_prenom || !d.hbg_prenom.trim()) { assocShowErr('Indiquez le prénom de l\'hébergeur de l\'associé ' + (i+1) + '.'); return false; }
-              if (!d.files || !d.files.cni_hbg)           { assocShowErr('L\'associé ' + (i+1) + ' doit fournir la pièce d\'identité de l\'hébergeur.'); return false; }
-              if (!d.files.domicile_hbg)                  { assocShowErr('L\'associé ' + (i+1) + ' doit fournir le justificatif de domicile de l\'hébergeur.'); return false; }
-              if (!d.files.attestation_hbg)               { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
+              if (requireFiles && (!d.files || !d.files.cni_hbg))  { assocShowErr('L\'associé ' + (i+1) + ' doit fournir la pièce d\'identité de l\'hébergeur.'); return false; }
+              if (requireFiles && (!d.files || !d.files.domicile_hbg))  { assocShowErr('L\'associé ' + (i+1) + ' doit fournir le justificatif de domicile de l\'hébergeur.'); return false; }
+              if (requireFiles && (!d.files || !d.files.attestation_hbg)) { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une attestation d\'hébergement.'); return false; }
             } else {
               if (!d.hbg_societe || !d.hbg_societe.trim())       { assocShowErr('Indiquez la raison sociale de l\'hébergeur de l\'associé ' + (i+1) + '.'); return false; }
               if (!d.hbg_siren   || !d.hbg_siren.trim())         { assocShowErr('Indiquez le SIREN de l\'hébergeur de l\'associé ' + (i+1) + '.'); return false; }
-              if (!d.files || !d.files.attestation_domiciliation) { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une attestation de domiciliation.'); return false; }
+              if (requireFiles && (!d.files || !d.files.attestation_domiciliation)) { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une attestation de domiciliation.'); return false; }
             }
           }
-          if (!d.files || !d.files.cni)    { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une CNI / Passeport.'); return false; }
-          if ((d.heberge || 'non') !== 'oui' && !d.files.domicile) { assocShowErr('L\'associé ' + (i+1) + ' doit fournir un justificatif de domicile.'); return false; }
+          if (requireFiles && (!d.files || !d.files.cni))    { assocShowErr('L\'associé ' + (i+1) + ' doit fournir une CNI / Passeport.'); return false; }
+          if (requireFiles && (d.heberge || 'non') !== 'oui' && (!d.files || !d.files.domicile)) { assocShowErr('L\'associé ' + (i+1) + ' doit fournir un justificatif de domicile.'); return false; }
         }
         assocHideErr(); return true;
       }

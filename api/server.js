@@ -82,6 +82,7 @@ async function initHubSpotCache() {
 }
 
 initHubSpotCache();
+ensureDraftPayloadProp();
 
 const ALLOWED_ORIGINS = [
   'https://creabook.cecca.fr',
@@ -133,28 +134,71 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// ── Draft tokens (30 jours, signés) ──────────────────────────────────────────
+// ── Draft tokens courts (30 jours, signés HMAC) ──────────────────────────────
+// Format : <companyId>:<expiresAt>.<hmac8>  (~35 caractères)
+// Le state complet est stocké dans HubSpot (cb_draft_payload sur la company).
+// Format nouveau : "<companyId>:<expiresAt>.<hmac16>"  (~35 chars, sig = 16 hex)
+// Format legacy  : "<base64url_state>.<hmac64>"         (long, sig = 64 hex)
 
-function makeDraftToken(data) {
-  const payload = Buffer.from(JSON.stringify(data)).toString('base64url');
-  const sig     = crypto.createHmac('sha256', TOKEN_SECRET).update(payload).digest('hex');
-  return payload + '.' + sig;
+function makeDraftToken(companyId, expiresAt) {
+  const claim = `${companyId}:${expiresAt}`;
+  const sig   = crypto.createHmac('sha256', TOKEN_SECRET).update(claim).digest('hex').slice(0, 16);
+  return `${claim}.${sig}`;
 }
 
-function parseDraftToken(token) {
+// Retourne { companyId } | { companyId, expired:true } | { legacy: true, state, filledByCollab, companyId } | null
+function verifyDraftToken(token) {
   if (!token) return null;
   const dot = token.lastIndexOf('.');
   if (dot < 0) return null;
-  const payload  = token.slice(0, dot);
-  const sig      = token.slice(dot + 1);
-  const expected = crypto.createHmac('sha256', TOKEN_SECRET).update(payload).digest('hex');
+  const beforeDot = token.slice(0, dot);
+  const sig       = token.slice(dot + 1);
+
+  // Détecter le format : sig de 64 hex = legacy, 16 hex = nouveau
+  if (sig.length === 64) {
+    // ── Format legacy : state encodé dans le token ──
+    const expected = crypto.createHmac('sha256', TOKEN_SECRET).update(beforeDot).digest('hex');
+    try { if (!crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'))) return null; }
+    catch { return null; }
+    try {
+      const data = JSON.parse(Buffer.from(beforeDot, 'base64url').toString());
+      if (Date.now() > data.expiresAt) return { ...data, expired: true, legacy: true };
+      return { ...data, legacy: true };
+    } catch { return null; }
+  }
+
+  // ── Format nouveau : state dans HubSpot ──
+  const claim    = beforeDot;
+  const expected = crypto.createHmac('sha256', TOKEN_SECRET).update(claim).digest('hex').slice(0, 16);
   try { if (!crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'))) return null; }
   catch { return null; }
+  const [companyId, expiresAt] = claim.split(':');
+  if (!companyId || !expiresAt) return null;
+  if (Date.now() > Number(expiresAt)) return { companyId, expired: true };
+  return { companyId };
+}
+
+// S'assure que la propriété cb_draft_payload existe sur companies (crée si absente)
+async function ensureDraftPayloadProp() {
   try {
-    const data = JSON.parse(Buffer.from(payload, 'base64url').toString());
-    if (Date.now() > data.expiresAt) return { ...data, expired: true };
-    return data;
-  } catch { return null; }
+    const check = await fetch('https://api.hubapi.com/crm/v3/properties/companies/cb_draft_payload', {
+      headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}` },
+    });
+    if (check.status === 404) {
+      await fetch('https://api.hubapi.com/crm/v3/properties/companies', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'cb_draft_payload', label: 'Draft Créabook (payload JSON)',
+          type: 'string', fieldType: 'textarea', groupName: 'companyinformation',
+          description: 'State complet du brouillon Créabook. Géré automatiquement — ne pas modifier.',
+        }),
+      });
+      console.log('[draft] Propriété cb_draft_payload créée sur companies');
+    }
+  } catch (e) {
+    console.warn('[draft] ensureDraftPayloadProp :', e.message);
+  }
 }
 
 // ── Tokens HMAC (5 min, signés) ───────────────────────────────────────────────
@@ -314,13 +358,15 @@ app.post('/draft', async (req, res) => {
   const compRes   = await hs('POST', '/crm/v3/objects/companies', { properties: companyProps });
   const companyId = compRes.code < 300 ? (compRes.data.id || null) : null;
 
-  const draftData = {
-    companyId,
-    state:          body.state || {},
-    filledByCollab: body.filledByCollab || {},
-    expiresAt:      Date.now() + 30 * 24 * 60 * 60 * 1000,
-  };
-  const token = makeDraftToken(draftData);
+  const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
+  const payload   = JSON.stringify({ state: body.state || {}, filledByCollab: body.filledByCollab || {}, expiresAt });
+
+  // Stocker le state dans HubSpot (pas dans l'URL)
+  if (companyId) {
+    await hs('PATCH', `/crm/v3/objects/companies/${companyId}`, { properties: { cb_draft_payload: payload } });
+  }
+
+  const token = makeDraftToken(companyId, expiresAt);
   const url   = `https://creabook.cecca.fr/?draft=${encodeURIComponent(token)}`;
 
   res.json({ ok: true, url, companyId });
@@ -328,11 +374,27 @@ app.post('/draft', async (req, res) => {
 
 // ── GET /draft/:token — client loads pre-filled state ────────────────────────
 
-app.get('/draft/:token', (req, res) => {
-  const data = parseDraftToken(decodeURIComponent(req.params.token));
-  if (!data)         return res.status(400).json({ error: 'Lien invalide ou corrompu' });
-  if (data.expired)  return res.status(410).json({ error: 'Lien expiré (30 jours)', expired: true });
-  res.json({ ok: true, state: data.state, filledByCollab: data.filledByCollab, companyId: data.companyId });
+app.get('/draft/:token', async (req, res) => {
+  const verified = verifyDraftToken(decodeURIComponent(req.params.token));
+  if (!verified)        return res.status(400).json({ error: 'Lien invalide ou corrompu' });
+  if (verified.expired) return res.status(410).json({ error: 'Lien expiré (30 jours)', expired: true });
+
+  // Ancien format : state embarqué dans le token
+  if (verified.legacy) {
+    return res.json({ ok: true, state: verified.state, filledByCollab: verified.filledByCollab || {}, companyId: verified.companyId || null });
+  }
+
+  // Nouveau format : state dans HubSpot
+  try {
+    const compRes    = await hs('GET', `/crm/v3/objects/companies/${verified.companyId}?properties=cb_draft_payload`, null);
+    const payloadRaw = (compRes.data.properties || {}).cb_draft_payload;
+    if (!payloadRaw) return res.status(400).json({ error: 'Brouillon introuvable' });
+    const payload = JSON.parse(payloadRaw);
+    res.json({ ok: true, state: payload.state, filledByCollab: payload.filledByCollab || {}, companyId: verified.companyId });
+  } catch (e) {
+    console.error('[draft GET]', e.message);
+    res.status(500).json({ error: 'Erreur lors de la récupération du brouillon' });
+  }
 });
 
 app.post('/upload', upload.single('file'), async (req, res) => {
@@ -822,6 +884,18 @@ function buildPersonSection(p, roleLabel, showParts) {
         ['Régime matrimonial', p.pm_rp_regime],
       ]))] : []),
       ...(partsRows.length ? [sub('Participation', subTable(partsRows))] : []),
+      (() => {
+        const pmDocsMap = p.fileDocs || {};
+        const pmDocNames = {
+          pm_kbis:       'Kbis',
+          pm_rbe:        'RBE',
+          pm_cni_rl:     'CNI représentant légal',
+          pm_cni_rp:     'CNI représentant permanent',
+          pm_domicile_rp:'Justif. domicile représentant permanent',
+        };
+        const pmDocList = Object.entries(pmDocNames).filter(([k]) => pmDocsMap[k]).map(([,v]) => v);
+        return pmDocList.length ? sub('Documents fournis', docChips(pmDocList)) : '';
+      })(),
     ].join('');
     return personCard(roleLabel + ' · Personne morale', name, true, subs);
   }
@@ -976,6 +1050,7 @@ function buildRapportHTML(body, dateStr, isInternal = false) {
         ['Activité',             soc.activite],
         ['Date de début',        soc.date_debut],
         ['Siège social',         siege],
+        ['Nombre d\'associés',   soc.nb_associes],
         ['Banque',               soc.banque_nom],
         ['Adresse agence',       soc.banque_adresse],
         ['Contact conseiller',   soc.banque_contact],
