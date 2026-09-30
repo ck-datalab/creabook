@@ -358,13 +358,15 @@ app.post('/draft', async (req, res) => {
   const compRes   = await hs('POST', '/crm/v3/objects/companies', { properties: companyProps });
   const companyId = compRes.code < 300 ? (compRes.data.id || null) : null;
 
+  if (!companyId) {
+    console.error('[draft] Échec création company HubSpot :', compRes.code, JSON.stringify(compRes.data));
+    return res.status(502).json({ error: 'Impossible de créer le dossier HubSpot. Vérifiez votre connexion et réessayez.' });
+  }
+
   const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
   const payload   = JSON.stringify({ state: body.state || {}, filledByCollab: body.filledByCollab || {}, expiresAt });
 
-  // Stocker le state dans HubSpot (pas dans l'URL)
-  if (companyId) {
-    await hs('PATCH', `/crm/v3/objects/companies/${companyId}`, { properties: { cb_draft_payload: payload } });
-  }
+  await hs('PATCH', `/crm/v3/objects/companies/${companyId}`, { properties: { cb_draft_payload: payload } });
 
   const token = makeDraftToken(companyId, expiresAt);
   const url   = `https://creabook.cecca.fr/?draft=${encodeURIComponent(token)}`;

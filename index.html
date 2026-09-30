@@ -3465,8 +3465,14 @@
         fetch('/draft/' + encodeURIComponent(draftToken))
           .then(function(r) {
             if (r.status === 410) { showErrToast('Ce lien de formulaire a expiré (30 jours). Demandez un nouveau lien à votre conseiller Cecca.'); return null; }
-            if (!r.ok) { showErrToast('Lien de formulaire invalide ou corrompu.'); return null; }
-            return r.json();
+            return r.json().then(function(d) {
+              if (!r.ok) {
+                var msg = (d && d.error) ? d.error : 'Lien de formulaire invalide ou corrompu.';
+                showErrToast(msg);
+                return null;
+              }
+              return d;
+            });
           })
           .then(function(data) {
             if (!data || !data.ok) return;
