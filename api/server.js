@@ -361,14 +361,21 @@ app.post('/draft', async (req, res) => {
 
   const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
   let token;
+  let patchOk = false;
   if (companyId) {
     // Nouveau format court : state stocké dans HubSpot
     const payload = JSON.stringify({ state: body.state || {}, filledByCollab: body.filledByCollab || {}, expiresAt });
-    await hs('PATCH', `/crm/v3/objects/companies/${companyId}`, { properties: { cb_draft_payload: payload } });
-    token = makeDraftToken(companyId, expiresAt);
-  } else {
+    const patchRes = await hs('PATCH', `/crm/v3/objects/companies/${companyId}`, { properties: { cb_draft_payload: payload } });
+    patchOk = patchRes.code < 300;
+    if (!patchOk) {
+      console.error('[draft] Échec PATCH cb_draft_payload :', patchRes.code, JSON.stringify(patchRes.data));
+    } else {
+      token = makeDraftToken(companyId, expiresAt);
+    }
+  }
+  if (!token) {
     // Fallback legacy : state embarqué dans le token (URL longue)
-    const legacyData = { companyId: null, state: body.state || {}, filledByCollab: body.filledByCollab || {}, expiresAt };
+    const legacyData = { companyId: companyId || null, state: body.state || {}, filledByCollab: body.filledByCollab || {}, expiresAt };
     const legacyPayload = Buffer.from(JSON.stringify(legacyData)).toString('base64url');
     const legacySig     = crypto.createHmac('sha256', TOKEN_SECRET).update(legacyPayload).digest('hex');
     token = legacyPayload + '.' + legacySig;
