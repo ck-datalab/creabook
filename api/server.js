@@ -136,7 +136,7 @@ app.use(express.json());
 
 // ── Draft tokens courts (30 jours, signés HMAC) ──────────────────────────────
 // Format : <companyId>:<expiresAt>.<hmac8>  (~35 caractères)
-// Le state complet est stocké dans HubSpot (cb_draft_payload sur la company).
+// Le state complet est stocké dans HubSpot (draft_creabook_payload_json sur la company).
 // Format nouveau : "<companyId>:<expiresAt>.<hmac16>"  (~35 chars, sig = 16 hex)
 // Format legacy  : "<base64url_state>.<hmac64>"         (long, sig = 64 hex)
 
@@ -178,16 +178,16 @@ function verifyDraftToken(token) {
   return { companyId };
 }
 
-// Vérifie que la propriété cb_draft_payload existe (doit être créée manuellement dans HubSpot)
+// Vérifie que la propriété draft_creabook_payload_json existe (doit être créée manuellement dans HubSpot)
 async function ensureDraftPayloadProp() {
   try {
-    const check = await fetch('https://api.hubapi.com/crm/v3/properties/companies/cb_draft_payload', {
+    const check = await fetch('https://api.hubapi.com/crm/v3/properties/companies/draft_creabook_payload_json', {
       headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}` },
     });
     if (check.ok) {
-      console.log('[draft] Propriété cb_draft_payload OK');
+      console.log('[draft] Propriété draft_creabook_payload_json OK');
     } else {
-      console.warn('[draft] Propriété cb_draft_payload absente (statut', check.status + ') — créez-la manuellement dans HubSpot → Paramètres → Propriétés → Entreprises');
+      console.warn('[draft] Propriété draft_creabook_payload_json absente (statut', check.status + ') — créez-la manuellement dans HubSpot → Paramètres → Propriétés → Entreprises');
     }
   } catch (e) {
     console.warn('[draft] ensureDraftPayloadProp :', e.message);
@@ -358,10 +358,10 @@ app.post('/draft', async (req, res) => {
   if (companyId) {
     // Nouveau format court : state stocké dans HubSpot
     const payload = JSON.stringify({ state: body.state || {}, filledByCollab: body.filledByCollab || {}, expiresAt });
-    const patchRes = await hs('PATCH', `/crm/v3/objects/companies/${companyId}`, { properties: { cb_draft_payload: payload } });
+    const patchRes = await hs('PATCH', `/crm/v3/objects/companies/${companyId}`, { properties: { draft_creabook_payload_json: payload } });
     patchOk = patchRes.code < 300;
     if (!patchOk) {
-      console.error('[draft] Échec PATCH cb_draft_payload :', patchRes.code, JSON.stringify(patchRes.data));
+      console.error('[draft] Échec PATCH draft_creabook_payload_json :', patchRes.code, JSON.stringify(patchRes.data));
     } else {
       token = makeDraftToken(companyId, expiresAt);
     }
@@ -392,8 +392,8 @@ app.get('/draft/:token', async (req, res) => {
 
   // Nouveau format : state dans HubSpot
   try {
-    const compRes    = await hs('GET', `/crm/v3/objects/companies/${verified.companyId}?properties=cb_draft_payload`, null);
-    const payloadRaw = (compRes.data.properties || {}).cb_draft_payload;
+    const compRes    = await hs('GET', `/crm/v3/objects/companies/${verified.companyId}?properties=draft_creabook_payload_json`, null);
+    const payloadRaw = (compRes.data.properties || {}).draft_creabook_payload_json;
     console.log('[draft GET] company', verified.companyId, '→ code:', compRes.code, '| payload length:', payloadRaw ? payloadRaw.length : 'null');
     if (!payloadRaw) return res.status(400).json({ error: 'Brouillon introuvable' });
     const payload = JSON.parse(payloadRaw);
