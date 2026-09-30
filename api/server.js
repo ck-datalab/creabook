@@ -184,8 +184,9 @@ async function ensureDraftPayloadProp() {
     const check = await fetch('https://api.hubapi.com/crm/v3/properties/companies/cb_draft_payload', {
       headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}` },
     });
+    console.log('[draft] Vérification cb_draft_payload :', check.status);
     if (check.status === 404) {
-      await fetch('https://api.hubapi.com/crm/v3/properties/companies', {
+      const createRes = await fetch('https://api.hubapi.com/crm/v3/properties/companies', {
         method: 'POST',
         headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -194,7 +195,12 @@ async function ensureDraftPayloadProp() {
           description: 'State complet du brouillon Créabook. Géré automatiquement — ne pas modifier.',
         }),
       });
-      console.log('[draft] Propriété cb_draft_payload créée sur companies');
+      const createData = await createRes.json().catch(() => ({}));
+      if (createRes.ok) {
+        console.log('[draft] Propriété cb_draft_payload créée sur companies');
+      } else {
+        console.error('[draft] Échec création cb_draft_payload :', createRes.status, JSON.stringify(createData));
+      }
     }
   } catch (e) {
     console.warn('[draft] ensureDraftPayloadProp :', e.message);
@@ -401,6 +407,7 @@ app.get('/draft/:token', async (req, res) => {
   try {
     const compRes    = await hs('GET', `/crm/v3/objects/companies/${verified.companyId}?properties=cb_draft_payload`, null);
     const payloadRaw = (compRes.data.properties || {}).cb_draft_payload;
+    console.log('[draft GET] company', verified.companyId, '→ code:', compRes.code, '| payload length:', payloadRaw ? payloadRaw.length : 'null');
     if (!payloadRaw) return res.status(400).json({ error: 'Brouillon introuvable' });
     const payload = JSON.parse(payloadRaw);
     res.json({ ok: true, state: payload.state, filledByCollab: payload.filledByCollab || {}, companyId: verified.companyId });
