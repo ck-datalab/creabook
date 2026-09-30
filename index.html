@@ -3002,7 +3002,8 @@
         }
       }
       function validatePM(d, label, showErr, isMandataire, hasParts) {
-        var requireFiles = _draftMode.active; // fichiers requis uniquement en mode client
+        if (!_draftMode.active) return true; // en mode collab, navigation libre
+        var requireFiles = true;
         var PM_REQ = ['pm_denom','pm_forme','pm_capital','pm_siren','pm_rcs','pm_adresse','pm_cp','pm_ville','pm_pays','pm_rl_nom','pm_rl_prenom','pm_rl_qualite','pm_rl_email','pm_rl_tel'];
         if (hasParts) PM_REQ.push('pm_nb_parts');
         var PM_LABELS = {pm_denom:'Dénomination sociale',pm_forme:'Forme juridique',pm_capital:'Capital social',pm_siren:'SIREN',pm_rcs:'RCS (ville)',pm_adresse:'Adresse du siège',pm_cp:'Code postal',pm_ville:'Ville',pm_pays:'Pays',pm_rl_nom:'Nom du représentant légal',pm_rl_prenom:'Prénom du représentant légal',pm_rl_qualite:'Qualité du représentant légal',pm_rl_email:'Email du représentant légal',pm_rl_tel:'Téléphone du représentant légal',pm_nb_parts:'Nombre de parts'};
@@ -3034,7 +3035,8 @@
         return true;
       }
       function validateMandataireStep() {
-        var requireFiles = _draftMode.active; // fichiers requis uniquement en mode client
+        if (!_draftMode.active) return true; // en mode collab, navigation libre
+        var requireFiles = true;
         if (_mdt.assocCount + _mdt.nonAssocCount === 0) { mdtShowErr('Veuillez indiquer au moins un mandataire.'); return false; }
         if (!_mdt.contactPrincipal) { mdtShowErr('Veuillez désigner un contact principal parmi les mandataires.'); return false; }
         var cpKey = _mdt.contactPrincipal;
@@ -3302,7 +3304,8 @@
       }
 
       function validateAssocStep() {
-        var requireFiles = _draftMode.active; // fichiers requis uniquement en mode client
+        if (!_draftMode.active) return true; // en mode collab, navigation libre
+        var requireFiles = true;
         var AREQ = ['nom','prenom','regime','nb_parts','adresse','cp','ville'];
         for (var i = 0; i < _assoc.count; i++) {
           var d = _assoc.items[i] || {};
