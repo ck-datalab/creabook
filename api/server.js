@@ -360,16 +360,23 @@ app.post('/draft', async (req, res) => {
 
   if (!companyId) {
     console.error('[draft] Échec création company HubSpot :', compRes.code, JSON.stringify(compRes.data));
-    return res.status(502).json({ error: 'Impossible de créer le dossier HubSpot. Vérifiez votre connexion et réessayez.' });
   }
 
   const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
-  const payload   = JSON.stringify({ state: body.state || {}, filledByCollab: body.filledByCollab || {}, expiresAt });
-
-  await hs('PATCH', `/crm/v3/objects/companies/${companyId}`, { properties: { cb_draft_payload: payload } });
-
-  const token = makeDraftToken(companyId, expiresAt);
-  const url   = `https://creabook.cecca.fr/?draft=${encodeURIComponent(token)}`;
+  let token;
+  if (companyId) {
+    // Nouveau format court : state stocké dans HubSpot
+    const payload = JSON.stringify({ state: body.state || {}, filledByCollab: body.filledByCollab || {}, expiresAt });
+    await hs('PATCH', `/crm/v3/objects/companies/${companyId}`, { properties: { cb_draft_payload: payload } });
+    token = makeDraftToken(companyId, expiresAt);
+  } else {
+    // Fallback legacy : state embarqué dans le token (URL longue)
+    const legacyData = { companyId: null, state: body.state || {}, filledByCollab: body.filledByCollab || {}, expiresAt };
+    const legacyPayload = Buffer.from(JSON.stringify(legacyData)).toString('base64url');
+    const legacySig     = crypto.createHmac('sha256', TOKEN_SECRET).update(legacyPayload).digest('hex');
+    token = legacyPayload + '.' + legacySig;
+  }
+  const url = `https://creabook.cecca.fr/?draft=${encodeURIComponent(token)}`;
 
   res.json({ ok: true, url, companyId });
 });
