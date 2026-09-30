@@ -515,7 +515,6 @@ app.post('/submit', async (req, res) => {
     montant_nominal: 'cb_montant_nominal_part',
     banque_nom:      'cb_banque_nom',
     banque_adresse:  'cb_banque_adresse',
-    banque_contact:  'cb_banque_contact',
     activite:        'pole_sectoriel',
   };
 
@@ -577,7 +576,6 @@ app.post('/submit', async (req, res) => {
     siege_ville:     'cb_siege_ville',
     banque_nom:      'cb_banque_nom',
     banque_adresse:  'cb_banque_adresse',
-    banque_contact:  'cb_banque_contact',
     type_parcours:   'cb_type_parcours',
     montant_nominal: 'cb_montant_nominal_part',
     date_debut:      'cb_date_debut_activite',
