@@ -1092,6 +1092,7 @@
           if (err) err.style.display = 'none';
           return true;
         }
+        if (!_draftMode.active) return true; // en mode collab, navigation libre sur toutes les étapes
         if (_step === 2) return validateMandataireStep();
         if (_step === 3) return validateAssocStep();
         if (!_fDoc) return true;
