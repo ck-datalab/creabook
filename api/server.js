@@ -337,23 +337,20 @@ app.post('/draft', async (req, res) => {
   const draftEtoile      = isEtoile(draftManagerName);
 
   // siren_pappers : '000000000' = marqueur brouillon, exclu par /company-lookup
-  const companyProps = { name: (s(hsF.cb_denomination_sociale) || 'Brouillon') + ' (En création)', siren_pappers: '000000000' };
-  if (s(hsF.cb_forme_juridique))       companyProps.forme_juridique_pappers = s(hsF.cb_forme_juridique);
-  if (s(hsF.cb_capital_social))        companyProps.capital_pappers         = s(hsF.cb_capital_social);
-  if (s(hsF.cb_objet_social))          companyProps.objet_social_pappers    = s(hsF.cb_objet_social);
-  if (s(hsF.cb_siege_adresse))         companyProps.address                 = s(hsF.cb_siege_adresse);
-  if (s(hsF.cb_siege_cp))              companyProps.zip                     = s(hsF.cb_siege_cp);
-  if (s(hsF.cb_siege_ville))           companyProps.city                    = s(hsF.cb_siege_ville);
-  if (s(hsF.cb_date_debut))            companyProps.cb_date_debut_activite  = ddmmyyyyToTs(s(hsF.cb_date_debut)) ?? s(hsF.cb_date_debut);
-  if (s(hsF.cb_type_parcours))         companyProps.cb_type_parcours        = s(hsF.cb_type_parcours);
-  if (s(hsF.cb_montant_nominal_part))  companyProps.cb_montant_nominal_part = s(hsF.cb_montant_nominal_part);
-  if (s(hsF.cb_banque_nom))            companyProps.cb_banque_nom           = s(hsF.cb_banque_nom);
-  if (s(hsF.cb_banque_adresse))        companyProps.cb_banque_adresse       = s(hsF.cb_banque_adresse);
-  if (s(hsF.cb_banque_contact))        companyProps.cb_banque_contact       = s(hsF.cb_banque_contact);
-  if (draftManagerName)                companyProps.manager                 = draftManagerName;
-  companyProps.entite         = draftEtoile ? 'CECCA Étoile' : 'CECCA';
-  companyProps.cb_source      = 'Créabook';
-  companyProps.lifecyclestage = 'lead';
+  // Uniquement des propriétés validées (mêmes noms que la route /submit) pour éviter tout rejet HubSpot
+  const companyProps = {
+    name:           (s(hsF.cb_denomination_sociale) || 'Brouillon') + ' (En création)',
+    siren_pappers:  '000000000',
+    cb_source:      'Créabook',
+    lifecyclestage: 'lead',
+    entite:         draftEtoile ? 'CECCA Étoile' : 'CECCA',
+  };
+  if (s(hsF.cb_forme_juridique))  companyProps.forme_juridique_pappers = s(hsF.cb_forme_juridique);
+  if (s(hsF.cb_capital_social))   companyProps.capital_pappers         = s(hsF.cb_capital_social);
+  if (s(hsF.cb_objet_social))     companyProps.objet_social_pappers    = s(hsF.cb_objet_social);
+  if (s(hsF.cb_siege_adresse))    companyProps.adresse_pappers         = s(hsF.cb_siege_adresse);
+  if (s(hsF.cb_siege_cp))         companyProps.code_postal_pappers     = s(hsF.cb_siege_cp);
+  if (s(hsF.cb_siege_ville))      companyProps.ville_pappers           = s(hsF.cb_siege_ville);
 
   const compRes   = await hs('POST', '/crm/v3/objects/companies', { properties: companyProps });
   const companyId = compRes.code < 300 ? (compRes.data.id || null) : null;
