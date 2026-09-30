@@ -178,29 +178,16 @@ function verifyDraftToken(token) {
   return { companyId };
 }
 
-// S'assure que la propriété cb_draft_payload existe sur companies (crée si absente)
+// Vérifie que la propriété cb_draft_payload existe (doit être créée manuellement dans HubSpot)
 async function ensureDraftPayloadProp() {
   try {
     const check = await fetch('https://api.hubapi.com/crm/v3/properties/companies/cb_draft_payload', {
       headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}` },
     });
-    console.log('[draft] Vérification cb_draft_payload :', check.status);
-    if (check.status === 404) {
-      const createRes = await fetch('https://api.hubapi.com/crm/v3/properties/companies', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'cb_draft_payload', label: 'Draft Créabook (payload JSON)',
-          type: 'string', fieldType: 'textarea', groupName: 'companyinformation',
-          description: 'State complet du brouillon Créabook. Géré automatiquement — ne pas modifier.',
-        }),
-      });
-      const createData = await createRes.json().catch(() => ({}));
-      if (createRes.ok) {
-        console.log('[draft] Propriété cb_draft_payload créée sur companies');
-      } else {
-        console.error('[draft] Échec création cb_draft_payload :', createRes.status, JSON.stringify(createData));
-      }
+    if (check.ok) {
+      console.log('[draft] Propriété cb_draft_payload OK');
+    } else {
+      console.warn('[draft] Propriété cb_draft_payload absente (statut', check.status + ') — créez-la manuellement dans HubSpot → Paramètres → Propriétés → Entreprises');
     }
   } catch (e) {
     console.warn('[draft] ensureDraftPayloadProp :', e.message);
