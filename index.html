@@ -1190,6 +1190,7 @@
         if (_fDoc) {
           _fDoc.querySelectorAll('input[name], select[name], textarea[name]').forEach(function(el) {
             if (el.type === 'hidden') return;
+            if (el.type === 'radio' && !el.checked) return;
             hsFields[el.name] = el.value;
           });
         }
@@ -1446,6 +1447,13 @@
             var el = _fDoc.querySelector('input[data-datef="1"][name="' + name + '"]')
                   || _fDoc.querySelector('[name="' + name + '"]');
             if (!el) return;
+            // Radios : cocher le bon et décocher les autres (ne pas juste changer .value)
+            if (el.type === 'radio') {
+              _fDoc.querySelectorAll('input[type="radio"][name="' + name + '"]').forEach(function(r) {
+                r.checked = (r.value === state.hsFields[name]);
+              });
+              return;
+            }
             el.value = state.hsFields[name];
             if (el.tagName === 'SELECT') {
               var evt = document.createEvent('HTMLEvents');
@@ -1454,6 +1462,14 @@
             }
           });
           applyHsLocks();
+          // Re-sync la section hébergeur APRÈS les 600ms de wireHebergement
+          setTimeout(function() {
+            var hw = _fDoc && _fDoc.querySelector('.hs_cb_est_heberge');
+            if (!hw) return;
+            var e = document.createEvent('MouseEvents');
+            e.initEvent('click', true, true);
+            hw.dispatchEvent(e);
+          }, 700);
         }
 
         if (state.mdt) {
