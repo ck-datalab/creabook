@@ -668,7 +668,9 @@
   body.cb-draft-client { padding-top: 2.5rem; }
   #cb-draft-modal { display: none; position: fixed; inset: 0; background: rgba(10,10,10,0.6); z-index: 10000; align-items: center; justify-content: center; }
   #cb-draft-modal.active { display: flex; }
-  .cb-draft-modal-box { background: white; border: 1px solid var(--grey-200); border-radius: 4px; padding: 2rem; max-width: 600px; width: 92%; }
+  .cb-draft-modal-box { background: white; border: 1px solid var(--grey-200); border-radius: 4px; padding: 2rem; max-width: 600px; width: 92%; position: relative; }
+  .cb-draft-x-btn { position: absolute; top: 0.75rem; right: 0.9rem; background: none; border: none; font-size: 1.3rem; line-height: 1; color: var(--grey-400); cursor: pointer; padding: 0; }
+  .cb-draft-x-btn:hover { color: var(--ink); }
   .cb-draft-modal-box h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--blue); margin: 0 0 0.3rem; }
   .cb-draft-modal-box > p { font-family: 'Inter', sans-serif; font-size: 0.86rem; color: var(--grey-500); margin: 0 0 1rem; }
   .cb-draft-email-preview { border: 1px solid var(--grey-200); border-radius: 4px; background: var(--paper-2); padding: 1.25rem 1.4rem; margin-bottom: 1rem; white-space: pre-wrap; font-family: 'Inter', sans-serif; font-size: 0.88rem; line-height: 1.7; color: var(--ink); user-select: all; }
@@ -1602,7 +1604,6 @@
         }).then(function(r) { return r.json(); }).then(function(d) {
           hideOverlay();
           if (!d.ok) throw new Error(d.error || 'Erreur serveur');
-          clearCollabState();
           showDraftModal(d.url, _selectedOwner.name || 'Votre conseiller Cecca');
         }).catch(function(e) {
           hideOverlay();
@@ -1659,6 +1660,12 @@
       function hideDraftModal() {
         var modal = document.getElementById('cb-draft-modal');
         if (modal) modal.classList.remove('active');
+      }
+
+      function closeDraftModal() {
+        hideDraftModal();
+        var navBtn = document.getElementById('btn-next');
+        if (navBtn) { navBtn.disabled = false; navBtn.textContent = 'Envoyer le dossier'; }
       }
 
       function copyDraftEmail() {
@@ -3104,6 +3111,10 @@
           for (var j = 0; j < _mdt.nonAssocCount; j++) { if (!_mdt.nonAssoc[j]) _mdt.nonAssoc[j] = {}; var _nc = buildMdtCard(j, false, j === 0 && _mdt.assocCount === 0); container.appendChild(_nc); applyCardLocks(_nc, 'mdt:n:' + j, 'n' + j); applyDateFormatters(_nc); }
         }
       }
+      function cbBadEmail(v) {
+        v = String(v || '').trim();
+        return v !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+      }
       function validatePM(d, label, showErr, isMandataire, hasParts) {
         if (!_draftMode.active) return true; // en mode collab, navigation libre
         var requireFiles = true;
@@ -3115,6 +3126,8 @@
           if (!d[fk] || !String(d[fk]).trim()) { showErr(label + ' : champ obligatoire manquant (' + (PM_LABELS[fk] || fk) + ').'); return false; }
         }
         if (d.pm_siren && !/^[0-9]{9}$/.test(d.pm_siren.trim())) { showErr(label + ' : le SIREN doit contenir exactement 9 chiffres.'); return false; }
+        if (cbBadEmail(d.pm_email))    { showErr(label + " : l'email de contact n'est pas valide."); return false; }
+        if (cbBadEmail(d.pm_rl_email)) { showErr(label + " : l'email du représentant légal n'est pas valide."); return false; }
         if (isMandataire) {
           var RP_REQ = ['pm_fonction','pm_rp_nom','pm_rp_prenom','pm_rp_ddn','pm_rp_lieu','pm_rp_nationalite','pm_rp_adresse','pm_rp_email','pm_rp_tel','pm_rp_num_secu','pm_rp_regime'];
           var RP_LABELS = {pm_fonction:'Fonction',pm_rp_nom:'Nom du représentant permanent',pm_rp_prenom:'Prénom du représentant permanent',pm_rp_ddn:'Date de naissance',pm_rp_lieu:'Lieu de naissance',pm_rp_nationalite:'Nationalité',pm_rp_adresse:'Adresse personnelle',pm_rp_email:'Email',pm_rp_tel:'Téléphone',pm_rp_num_secu:'N° sécurité sociale',pm_rp_regime:'Régime matrimonial'};
@@ -3122,6 +3135,7 @@
             var rk = RP_REQ[ri];
             if (!d[rk] || !String(d[rk]).trim()) { showErr(label + ' : champ obligatoire manquant (' + (RP_LABELS[rk] || rk) + ').'); return false; }
           }
+          if (cbBadEmail(d.pm_rp_email)) { showErr(label + " : l'email du représentant permanent n'est pas valide."); return false; }
           if (requireFiles && (!d.files || !d.files.pm_cni_rp)) { showErr(label + " : pièce d'identité du représentant permanent requise."); return false; }
           if (requireFiles && (!d.files || !d.files.pm_domicile_rp)) { showErr(label + ' : justificatif de domicile du représentant permanent requis.'); return false; }
         }
@@ -3148,6 +3162,11 @@
         var cpData = cpIsAssoc ? (_mdt.assoc[cpIdx] || {}) : (_mdt.nonAssoc[cpIdx] || {});
         if (!cpData.email || !cpData.email.trim()) { mdtShowErr('Veuillez renseigner l\'email du contact principal.'); return false; }
         if (!cpData.phone || !cpData.phone.trim()) { mdtShowErr('Veuillez renseigner le téléphone portable du contact principal.'); return false; }
+        var _allMdt = _mdt.assoc.slice(0, _mdt.assocCount).map(function (x, k) { return { x: x, l: 'Mandataire associé ' + (k + 1) }; })
+          .concat(_mdt.nonAssoc.slice(0, _mdt.nonAssocCount).map(function (x, k) { return { x: x, l: 'Mandataire non associé ' + (k + 1) }; }));
+        for (var em = 0; em < _allMdt.length; em++) {
+          if ((_allMdt[em].x.pm_type || 'pp') !== 'pm' && cbBadEmail(_allMdt[em].x.email)) { mdtShowErr(_allMdt[em].l + " : l'email n'est pas valide."); return false; }
+        }
         var AREQ = ['nom','prenom','role','nationalite','num_secu','regime','nb_parts','adresse','cp','ville'];
         var NREQ = ['nom','prenom','role','nationalite','num_secu','regime','adresse','cp','ville'];
         for (var i = 0; i < _mdt.assocCount; i++) {
@@ -3419,6 +3438,7 @@
           for (var f = 0; f < AREQ.length; f++) {
             if (!d[AREQ[f]] || !String(d[AREQ[f]]).trim()) { assocShowErr('Complétez tous les champs obligatoires de l\'associé ' + (i+1) + '.'); return false; }
           }
+          if (cbBadEmail(d.email)) { assocShowErr('L\'email de l\'associé ' + (i+1) + ' n\'est pas valide.'); return false; }
           if ((d.heberge || 'non') === 'oui') {
             var ht3 = d.hbg_type || 'physique';
             if (ht3 === 'physique') {
@@ -3732,6 +3752,7 @@
 </div>
 <div id="cb-draft-modal">
   <div class="cb-draft-modal-box">
+    <button class="cb-draft-x-btn" onclick="closeDraftModal()" title="Fermer et modifier">×</button>
     <h3>Mail prêt à envoyer</h3>
     <p>Copiez le contenu ci-dessous et envoyez-le à votre client, ou ouvrez directement votre messagerie.</p>
     <div class="cb-draft-email-preview" id="cb-draft-email-preview"></div>
