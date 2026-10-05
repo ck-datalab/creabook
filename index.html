@@ -793,7 +793,7 @@
       <span class="form-step-counter" id="form-step-counter">Étape 1 / 5</span>
       <button class="form-nav-btn primary" id="btn-next" onclick="formNextStep()">Suivant →</button>
     </div>
-    <button id="cb-btn-draft" onclick="generateDraftLink()">Envoyer le formulaire au client pour complétion →</button>
+    <button id="cb-btn-draft" style="display:none" onclick="generateDraftLink()">Envoyer le formulaire au client pour complétion →</button>
 
     <!-- Post-submission: virement section -->
     <div id="next-steps" class="next-steps">
@@ -1012,7 +1012,6 @@
         }
 
         if (ownerPanel) ownerPanel.style.display = 'none';
-        if (draftBtn && !_draftMode.active) draftBtn.style.display = '';
 
         var fss = _fDoc ? _fDoc.querySelectorAll('form fieldset') : [];
         for (var i = 0; i < fss.length; i++) fss[i].style.display = 'none';
@@ -1489,8 +1488,8 @@
       }
 
       function generateDraftLink() {
-        var btn = document.getElementById('cb-btn-draft');
-        if (btn) { btn.disabled = true; btn.textContent = 'Génération en cours…'; }
+        var navBtn = document.getElementById('btn-next');
+        if (navBtn) { navBtn.disabled = true; navBtn.textContent = 'Génération en cours…'; }
         showOverlay('Génération du lien client…');
         var state = collectFormState();
         var filledByCollab = collectFilledByCollab();
@@ -1503,11 +1502,11 @@
         }).then(function(r) { return r.json(); }).then(function(d) {
           hideOverlay();
           if (!d.ok) throw new Error(d.error || 'Erreur serveur');
-          if (btn) btn.style.display = 'none';
+          clearCollabState();
           showDraftModal(d.url, _selectedOwner.name || 'Votre conseiller Cecca');
         }).catch(function(e) {
           hideOverlay();
-          if (btn) { btn.disabled = false; btn.textContent = 'Formulaire non terminé — Générer un mail client'; }
+          if (navBtn) { navBtn.disabled = false; navBtn.textContent = 'Envoyer le dossier'; }
           showErrToast('Erreur : ' + e.message);
         });
       }
@@ -1923,7 +1922,8 @@
           return;
         }
         if (_step < TOTAL_STEPS - 1) { _step++; applyStepVisibility(); updateStepUI(); saveCollabState(); }
-        else { uploadAllAndSubmit(); }
+        else if (_draftMode.active) { uploadAllAndSubmit(); }
+        else { generateDraftLink(); }
       }
 
       // ── SSN formatter ──────────────────────────────────────────────
@@ -3639,7 +3639,7 @@
       <button class="cb-draft-copy-btn" onclick="copyDraftEmail()">Copier le mail</button>
       <a class="cb-draft-open-btn" id="cb-draft-open-btn" href="#">Ouvrir la messagerie</a>
     </div>
-    <button class="cb-draft-close-btn" onclick="hideDraftModal()">Fermer</button>
+    <button class="cb-draft-close-btn" onclick="clearAndRestart()">Démarrer un nouveau dossier →</button>
   </div>
 </div>
 </body>
