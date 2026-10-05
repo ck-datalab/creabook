@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
 <style>
   :root {
     --ink:       #0A0A0A;
@@ -687,6 +688,14 @@
 </head>
 <body>
 
+<!-- Auth loading screen (collab mode uniquement — caché immédiatement en mode draft) -->
+<div id="auth-screen" style="position:fixed;inset:0;background:#FAFAF7;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0.75rem;">
+  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:.4;animation:auth-spin 1s linear infinite"><circle cx="20" cy="20" r="17" stroke="#1A2E4F" stroke-width="3" stroke-linecap="round" stroke-dasharray="80 26"/></svg>
+  <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:0.95rem;font-weight:600;color:#1A2E4F;margin:0;">Authentification en cours…</p>
+  <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:0.8rem;color:#6A645B;margin:0;">Connexion à votre compte Microsoft</p>
+</div>
+<style>@keyframes auth-spin{to{transform:rotate(360deg)}}</style>
+
 <!-- Hero -->
 <section class="hero">
   <div class="hero-logo">
@@ -1185,6 +1194,77 @@
       var _pendingDraft = null;
       var _draftMode    = { active: false, filledByCollab: {}, companyId: null };
 
+      // ── Azure AD ──────────────────────────────────────────────────────────────
+      var _msalInstance = null;
+      var _azureToken   = null;
+      var _isDraftMode  = !!(new URLSearchParams(window.location.search).get('draft'));
+
+      // Masquer l'auth-screen immédiatement si mode client (draft)
+      (function() {
+        if (_isDraftMode) {
+          var s = document.getElementById('auth-screen');
+          if (s) s.style.display = 'none';
+        }
+      })();
+
+      // Initialisation Azure AD (collab uniquement, async)
+      (function initAuth() {
+        if (_isDraftMode) return;
+        fetch('/config')
+          .then(function(r) { return r.ok ? r.json() : null; })
+          .catch(function() { return null; })
+          .then(function(cfg) {
+            var authScreen = document.getElementById('auth-screen');
+            if (!cfg || !cfg.tenantId || !cfg.clientId) {
+              // Azure non configuré → mode dev, laisser passer
+              if (authScreen) authScreen.style.display = 'none';
+              return;
+            }
+            var msalCfg = {
+              auth: {
+                clientId:    cfg.clientId,
+                authority:   'https://login.microsoftonline.com/' + cfg.tenantId,
+                redirectUri: window.location.origin + '/',
+              },
+              cache: { cacheLocation: 'sessionStorage' },
+            };
+            var inst = new msal.PublicClientApplication(msalCfg);
+            inst.initialize().then(function() {
+              return inst.handleRedirectPromise();
+            }).then(function(result) {
+              if (result) _azureToken = result.idToken;
+              var accounts = inst.getAllAccounts();
+              if (!accounts.length) {
+                return inst.loginRedirect({ scopes: ['openid', 'profile'] });
+              }
+              _msalInstance = inst;
+              if (_azureToken) {
+                if (authScreen) authScreen.style.display = 'none';
+                return;
+              }
+              return inst.acquireTokenSilent({ account: accounts[0], scopes: ['openid', 'profile'] })
+                .then(function(r) { _azureToken = r.idToken; })
+                .catch(function(e) {
+                  console.warn('[azure] Refresh silencieux échoué :', e.message);
+                  return inst.loginRedirect({ scopes: ['openid', 'profile'] });
+                })
+                .then(function() { if (authScreen) authScreen.style.display = 'none'; });
+            }).catch(function(e) {
+              console.error('[azure] Erreur auth :', e);
+              if (authScreen) authScreen.style.display = 'none';
+            });
+          });
+      })();
+
+      function getAzureBearer() {
+        if (!_msalInstance || _isDraftMode) return Promise.resolve(null);
+        var accounts = _msalInstance.getAllAccounts();
+        if (!accounts.length) return Promise.resolve(_azureToken);
+        return _msalInstance.acquireTokenSilent({ account: accounts[0], scopes: ['openid', 'profile'] })
+          .then(function(r) { _azureToken = r.idToken; return _azureToken; })
+          .catch(function() { return _azureToken; });
+      }
+
       function collectFormState() {
         var hsFields = {};
         if (_fDoc) {
@@ -1509,10 +1589,14 @@
         showOverlay('Génération du lien client…');
         var state = collectFormState();
         var filledByCollab = collectFilledByCollab();
-        getOneToken().then(function(tok) {
+        Promise.all([getOneToken(), getAzureBearer()]).then(function(res) {
+          var tok    = res[0];
+          var bearer = res[1];
+          var headers = { 'Content-Type': 'application/json' };
+          if (bearer) headers['Authorization'] = 'Bearer ' + bearer;
           return fetch(DRAFT_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: headers,
             body: JSON.stringify({ token: tok, state: state, filledByCollab: filledByCollab }),
           });
         }).then(function(r) { return r.json(); }).then(function(d) {

@@ -20,6 +20,8 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const RESEND_FROM          = process.env.RESEND_FROM          || 'Créa\'Book <creabook@cecca.fr>';
 const RESEND_JURIDIQUE_CECCA  = process.env.RESEND_JURIDIQUE_CECCA  || '';
 const RESEND_JURIDIQUE_ETOILE = process.env.RESEND_JURIDIQUE_ETOILE || '';
+const AZURE_TENANT_ID         = process.env.AZURE_TENANT_ID         || '';
+const AZURE_CLIENT_ID         = process.env.AZURE_CLIENT_ID         || '';
 
 if (!HUBSPOT_TOKEN) throw new Error('HUBSPOT_TOKEN manquant');
 if (!TOKEN_SECRET)  throw new Error('TOKEN_SECRET manquant');
@@ -126,13 +128,82 @@ app.use((req, res, next) => {
   const allowed = ALLOWED_ORIGINS.some(o => origin.startsWith(o));
   if (allowed) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (!allowed && req.headers.origin) return res.status(403).json({ error: 'Origine non autorisée' });
   next();
 });
 
 app.use(express.json());
+
+// ── Azure AD — validation JWT (JWKS natif Node 20, aucun paquet extra) ────────
+
+let _jwksCache    = null;
+let _jwksCachedAt = 0;
+
+async function getAzurePublicKeys() {
+  if (_jwksCache && Date.now() - _jwksCachedAt < 3_600_000) return _jwksCache;
+  try {
+    const r = await fetch(`https://login.microsoftonline.com/${AZURE_TENANT_ID}/discovery/v2.0/keys`);
+    const d = await r.json();
+    _jwksCache    = d.keys || [];
+    _jwksCachedAt = Date.now();
+  } catch (e) {
+    console.warn('[azure] JWKS fetch :', e.message);
+    if (!_jwksCache) _jwksCache = [];
+  }
+  return _jwksCache;
+}
+
+async function validateAzureToken(token) {
+  if (!AZURE_TENANT_ID || !AZURE_CLIENT_ID) throw new Error('Azure non configuré');
+  const parts = token.split('.');
+  if (parts.length !== 3) throw new Error('Format JWT invalide');
+  const [hB64, pB64, sB64] = parts;
+  let header, payload;
+  try {
+    header  = JSON.parse(Buffer.from(hB64, 'base64url').toString());
+    payload = JSON.parse(Buffer.from(pB64, 'base64url').toString());
+  } catch { throw new Error('JWT illisible'); }
+
+  if (payload.exp && Math.floor(Date.now() / 1000) > payload.exp) throw new Error('Token expiré');
+  if (payload.aud !== AZURE_CLIENT_ID) throw new Error('Audience invalide');
+  const expectedIss = `https://login.microsoftonline.com/${AZURE_TENANT_ID}/v2.0`;
+  if (payload.iss !== expectedIss) throw new Error('Issuer invalide');
+
+  const keys = await getAzurePublicKeys();
+  const jwk  = keys.find(k => k.kid === header.kid && (k.use === 'sig' || !k.use));
+  if (!jwk) throw new Error(`Clé de signature introuvable (kid=${header.kid})`);
+
+  const publicKey = crypto.createPublicKey({ key: jwk, format: 'jwk' });
+  const msg = Buffer.from(`${hB64}.${pB64}`);
+  const sig = Buffer.from(sB64.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+  const ok  = crypto.verify('SHA256', msg, { key: publicKey, padding: crypto.constants.RSA_PKCS1_PADDING }, sig);
+  if (!ok) throw new Error('Signature invalide');
+  return payload;
+}
+
+async function requireAzureAuth(req, res, next) {
+  if (!AZURE_TENANT_ID) {
+    console.warn('[azure] AZURE_TENANT_ID absent — auth Azure désactivée');
+    return next();
+  }
+  const auth = req.headers.authorization || '';
+  if (!auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Authentification Azure requise' });
+  try {
+    req.azureUser = await validateAzureToken(auth.slice(7));
+    next();
+  } catch (e) {
+    console.warn('[azure] Token invalide :', e.message);
+    return res.status(401).json({ error: 'Token Azure invalide : ' + e.message });
+  }
+}
+
+// ── GET /config — valeurs publiques Azure (pas de secrets) ───────────────────
+
+app.get('/config', (_req, res) => {
+  res.json({ tenantId: AZURE_TENANT_ID || null, clientId: AZURE_CLIENT_ID || null });
+});
 
 // ── Draft tokens courts (30 jours, signés HMAC) ──────────────────────────────
 // Format : <companyId>:<expiresAt>.<hmac8>  (~35 caractères)
@@ -318,7 +389,7 @@ app.get('/company-lookup', async (req, res) => {
 
 // ── POST /draft — collab saves partial state ──────────────────────────────────
 
-app.post('/draft', async (req, res) => {
+app.post('/draft', requireAzureAuth, async (req, res) => {
   const body = req.body;
   if (!checkToken(body.token || '')) return res.status(403).json({ error: 'Token invalide' });
 

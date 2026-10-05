@@ -79,7 +79,9 @@ jobs:
           scw container container update ${{ env.CONTAINER_ID }} \
             region=${{ env.REGION }} \
             "environment-variables.RESEND_JURIDIQUE_CECCA=${{ vars.RESEND_JURIDIQUE_CECCA }}" \
-            "environment-variables.RESEND_JURIDIQUE_ETOILE=${{ vars.RESEND_JURIDIQUE_ETOILE }}"
+            "environment-variables.RESEND_JURIDIQUE_ETOILE=${{ vars.RESEND_JURIDIQUE_ETOILE }}" \
+            "environment-variables.AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" \
+            "environment-variables.AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"
 
       - name: Wait for container to be ready
         env:
@@ -122,6 +124,8 @@ jobs:
 #   SCW_ACCESS_KEY   → SCWCP3ZGB2Q4DGSCJ91S
 #   SCW_SECRET_KEY   → (Scaleway secret key)
 #   SCW_ORG_ID       → 4932150b-15f3-4313-8775-3b7ea42cdee4
+#   AZURE_TENANT_ID  → (Directory/Tenant ID — depuis Azure Portal > Azure Active Directory)
+#   AZURE_CLIENT_ID  → (Application/Client ID — depuis Azure Portal > App registrations)
 #
 # ── GitHub Variables à configurer ──────────────────────────────────────────────
 # Settings > Secrets and variables > Actions > Variables
